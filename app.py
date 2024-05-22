@@ -1,7 +1,11 @@
 import streamlit as st
 import pandas as pd
-from transformers import pipeline, GPT2Tokenizer, GPT2LMHeadModel
+from transformers import pipeline, GPT2Tokenizer
 from sentence_transformers import SentenceTransformer, util
+from googletrans import Translator
+
+# Initialize the translator
+translator = Translator()
 
 # Load the transformer models
 generator = pipeline('text-generation', model='gpt2', tokenizer=GPT2Tokenizer.from_pretrained('gpt2'))
@@ -65,29 +69,27 @@ def generate_response(drug_info):
     response = generator(prompt, max_length=300, num_return_sequences=1, truncation=True, pad_token_id=50256)
     return response[0]['generated_text']
 
-def format_response(response):
-    return response.replace("\\n", "\n")
-
 def rag_system(query, df, retriever, generator):
     drug_info = retrieve_drug_info(query, df, retriever)
     response = generate_response(drug_info)
-    formatted_response = format_response(response)
-    return formatted_response, drug_info
+    return response
 
 # Streamlit app
 st.title("Drug Information Retrieval and Generation")
+
+# Language selection
+language = st.selectbox("Select language:", ["English", "Myanmar (Burmese)"])
 
 query = st.text_input("Enter the drug name or query:")
 
 if st.button("Get Information"):
     if query:
-        response, drug_info = rag_system(query, df, retriever, generator)
-        
-        st.subheader("Retrieved Information")
-        for key, value in drug_info.items():
-            st.write(f"**{key}:** {value}")
-        
-        st.subheader("Generated Response")
+        if language == "Myanmar (Burmese)":
+            query = translator.translate(query, src='my', dest='en').text
+            response = rag_system(query, df, retriever, generator)
+            response = translator.translate(response, src='en', dest='my').text
+        else:
+            response = rag_system(query, df, retriever, generator)
         st.write(response)
     else:
         st.write("Please enter a valid query.")
