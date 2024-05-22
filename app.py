@@ -1,10 +1,10 @@
 import streamlit as st
 import pandas as pd
-from transformers import pipeline
+from transformers import pipeline, GPT2Tokenizer, GPT2LMHeadModel
 from sentence_transformers import SentenceTransformer, util
 
 # Load the transformer models
-generator = pipeline('text-generation', model='gpt2')
+generator = pipeline('text-generation', model='gpt2', tokenizer=GPT2Tokenizer.from_pretrained('gpt2'))
 retriever = SentenceTransformer('paraphrase-MiniLM-L6-v2')
 
 # Sample expanded data with additional categories
@@ -62,7 +62,7 @@ def generate_response(drug_info):
     drug_info_dict = drug_info.to_dict()
     prompt = f"Provide detailed information about the drug with the following data:\n{drug_info_dict}"
 
-    response = generator(prompt, max_length=300, num_return_sequences=1)
+    response = generator(prompt, max_length=300, num_return_sequences=1, truncation=True, pad_token_id=50256)
     return response[0]['generated_text']
 
 def rag_system(query, df, retriever, generator):
