@@ -51,11 +51,6 @@ def parse_query(query):
     
     return results
 
-# Function to determine if the query contains Burmese characters
-def contains_burmese(query):
-    burmese_characters = set("ကခဂဃငစဆဇဈညဋဌဍဎဏတထဒဓနပဖဗဘမယရလဝသဟဠအဣဤဥဦဧဩဪါာိီုူေဲံ့းွှဿ၀၁၂၃၄၅၆၇၈၉")
-    return any(char in burmese_characters for char in query)
-
 # Sidebar with instructions
 st.sidebar.title("Instructions")
 st.sidebar.write("""
@@ -72,7 +67,6 @@ query = st.text_input('Query')
 if query:
     results = parse_query(query)
     if results:
-        display_in_burmese = contains_burmese(query)
         for med in results:
             st.markdown(f"### {med['generic_name']} ({med.get('generic_name_mm', '')})")
             
