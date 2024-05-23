@@ -2,20 +2,21 @@ import streamlit as st
 import json
 import spacy
 import os
+from spacy.cli import download as spacy_download
+from pathlib import Path
 
 # Function to download the SpaCy model
-def download_spacy_model(model_name="en_core_web_sm"):
-    from spacy.cli import download
-    download(model_name)
+@st.cache_resource
+def load_spacy_model(model_name="en_core_web_sm"):
+    spacy_model_path = Path(st.cache_resource.get_cache_dir()) / "spacy_models"
+    spacy_model_path.mkdir(parents=True, exist_ok=True)
+    os.environ["SPACY_DATA"] = str(spacy_model_path)
+    if not (spacy_model_path / model_name).exists():
+        spacy_download(model_name)
+    return spacy.load(model_name)
 
-# Check if the SpaCy model is already installed, if not, download it
-model_name = "en_core_web_sm"
-if not spacy.util.is_package(model_name):
-    with st.spinner("Downloading SpaCy model..."):
-        download_spacy_model(model_name)
-
-# Load the SpaCy model
-nlp = spacy.load(model_name)
+# Load the SpaCy model with caching
+nlp = load_spacy_model()
 
 # Load the JSON data
 with open('medicines.json') as f:
