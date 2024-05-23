@@ -28,7 +28,7 @@ def load_data():
     return medicines, symptoms, diseases, generic_names, forms, brand_names, manufacturers
 
 # Load the pre-trained transformer model
-model = SentenceTransformer('all-MiniLM-L6-v2')
+model = SentenceTransformer('paraphrase-MiniLM-L6-v2')  # Smaller, efficient model
 
 # Function to create combined text from various fields for retrieval
 def create_combined_text(item):
