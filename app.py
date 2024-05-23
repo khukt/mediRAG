@@ -1,17 +1,24 @@
 import streamlit as st
 import json
 import spacy
+import os
 from spacy.cli import download as spacy_download
 from pathlib import Path
 
 # Function to download the SpaCy model
 @st.cache_resource
 def load_spacy_model(model_name="en_core_web_sm"):
-    spacy_model_path = Path(st.get_cache_dir()) / "spacy_models"
-    spacy_model_path.mkdir(parents=True, exist_ok=True)
-    os.environ["SPACY_DATA"] = str(spacy_model_path)
-    if not (spacy_model_path / model_name).exists():
-        spacy_download(model_name)
+    # Define the cache path for the spacy model
+    cache_dir = Path(st.__path__[0]) / 'cache' / 'spacy_models'
+    model_path = cache_dir / model_name
+
+    if not model_path.exists():
+        # Ensure the cache directory exists
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        # Download the model to the cache directory
+        spacy_download(model_name, False, model_path)
+
+    # Load the model from the cache directory
     return spacy.load(model_name)
 
 # Load the SpaCy model with caching
