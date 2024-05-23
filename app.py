@@ -32,27 +32,20 @@ model = SentenceTransformer('all-MiniLM-L6-v2')  # Smaller, efficient model
 
 # Function to create combined text from various fields for retrieval
 def create_combined_text(item):
-    if isinstance(item, dict):
-        fields = [
-            'description', 'mechanism_of_action', 'indications', 
-            'contraindications', 'warnings', 'interactions', 
-            'side_effects', 'additional_info'
-        ]
-        combined_text = ' '.join([item.get(field, '') for field in fields]).lower()
-        return combined_text
-    else:
-        # Log the unexpected data format
-        st.error(f"Unexpected data format: {item}")
-        return ""
+    fields = [
+        'description', 'mechanism_of_action', 'indications', 
+        'contraindications', 'warnings', 'interactions', 
+        'side_effects', 'additional_info'
+    ]
+    combined_text = ' '.join([item.get(field, '') for field in fields if field in item]).lower()
+    return combined_text
 
 # Function to retrieve information
-def retrieve_information(data, query, top_k=5):
+def retrieve_information(data, combined_texts, query, top_k=5):
     try:
         # Encode the query
         query_embedding = model.encode(query.lower(), convert_to_tensor=True)
 
-        combined_texts = [create_combined_text(item) for item in data]
-        
         # Encode the combined texts
         doc_embeddings = model.encode(combined_texts, convert_to_tensor=True)
 
@@ -73,9 +66,9 @@ def retrieve_information(data, query, top_k=5):
         return []
 
 # Function to generate response
-def generate_response(data, query):
+def generate_response(data, combined_texts, query):
     # Retrieve relevant information based on the query
-    relevant_data = retrieve_information(data, query)
+    relevant_data = retrieve_information(data, combined_texts, query)
     if not relevant_data:
         return "No relevant information found for your query."
     else:
@@ -86,6 +79,9 @@ def generate_response(data, query):
 
 # Load the data
 medicines, symptoms, diseases, generic_names, forms, brand_names, manufacturers = load_data()
+
+# Create combined texts for each medicine
+combined_texts = [create_combined_text(item) for item in medicines]
 
 # Debug the structure of medicines data
 st.write("Loaded medicines data:")
@@ -102,7 +98,7 @@ query = st.text_input("Enter your query about medicine:")
 
 if query:
     # Generate a response based on the query
-    response = generate_response(medicines, query)
+    response = generate_response(medicines, combined_texts, query)
     
     # Display the response in the Streamlit app
     st.write(response)
