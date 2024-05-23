@@ -1,28 +1,7 @@
 import streamlit as st
 import json
-import spacy
-import os
-
-# Function to download the SpaCy model
-def download_spacy_model(model_name="en_core_web_sm"):
-    from spacy.cli import download
-    try:
-        download(model_name)
-    except Exception as e:
-        st.error(f"Error downloading SpaCy model: {e}")
-
-# Check if the SpaCy model is already installed, if not, download it
-model_name = "en_core_web_sm"
-if not spacy.util.is_package(model_name):
-    with st.spinner("Downloading SpaCy model..."):
-        download_spacy_model(model_name)
-
-# Function to load the SpaCy model with caching
-@st.cache_resource
-def load_spacy_model(model_name="en_core_web_sm"):
-    return spacy.load(model_name)
-
-nlp = load_spacy_model()
+from transformers import AutoTokenizer, AutoModelForMaskedLM
+import torch
 
 # Function to load JSON data with caching
 @st.cache_data
@@ -38,17 +17,27 @@ manufacturers = load_json_data('manufacturers.json')['manufacturers']
 brand_dict = {brand['id']: brand for brand in brand_names}
 manufacturer_dict = {manufacturer['id']: manufacturer for manufacturer in manufacturers}
 
+# Load the NLP model with caching
+@st.cache_resource
+def load_nlp_model():
+    tokenizer = AutoTokenizer.from_pretrained("distilroberta-base")
+    model = AutoModelForMaskedLM.from_pretrained("distilroberta-base")
+    return tokenizer, model
+
+tokenizer, model = load_nlp_model()
+
 # Function to parse the query and retrieve medicine information
 def parse_query(query):
-    doc = nlp(query.lower())
+    query = query.lower()
     results = []
+    query_tokens = query.split()
 
     for med in medicines:
-        if any(token.lemma_ in med['generic_name'].lower() for token in doc) or \
-           any(token.lemma_ in brand_dict[brand_id]['name'].lower() for brand_id in med['brand_names'] for token in doc) or \
-           any(token.lemma_ in use.lower() for use in med['uses'] for token in doc):
+        if any(token in med['generic_name'].lower() for token in query_tokens) or \
+           any(token in brand_dict[brand_id]['name'].lower() for brand_id in med['brand_names'] for token in query_tokens) or \
+           any(token in use.lower() for use in med['uses'] for token in query_tokens):
             results.append(med)
-
+            
     return results
 
 # Streamlit app
