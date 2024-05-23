@@ -42,26 +42,30 @@ def create_combined_text(item):
 
 # Function to retrieve information
 def retrieve_information(data, query, top_k=5):
-    # Encode the query
-    query_embedding = model.encode(query, convert_to_tensor=True)
+    try:
+        # Encode the query
+        query_embedding = model.encode(query, convert_to_tensor=True)
 
-    combined_texts = [create_combined_text(item) for item in data]
-    
-    # Encode the combined texts
-    doc_embeddings = model.encode(combined_texts, convert_to_tensor=True)
+        combined_texts = [create_combined_text(item) for item in data]
+        
+        # Encode the combined texts
+        doc_embeddings = model.encode(combined_texts, convert_to_tensor=True)
 
-    # Compute cosine similarities
-    cos_scores = util.pytorch_cos_sim(query_embedding, doc_embeddings)[0]
+        # Compute cosine similarities
+        cos_scores = util.pytorch_cos_sim(query_embedding, doc_embeddings)[0]
 
-    # Ensure top_k does not exceed the number of available documents
-    top_k = min(top_k, len(data))
+        # Ensure top_k does not exceed the number of available documents
+        top_k = min(top_k, len(data))
 
-    # Get the top_k results
-    top_results = cos_scores.topk(k=top_k)
+        # Get the top_k results
+        top_results = cos_scores.topk(k=top_k)
 
-    # Retrieve the top_k medicines
-    top_medicines = [data[idx] for idx in top_results[1].tolist()]
-    return top_medicines
+        # Retrieve the top_k medicines
+        top_medicines = [data[idx] for idx in top_results[1].tolist()]
+        return top_medicines
+    except Exception as e:
+        st.error(f"An error occurred during information retrieval: {e}")
+        return []
 
 # Function to generate response
 def generate_response(data, query):
