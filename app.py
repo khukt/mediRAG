@@ -1,6 +1,6 @@
 import streamlit as st
 import json
-from transformers import AutoTokenizer, AutoModelForMaskedLM
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import torch
 
 # Function to load JSON data with caching
@@ -17,11 +17,11 @@ manufacturers = load_json_data('manufacturers.json')['manufacturers']
 brand_dict = {brand['id']: brand for brand in brand_names}
 manufacturer_dict = {manufacturer['id']: manufacturer for manufacturer in manufacturers}
 
-# Load the NLP model with caching
+# Load the multilingual NLP model with caching
 @st.cache_resource
 def load_nlp_model():
-    tokenizer = AutoTokenizer.from_pretrained("distilroberta-base")
-    model = AutoModelForMaskedLM.from_pretrained("distilroberta-base")
+    tokenizer = AutoTokenizer.from_pretrained("xlm-roberta-base")
+    model = AutoModelForSequenceClassification.from_pretrained("xlm-roberta-base")
     return tokenizer, model
 
 tokenizer, model = load_nlp_model()
