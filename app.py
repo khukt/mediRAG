@@ -40,12 +40,12 @@ df = pd.DataFrame(data)
 
 # Precompute embeddings for all texts in the dataframe
 @st.cache_data
-def precompute_embeddings(df, retriever):
+def precompute_embeddings(_retriever):
     all_texts = df['Generic Name'].tolist() + df['Commercial Names'].tolist() + df['Drug Class'].tolist() + df['Disease Names'].tolist() + df['Symptoms'].tolist() + df['Treatment Protocols'].tolist() + df['Medical Procedures'].tolist()
-    data_embeddings = retriever.encode(all_texts, convert_to_tensor=True)
+    data_embeddings = _retriever.encode(all_texts, convert_to_tensor=True)
     return all_texts, data_embeddings
 
-all_texts, data_embeddings = precompute_embeddings(df, retriever)
+all_texts, data_embeddings = precompute_embeddings(retriever)
 
 def retrieve_drug_info(query, all_texts, data_embeddings, retriever):
     # Encode the query
