@@ -51,8 +51,8 @@ def parse_query(query):
     
     return results
 
-# Function to determine if the query is in Burmese
-def is_burmese(query):
+# Function to determine if the query contains Burmese characters
+def contains_burmese(query):
     burmese_characters = set("ကခဂဃငစဆဇဈညဋဌဍဎဏတထဒဓနပဖဗဘမယရလဝသဟဠအဣဤဥဦဧဩဪါာိီုူေဲံ့းွှဿ၀၁၂၃၄၅၆၇၈၉")
     return any(char in burmese_characters for char in query)
 
@@ -72,7 +72,7 @@ query = st.text_input('Query')
 if query:
     results = parse_query(query)
     if results:
-        display_in_burmese = is_burmese(query)
+        display_in_burmese = contains_burmese(query)
         for med in results:
             st.markdown(f"### {med['generic_name']} ({med.get('generic_name_mm', '')})")
             
@@ -80,11 +80,11 @@ if query:
             
             with col1:
                 st.markdown("**Uses**")
-                st.write(', '.join(med.get('uses_mm', med['uses'])))
+                st.write(', '.join(med.get('uses_mm', med['uses']) if display_in_burmese else med['uses']))
             
             with col2:
                 st.markdown("**Side Effects**")
-                st.write(', '.join(med.get('side_effects_mm', med['side_effects'])))
+                st.write(', '.join(med.get('side_effects_mm', med['side_effects']) if display_in_burmese else med['side_effects']))
             
             st.markdown("**Brands and Dosages**")
             for brand_id in med['brand_names']:
