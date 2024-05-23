@@ -76,26 +76,33 @@ if query:
         for med in results:
             st.markdown(f"### {med['generic_name']} ({med.get('generic_name_mm', '')})")
             
-            with st.expander("Uses (English)"):
-                st.write(', '.join(med['uses']))
-            with st.expander("Uses (Burmese)"):
-                if 'uses_mm' in med:
-                    st.write(', '.join(med['uses_mm']))
-
-            with st.expander("Side Effects (English)"):
-                st.write(', '.join(med['side_effects']))
-            with st.expander("Side Effects (Burmese)"):
-                if 'side_effects_mm' in med:
-                    st.write(', '.join(med['side_effects_mm']))
+            col1, col2 = st.columns(2)
             
+            with col1:
+                with st.expander("Uses (English)"):
+                    st.write(', '.join(med['uses']))
+                with st.expander("Uses (Burmese)"):
+                    if 'uses_mm' in med:
+                        st.write(', '.join(med['uses_mm']))
+
+            with col2:
+                with st.expander("Side Effects (English)"):
+                    st.write(', '.join(med['side_effects']))
+                with st.expander("Side Effects (Burmese)"):
+                    if 'side_effects_mm' in med:
+                        st.write(', '.join(med['side_effects_mm']))
+
             st.markdown("**Brands and Dosages**")
             for brand_id in med['brand_names']:
                 brand = brand_dict[brand_id]
                 manufacturer = manufacturer_dict[brand['manufacturer_id']]
-                st.markdown(f"**{brand['name']}**")
+                st.markdown(f"**Brand Name:** {brand['name']}")
                 st.write(f"**Dosages:** {', '.join(brand['dosages'])}")
                 st.write(f"**Manufacturer:** {manufacturer['name']}")
-                st.write(f"**Contact Info:** Phone: {manufacturer['contact_info']['phone']}, Email: {manufacturer['contact_info']['email']}, Address: {manufacturer['contact_info']['address']}")
+                st.write(f"**Contact Info:**")
+                st.write(f"Phone: {manufacturer['contact_info']['phone']}")
+                st.write(f"Email: {manufacturer['contact_info']['email']}")
+                st.write(f"Address: {manufacturer['contact_info']['address']}")
                 st.markdown("---")
     else:
         st.write('No results found.')
