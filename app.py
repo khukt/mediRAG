@@ -42,7 +42,12 @@ def load_nlp_model():
 
 tokenizer, model, qa_pipeline = load_nlp_model()
 
-# Query processing function
+# Function to detect if a string contains Burmese characters
+def contains_burmese(text):
+    burmese_characters = set("ကခဂဃငစဆဇဈညဋဌဍဎဏတထဒဓနပဖဗဘမယရလဝသဟဠအဣဤဥဦဧဩဪါာိီုူေဲံ့းွှဿ၀၁၂၃၄၅၆၇၈၉")
+    return any(char in burmese_characters for char in text)
+
+# Function to parse the query and retrieve medicine information
 def parse_query(query):
     query = query.lower()
     results = []
@@ -83,30 +88,36 @@ def display_brand_info(brand_info):
         st.write(f"Email: {manufacturer['contact_info']['email']}")
         st.write(f"Address: {manufacturer['contact_info']['address']}")
 
-def display_medicine_info(med):
+def display_medicine_info(med, query_tokens):
     st.markdown(f"### {generic_dict[med['generic_name_ids'][0]]['name']} ({generic_dict[med['generic_name_ids'][0]]['name_mm']})")
+
     st.markdown(f"**Description:** {med.get('description', 'N/A')} ({med.get('description_mm', 'N/A')})")
     st.markdown(f"**Mechanism of Action:** {med.get('mechanism_of_action', 'N/A')} ({med.get('mechanism_of_action_mm', 'N/A')})")
 
+    def highlight_matches(text, tokens):
+        for token in tokens:
+            text = text.replace(token, f"<mark>{token}</mark>")
+        return text
+
     with st.expander("Indications"):
-        st.markdown(f"**English:** {', '.join(med.get('indications', []))}")
-        st.markdown(f"**Burmese:** {', '.join(med.get('indications_mm', []))}")
+        st.markdown(f"**English:** {highlight_matches(', '.join(med.get('indications', [])), query_tokens)}", unsafe_allow_html=True)
+        st.markdown(f"**Burmese:** {highlight_matches(', '.join(med.get('indications_mm', [])), query_tokens)}", unsafe_allow_html=True)
 
     with st.expander("Side Effects"):
-        st.markdown(f"**English:** {', '.join(med.get('side_effects', []))}")
-        st.markdown(f"**Burmese:** {', '.join(med.get('side_effects_mm', []))}")
+        st.markdown(f"**English:** {highlight_matches(', '.join(med.get('side_effects', [])), query_tokens)}", unsafe_allow_html=True)
+        st.markdown(f"**Burmese:** {highlight_matches(', '.join(med.get('side_effects_mm', [])), query_tokens)}", unsafe_allow_html=True)
 
     with st.expander("Contraindications"):
-        st.markdown(f"**English:** {', '.join(med.get('contraindications', []))}")
-        st.markdown(f"**Burmese:** {', '.join(med.get('contraindications_mm', []))}")
+        st.markdown(f"**English:** {highlight_matches(', '.join(med.get('contraindications', [])), query_tokens)}", unsafe_allow_html=True)
+        st.markdown(f"**Burmese:** {highlight_matches(', '.join(med.get('contraindications_mm', [])), query_tokens)}", unsafe_allow_html=True)
 
     with st.expander("Warnings"):
-        st.markdown(f"**English:** {', '.join(med.get('warnings', []))}")
-        st.markdown(f"**Burmese:** {', '.join(med.get('warnings_mm', []))}")
+        st.markdown(f"**English:** {highlight_matches(', '.join(med.get('warnings', [])), query_tokens)}", unsafe_allow_html=True)
+        st.markdown(f"**Burmese:** {highlight_matches(', '.join(med.get('warnings_mm', [])), query_tokens)}", unsafe_allow_html=True)
 
     with st.expander("Drug Interactions"):
-        st.markdown(f"**English:** {', '.join(med.get('interactions', []))}")
-        st.markdown(f"**Burmese:** {', '.join(med.get('interactions_mm', []))}")
+        st.markdown(f"**English:** {highlight_matches(', '.join(med.get('interactions', [])), query_tokens)}", unsafe_allow_html=True)
+        st.markdown(f"**Burmese:** {highlight_matches(', '.join(med.get('interactions_mm', [])), query_tokens)}", unsafe_allow_html=True)
 
     st.markdown("### Brands and Dosages")
     for brand_info in med['brands']:
@@ -169,10 +180,11 @@ def main():
 
     if query:
         results = parse_query(query)
+        query_tokens = tokenizer.tokenize(query.lower())
         if results:
             st.markdown("## Results")
             for med in results:
-                display_medicine_info(med)
+                display_medicine_info(med, query_tokens)
             
             st.markdown("## Generated Answers")
             for med in results:
