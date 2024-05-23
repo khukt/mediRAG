@@ -55,24 +55,45 @@ def parse_query(query):
     tokens = tokenizer.convert_ids_to_tokens(inputs["input_ids"].squeeze().tolist())
 
     for med in medicines:
-        if any([
-            any(token in generic_dict[gname_id]['name'].lower() for gname_id in med['generic_name_ids'] for token in tokens),
-            any(token in generic_dict[gname_id]['name_mm'].lower() for gname_id in med['generic_name_ids'] for token in tokens),
-            any(token in ' '.join(med.get('indications', [])).lower() for token in tokens),
-            any(token in ' '.join(med.get('indications_mm', [])).lower() for token in tokens),
-            any(token in ' '.join(med.get('side_effects', [])).lower() for token in tokens),
-            any(token in ' '.join(med.get('side_effects_mm', [])).lower() for token in tokens),
-            any(token in ' '.join(med.get('contraindications', [])).lower() for token in tokens),
-            any(token in ' '.join(med.get('contraindications_mm', [])).lower() for token in tokens),
-            any(token in ' '.join(med.get('warnings', [])).lower() for token in tokens),
-            any(token in ' '.join(med.get('warnings_mm', [])).lower() for token in tokens),
-            any(token in ' '.join(med.get('interactions', [])).lower() for token in tokens),
-            any(token in ' '.join(med.get('interactions_mm', [])).lower() for token in tokens),
-            any(any(token in brand_dict[brand_info['brand_id']]['name'].lower() for token in tokens) for brand_info in med['brands'])
-        ]):
-            results.append(med)
+        score = 0
 
-    return results
+        # Check for matches in brand names
+        if any(any(token in brand_dict[brand_info['brand_id']]['name'].lower() for token in tokens) for brand_info in med['brands']):
+            score += 6
+
+        # Check for matches in diseases
+        if any(any(token in disease_dict[disease_id]['name'].lower() for token in tokens) for disease_id in med['disease_ids']):
+            score += 5
+
+        # Check for matches in generic names
+        if any(any(token in generic_dict[gname_id]['name'].lower() for token in tokens) for gname_id in med['generic_name_ids']):
+            score += 4
+
+        # Check for matches in manufacturers
+        if any(any(token in manufacturer_dict[brand_dict[brand_info['brand_id']]['manufacturer_id']]['name'].lower() for token in tokens) for brand_info in med['brands']):
+            score += 3
+
+        # Check for matches in medicine descriptions, indications, side effects, etc.
+        if any([
+            any(token in med.get('description', '').lower() for token in tokens),
+            any(token in med.get('mechanism_of_action', '').lower() for token in tokens),
+            any(token in ' '.join(med.get('indications', [])).lower() for token in tokens),
+            any(token in ' '.join(med.get('side_effects', [])).lower() for token in tokens),
+            any(token in ' '.join(med.get('contraindications', [])).lower() for token in tokens),
+            any(token in ' '.join(med.get('warnings', [])).lower() for token in tokens),
+            any(token in ' '.join(med.get('interactions', [])).lower() for token in tokens)
+        ]):
+            score += 2
+
+        # Check for matches in symptoms
+        if any(any(token in symptom_dict[symptom_id]['name'].lower() for token in tokens) for symptom_id in med['symptom_ids']):
+            score += 1
+
+        if score > 0:
+            results.append((score, med))
+
+    results.sort(reverse=True, key=lambda x: x[0])
+    return [med for score, med in results]
 
 # Display functions
 def display_brand_info(brand_info):
