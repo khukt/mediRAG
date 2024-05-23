@@ -20,8 +20,8 @@ manufacturer_dict = {manufacturer['id']: manufacturer for manufacturer in manufa
 # Load the multilingual NLP model with caching
 @st.cache_resource
 def load_nlp_model():
-    tokenizer = AutoTokenizer.from_pretrained("xlm-roberta-base")
-    model = AutoModelForMaskedLM.from_pretrained("xlm-roberta-base")
+    tokenizer = AutoTokenizer.from_pretrained("distilbert-base-multilingual-cased")
+    model = AutoModelForMaskedLM.from_pretrained("distilbert-base-multilingual-cased")
     return tokenizer, model
 
 tokenizer, model = load_nlp_model()
