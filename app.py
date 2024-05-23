@@ -43,10 +43,10 @@ def parse_query(query):
     # Tokenize the query using the tokenizer
     inputs = tokenizer(query, return_tensors="pt")
     tokens = tokenizer.convert_ids_to_tokens(inputs["input_ids"].squeeze().tolist())
-    
+
     for med in medicines:
-        generic_name_matches = any(token in med['generic_name'].lower() for token in tokens)
-        generic_name_mm_matches = any(token in med.get('generic_name_mm', '').lower() for token in tokens)
+        generic_name_matches = any(token in gname['name'].lower() for gname in med['generic_names'] for token in tokens)
+        generic_name_mm_matches = any(token in gname['name_mm'].lower() for gname in med['generic_names'] for token in tokens)
         indications_matches = any(token in ' '.join(med.get('indications', [])).lower() for token in tokens)
         indications_mm_matches = any(token in ' '.join(med.get('indications_mm', [])).lower() for token in tokens)
         side_effects_matches = any(token in ' '.join(med.get('side_effects', [])).lower() for token in tokens)
@@ -57,7 +57,7 @@ def parse_query(query):
         warnings_mm_matches = any(token in ' '.join(med.get('warnings_mm', [])).lower() for token in tokens)
         interactions_matches = any(token in ' '.join(med.get('interactions', [])).lower() for token in tokens)
         interactions_mm_matches = any(token in ' '.join(med.get('interactions_mm', [])).lower() for token in tokens)
-        brand_name_matches = any(any(token in brand_dict[brand_id]['name'].lower() for token in tokens) for brand_id in med['brand_names'])
+        brand_name_matches = any(any(token in brand_dict[brand_info['brand_id']]['name'].lower() for token in tokens) for brand_info in med['brands'])
 
         if (generic_name_matches or generic_name_mm_matches or indications_matches or indications_mm_matches or
             side_effects_matches or side_effects_mm_matches or contraindications_matches or contraindications_mm_matches or
@@ -104,8 +104,7 @@ if query:
     if results:
         st.markdown("## Results")
         for med in results:
-            st.markdown(f"### {med['generic_name']} ({med.get('generic_name_mm', '')})")
-            
+            st.markdown(f"### {med['generic_names'][0]['name']} ({med['generic_names'][0]['name_mm']})")
             st.write(f"**Description:** {med.get('description', 'N/A')}")
             st.write(f"**Mechanism of Action:** {med.get('mechanism_of_action', 'N/A')}")
             
@@ -139,11 +138,11 @@ if query:
                     st.write(', '.join(med.get('interactions_mm', [])))
 
             st.markdown("**Brands and Dosages**")
-            for brand_id in med['brand_names']:
-                brand = brand_dict[brand_id]
+            for brand_info in med['brands']:
+                brand = brand_dict[brand_info['brand_id']]
                 manufacturer = manufacturer_dict[brand['manufacturer_id']]
                 st.markdown(f"**Brand Name:** {brand['name']}")
-                st.write(f"**Dosages:** {', '.join(brand['dosages'])}")
+                st.write(f"**Dosages:** {', '.join(brand_info['dosages'])}")
                 st.write(f"**Manufacturer:** {manufacturer['name']}")
                 st.write(f"**Contact Info:**")
                 st.write(f"Phone: {manufacturer['contact_info']['phone']}")
@@ -154,7 +153,7 @@ if query:
         # Use the Q&A model to generate more user-friendly answers
         st.markdown("## Generated Answers")
         for med in results:
-            context = f"Generic Name: {med['generic_name']}\n" \
+            context = f"Generic Name: {med['generic_names'][0]['name']}\n" \
                       f"Description: {med.get('description', 'N/A')}\n" \
                       f"Mechanism of Action: {med.get('mechanism_of_action', 'N/A')}\n" \
                       f"Indications: {', '.join(med.get('indications', []))}\n" \
@@ -162,7 +161,7 @@ if query:
                       f"Contraindications: {', '.join(med.get('contraindications', []))}\n" \
                       f"Warnings: {', '.join(med.get('warnings', []))}\n" \
                       f"Drug Interactions: {', '.join(med.get('interactions', []))}\n" \
-                      f"Brands: {', '.join(brand_dict[brand_id]['name'] for brand_id in med['brand_names'])}\n"
+                      f"Brands: {', '.join(brand_dict[brand_info['brand_id']]['name'] for brand_info in med['brands'])}\n"
             qa_result = qa_pipeline(question=query, context=context)
             st.write(f"**Answer:** {qa_result['answer']}")
     else:
