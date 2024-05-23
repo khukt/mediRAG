@@ -3,6 +3,9 @@ import json
 from transformers import AutoTokenizer, AutoModelForMaskedLM
 import torch
 
+# Set page configuration
+st.set_page_config(page_title="Medicine Information Retrieval", layout="wide")
+
 # Function to load JSON data with caching
 @st.cache_data
 def load_json_data(file_path):
@@ -50,9 +53,6 @@ def parse_query(query):
 def is_burmese(query):
     burmese_characters = set("ကခဂဃငစဆဇဈညဋဌဍဎဏတထဒဓနပဖဗဘမယရလဝသဟဠအဣဤဥဦဧဩဪါာိီုူေဲံ့းွှဿ၀၁၂၃၄၅၆၇၈၉")
     return any(char in burmese_characters for char in query)
-
-# Streamlit app
-st.set_page_config(page_title="Medicine Information Retrieval", layout="wide")
 
 # Sidebar with instructions
 st.sidebar.title("Instructions")
