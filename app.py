@@ -113,9 +113,19 @@ if st.button("Get Information"):
     if query:
         try:
             if language == "Myanmar (Burmese)":
-                query = translator.translate(query, src='my', dest='en').text
+                try:
+                    query = translator.translate(query, src='my', dest='en').text
+                except Exception as e:
+                    st.write(f"Translation error: {e}")
+                    query = query_prefix  # fallback to original query if translation fails
+                
                 response = rag_system(query, all_texts, data_embeddings, retriever, generator)
-                response = translator.translate(response, src='en', dest='my').text
+                
+                try:
+                    response = translator.translate(response, src='en', dest='my').text
+                except Exception as e:
+                    st.write(f"Translation error: {e}")
+                    response = response  # fallback to English response if translation fails
             else:
                 response = rag_system(query, all_texts, data_embeddings, retriever, generator)
             st.write(response)
