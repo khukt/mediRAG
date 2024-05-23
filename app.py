@@ -11,13 +11,13 @@ def print_memory_usage():
 
 # Function to load data
 def load_data():
-    medicines = pd.read_json('/mnt/data/medicines.json')
-    symptoms = pd.read_json('/mnt/data/symptoms.json')
-    diseases = pd.read_json('/mnt/data/diseases.json')
-    generic_names = pd.read_json('/mnt/data/generic_names.json')
-    forms = pd.read_json('/mnt/data/forms.json')
-    brand_names = pd.read_json('/mnt/data/brand_names.json')
-    manufacturers = pd.read_json('/mnt/data/manufacturers.json')
+    medicines = pd.read_json('medicines.json')
+    symptoms = pd.read_json('symptoms.json')
+    diseases = pd.read_json('diseases.json')
+    generic_names = pd.read_json('generic_names.json')
+    forms = pd.read_json('forms.json')
+    brand_names = pd.read_json('brand_names.json')
+    manufacturers = pd.read_json('manufacturers.json')
     
     return medicines, symptoms, diseases, generic_names, forms, brand_names, manufacturers
 
