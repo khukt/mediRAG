@@ -1,6 +1,6 @@
 import streamlit as st
 import json
-from transformers import AutoTokenizer, AutoModelForMaskedLM
+from transformers import AutoTokenizer, AutoModelForQuestionAnswering, pipeline
 import torch
 
 # Set page configuration
@@ -20,14 +20,15 @@ manufacturers = load_json_data('manufacturers.json')['manufacturers']
 brand_dict = {brand['id']: brand for brand in brand_names}
 manufacturer_dict = {manufacturer['id']: manufacturer for manufacturer in manufacturers}
 
-# Load the multilingual NLP model with caching
+# Load the multilingual model with caching
 @st.cache_resource
 def load_nlp_model():
     tokenizer = AutoTokenizer.from_pretrained("distilbert-base-multilingual-cased")
-    model = AutoModelForMaskedLM.from_pretrained("distilbert-base-multilingual-cased")
-    return tokenizer, model
+    model = AutoModelForQuestionAnswering.from_pretrained("distilbert-base-multilingual-cased")
+    qa_pipeline = pipeline("question-answering", model=model, tokenizer=tokenizer)
+    return tokenizer, model, qa_pipeline
 
-tokenizer, model = load_nlp_model()
+tokenizer, model, qa_pipeline = load_nlp_model()
 
 # Function to detect if a string contains Burmese characters
 def contains_burmese(text):
@@ -93,6 +94,7 @@ query = st.text_input(query_label)
 if query:
     results = parse_query(query)
     if results:
+        st.markdown("## Results")
         for med in results:
             st.markdown(f"### {med['generic_name']} ({med.get('generic_name_mm', '')})")
             
@@ -124,5 +126,15 @@ if query:
                 st.write(f"Email: {manufacturer['contact_info']['email']}")
                 st.write(f"Address: {manufacturer['contact_info']['address']}")
                 st.markdown("---")
+
+        # Use the Q&A model to generate more user-friendly answers
+        st.markdown("## Generated Answers")
+        for med in results:
+            context = f"Generic Name: {med['generic_name']}\n" \
+                      f"Uses: {', '.join(med['uses'])}\n" \
+                      f"Side Effects: {', '.join(med['side_effects'])}\n" \
+                      f"Brands: {', '.join(brand_dict[brand_id]['name'] for brand_id in med['brand_names'])}\n"
+            qa_result = qa_pipeline(question=query, context=context)
+            st.write(f"**Answer:** {qa_result['answer']}")
     else:
         st.write('No results found.')
