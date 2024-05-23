@@ -1,0 +1,19 @@
+{
+    "diseases": [
+        {
+            "id": 1,
+            "name": "Flu",
+            "name_mm": "ဖလူးရောဂါ"
+        },
+        {
+            "id": 2,
+            "name": "Arthritis",
+            "name_mm": "အာသရိုက်တစ်ရောဂါ"
+        },
+        {
+            "id": 3,
+            "name": "Common Cold",
+            "name_mm": "အအေးမိရောဂါ"
+        }
+    ]
+}
