@@ -1,8 +1,7 @@
 import streamlit as st
 import json
-from transformers import AutoTokenizer, AutoModelForMaskedLM, pipeline
+from transformers import AutoTokenizer, AutoModelForMaskedLM
 import torch
-import re
 
 # Set page configuration
 st.set_page_config(page_title="Medicine Information Retrieval", layout="wide")
@@ -13,7 +12,6 @@ def load_json_data(file_path):
     with open(file_path) as f:
         return json.load(f)
 
-# Load data
 medicines = load_json_data('medicines.json')['medicines']
 brand_names = load_json_data('brand_names.json')['brand_names']
 manufacturers = load_json_data('manufacturers.json')['manufacturers']
@@ -27,110 +25,37 @@ manufacturer_dict = {manufacturer['id']: manufacturer for manufacturer in manufa
 def load_nlp_model():
     tokenizer = AutoTokenizer.from_pretrained("distilbert-base-multilingual-cased")
     model = AutoModelForMaskedLM.from_pretrained("distilbert-base-multilingual-cased")
-    qa_pipeline = pipeline("question-answering", model=model, tokenizer=tokenizer)
-    return tokenizer, model, qa_pipeline
+    return tokenizer, model
 
-tokenizer, model, qa_pipeline = load_nlp_model()
+tokenizer, model = load_nlp_model()
 
 # Function to detect if a string contains Burmese characters
 def contains_burmese(text):
     burmese_characters = set("ကခဂဃငစဆဇဈညဋဌဍဎဏတထဒဓနပဖဗဘမယရလဝသဟဠအဣဤဥဦဧဩဪါာိီုူေဲံ့းွှဿ၀၁၂၃၄၅၆၇၈၉")
     return any(char in burmese_characters for char in text)
 
-# Function to classify the query type
-def classify_query(query):
-    if "difference between" in query or "differ" in query:
-        return "comparison"
-    elif "what is" in query or "ဆိုတာဘာလဲ" in query:
-        return "simple"
-    elif "tell me about" in query or "အကြောင်းပြောပြပါ" in query:
-        return "brand"
-    elif "for a headache" in query or "ခေါင်းကိုက်ကို" in query:
-        return "symptom"
-    return "unknown"
-
 # Function to parse the query and retrieve medicine information
 def parse_query(query):
-    query_type = classify_query(query.lower())
     query = query.lower()
+    results = []
 
-    if query_type == "simple":
-        if contains_burmese(query):
-            term = query.replace("ဆိုတာဘာလဲ", "").strip()
-        else:
-            term = query.replace("what is", "").strip()
-        
-        for med in medicines:
-            if term in med['generic_name'].lower() or term in med.get('generic_name_mm', '').lower():
-                return med
-
-    elif query_type == "brand":
-        if contains_burmese(query):
-            term = query.replace("အကြောင်းပြောပြပါ", "").strip()
-        else:
-            term = query.replace("tell me about", "").strip()
-        
-        for brand in brand_names:
-            if term in brand['name'].lower():
-                med = next((m for m in medicines if brand['id'] in m['brand_names']), None)
-                return med
-
-    elif query_type == "symptom":
-        if contains_burmese(query):
-            term = "ခေါင်းကိုက်"
-        else:
-            term = "headache"
-        
-        results = []
-        for med in medicines:
-            if any(term in use.lower() for use in med['uses']) or any(term in use.lower() for use in med.get('uses_mm', [])):
-                results.append(med)
-        return results
-
-    elif query_type == "comparison":
-        meds = re.findall(r'between (.*?) and (.*)', query)
-        if not meds:
-            meds = re.findall(r'differ from (.*?) and (.*)', query)
-        if meds:
-            med1_name, med2_name = meds[0]
-            med1 = next((m for m in medicines if med1_name.strip() in m['generic_name'].lower()), None)
-            med2 = next((m for m in medicines if med2_name.strip() in m['generic_name'].lower()), None)
-            return med1, med2
-
-    return None
-
-# Function to display medicine information
-def display_medicine(med):
-    st.markdown(f"### {med['generic_name']} ({med.get('generic_name_mm', '')})")
+    # Tokenize the query using the tokenizer
+    inputs = tokenizer(query, return_tensors="pt")
+    tokens = tokenizer.convert_ids_to_tokens(inputs["input_ids"].squeeze().tolist())
     
-    col1, col2 = st.columns(2)
+    for med in medicines:
+        generic_name_matches = any(token in med['generic_name'].lower() for token in tokens)
+        generic_name_mm_matches = any(token in med.get('generic_name_mm', '').lower() for token in tokens)
+        uses_matches = any(token in ' '.join(med['uses']).lower() for token in tokens)
+        uses_mm_matches = any(token in ' '.join(med.get('uses_mm', [])).lower() for token in tokens)
+        side_effects_matches = any(token in ' '.join(med['side_effects']).lower() for token in tokens)
+        side_effects_mm_matches = any(token in ' '.join(med.get('side_effects_mm', [])).lower() for token in tokens)
+        brand_name_matches = any(any(token in brand_dict[brand_id]['name'].lower() for token in tokens) for brand_id in med['brand_names'])
+
+        if generic_name_matches or generic_name_mm_matches or uses_matches or uses_mm_matches or side_effects_matches or side_effects_mm_matches or brand_name_matches:
+            results.append(med)
     
-    with col1:
-        with st.expander("Uses (English)"):
-            st.write(', '.join(med['uses']))
-        with st.expander("Uses (Burmese)"):
-            if 'uses_mm' in med:
-                st.write(', '.join(med['uses_mm']))
-
-    with col2:
-        with st.expander("Side Effects (English)"):
-            st.write(', '.join(med['side_effects']))
-        with st.expander("Side Effects (Burmese)"):
-            if 'side_effects_mm' in med:
-                st.write(', '.join(med['side_effects_mm']))
-
-    st.markdown("**Brands and Dosages**")
-    for brand_id in med['brand_names']:
-        brand = brand_dict[brand_id]
-        manufacturer = manufacturer_dict[brand['manufacturer_id']]
-        st.markdown(f"**Brand Name:** {brand['name']}")
-        st.write(f"**Dosages:** {', '.join(brand['dosages'])}")
-        st.write(f"**Manufacturer:** {manufacturer['name']}")
-        st.write(f"**Contact Info:**")
-        st.write(f"Phone: {manufacturer['contact_info']['phone']}")
-        st.write(f"Email: {manufacturer['contact_info']['email']}")
-        st.write(f"Address: {manufacturer['contact_info']['address']}")
-        st.markdown("---")
+    return results
 
 # Sidebar with language switcher
 language = st.sidebar.selectbox("Select Language", ["Burmese", "English"])
@@ -168,20 +93,36 @@ query = st.text_input(query_label)
 if query:
     results = parse_query(query)
     if results:
-        if isinstance(results, list):
-            for med in results:
-                display_medicine(med)
-        elif isinstance(results, tuple):
-            med1, med2 = results
-            st.markdown(f"### Comparison of {med1['generic_name']} and {med2['generic_name']}")
+        for med in results:
+            st.markdown(f"### {med['generic_name']} ({med.get('generic_name_mm', '')})")
+            
             col1, col2 = st.columns(2)
+            
             with col1:
-                st.markdown(f"#### {med1['generic_name']}")
-                display_medicine(med1)
+                with st.expander("Uses (English)"):
+                    st.write(', '.join(med['uses']))
+                with st.expander("Uses (Burmese)"):
+                    if 'uses_mm' in med:
+                        st.write(', '.join(med['uses_mm']))
+
             with col2:
-                st.markdown(f"#### {med2['generic_name']}")
-                display_medicine(med2)
-        else:
-            display_medicine(results)
+                with st.expander("Side Effects (English)"):
+                    st.write(', '.join(med['side_effects']))
+                with st.expander("Side Effects (Burmese)"):
+                    if 'side_effects_mm' in med:
+                        st.write(', '.join(med['side_effects_mm']))
+
+            st.markdown("**Brands and Dosages**")
+            for brand_id in med['brand_names']:
+                brand = brand_dict[brand_id]
+                manufacturer = manufacturer_dict[brand['manufacturer_id']]
+                st.markdown(f"**Brand Name:** {brand['name']}")
+                st.write(f"**Dosages:** {', '.join(brand['dosages'])}")
+                st.write(f"**Manufacturer:** {manufacturer['name']}")
+                st.write(f"**Contact Info:**")
+                st.write(f"Phone: {manufacturer['contact_info']['phone']}")
+                st.write(f"Email: {manufacturer['contact_info']['email']}")
+                st.write(f"Address: {manufacturer['contact_info']['address']}")
+                st.markdown("---")
     else:
         st.write('No results found.')
