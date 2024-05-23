@@ -1,7 +1,6 @@
 import streamlit as st
 import json
 from transformers import AutoTokenizer, AutoModelForQuestionAnswering, pipeline
-import torch
 
 # Set page configuration
 st.set_page_config(page_title="Medicine Information Retrieval", layout="wide")
@@ -50,7 +49,7 @@ def parse_query(query):
 def generate_context(med_names):
     context_parts = []
     for med in medicines:
-        if med['generic_name'].lower() in med_names or med.get('generic_name_mm', '').lower() in med_names:
+        if any(name in med['generic_name'].lower() for name in med_names) or any(name in med.get('generic_name_mm', '').lower() for name in med_names):
             context_parts.append(f"{med['generic_name']} ({med.get('generic_name_mm', '')}): Uses: {', '.join(med['uses'])}. Side Effects: {', '.join(med['side_effects'])}.")
     return " ".join(context_parts)
 
