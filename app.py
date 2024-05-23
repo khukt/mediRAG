@@ -1,10 +1,10 @@
 import streamlit as st
-import pandas as pd
 from sentence_transformers import SentenceTransformer, util
-import psutil
 import json
+import torch
 
 # Function to print memory usage in GB
+import psutil
 def print_memory_usage():
     process = psutil.Process()
     mem_info = process.memory_info()
@@ -41,7 +41,7 @@ def create_combined_text(item):
     return combined_text
 
 # Function to retrieve information
-def retrieve_information(data, query, top_k=1):
+def retrieve_information(data, query, top_k=5):
     try:
         # Encode the query
         query_embedding = model.encode(query.lower(), convert_to_tensor=True)
@@ -58,10 +58,10 @@ def retrieve_information(data, query, top_k=1):
         top_k = min(top_k, len(data))
 
         # Get the top_k results
-        top_results = cos_scores.topk(k=top_k)
+        top_results = torch.topk(cos_scores, k=top_k)
 
         # Retrieve the top_k medicines
-        top_medicines = [data[idx] for idx in top_results[1].tolist()]
+        top_medicines = [data[idx] for idx in top_results.indices.tolist()]
         return top_medicines
     except Exception as e:
         st.error(f"An error occurred during information retrieval: {e}")
