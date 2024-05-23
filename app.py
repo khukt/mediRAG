@@ -126,10 +126,10 @@ if query:
                 
                 with col1:
                     with st.expander("Uses (English)"):
-                        st.write(', '.join(med['uses']))
+                        st.write(', '. join(med['uses']))
                     with st.expander("Uses (Burmese)"):
                         if 'uses_mm' in med:
-                            st.write(', '.join(med['uses_mm']))
+                            st.write(', '. join(med['uses_mm']))
 
                 with col2:
                     with st.expander("Side Effects (English)"):
@@ -143,7 +143,7 @@ if query:
                     brand = brand_dict[brand_id]
                     manufacturer = manufacturer_dict[brand['manufacturer_id']]
                     st.markdown(f"**Brand Name:** {brand['name']}")
-                    st.write(f"**Dosages:** {', '.join(brand['dosages'])}")
+                    st.write(f"**Dosages:** {', '. join(brand['dosages'])}")
                     st.write(f"**Manufacturer:** {manufacturer['name']}")
                     st.write(f"**Contact Info:**")
                     st.write(f"Phone: {manufacturer['contact_info']['phone']}")
