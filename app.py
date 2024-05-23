@@ -80,11 +80,15 @@ if query:
             
             with col1:
                 st.markdown("**Uses**")
-                st.write(', '.join(med.get('uses_mm', med['uses']) if display_in_burmese else med['uses']))
+                st.write(', '.join(med['uses']))
+                if 'uses_mm' in med:
+                    st.write(', '.join(med['uses_mm']))
             
             with col2:
                 st.markdown("**Side Effects**")
-                st.write(', '.join(med.get('side_effects_mm', med['side_effects']) if display_in_burmese else med['side_effects']))
+                st.write(', '.join(med['side_effects']))
+                if 'side_effects_mm' in med:
+                    st.write(', '.join(med['side_effects_mm']))
             
             st.markdown("**Brands and Dosages**")
             for brand_id in med['brand_names']:
