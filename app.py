@@ -13,12 +13,20 @@ def load_json_data(file_path):
         return json.load(f)
 
 medicines = load_json_data('medicines.json')['medicines']
+generic_names = load_json_data('generic_names.json')['generic_names']
 brand_names = load_json_data('brand_names.json')['brand_names']
 manufacturers = load_json_data('manufacturers.json')['manufacturers']
+forms = load_json_data('forms.json')['forms']
+symptoms = load_json_data('symptoms.json')['symptoms']
+diseases = load_json_data('diseases.json')['diseases']
 
 # Create dictionaries for quick lookups
+generic_dict = {generic['id']: generic for generic in generic_names}
 brand_dict = {brand['id']: brand for brand in brand_names}
 manufacturer_dict = {manufacturer['id']: manufacturer for manufacturer in manufacturers}
+form_dict = {form['id']: form for form in forms}
+symptom_dict = {symptom['id']: symptom for symptom in symptoms}
+disease_dict = {disease['id']: disease for disease in diseases}
 
 # Load the multilingual model with caching
 @st.cache_resource
@@ -45,8 +53,8 @@ def parse_query(query):
     tokens = tokenizer.convert_ids_to_tokens(inputs["input_ids"].squeeze().tolist())
 
     for med in medicines:
-        # Access generic names and check for matches
-        generic_name_matches = any(token in name.lower() for gname in med['generic_names'] for name in [gname['name'], gname['name_mm']] for token in tokens)
+        generic_name_matches = any(token in generic_dict[gname_id]['name'].lower() for gname_id in med['generic_name_ids'] for token in tokens)
+        generic_name_mm_matches = any(token in generic_dict[gname_id]['name_mm'].lower() for gname_id in med['generic_name_ids'] for token in tokens)
         indications_matches = any(token in ' '.join(med.get('indications', [])).lower() for token in tokens)
         indications_mm_matches = any(token in ' '.join(med.get('indications_mm', [])).lower() for token in tokens)
         side_effects_matches = any(token in ' '.join(med.get('side_effects', [])).lower() for token in tokens)
@@ -59,7 +67,7 @@ def parse_query(query):
         interactions_mm_matches = any(token in ' '.join(med.get('interactions_mm', [])).lower() for token in tokens)
         brand_name_matches = any(any(token in brand_dict[brand_info['brand_id']]['name'].lower() for token in tokens) for brand_info in med['brands'])
 
-        if (generic_name_matches or indications_matches or indications_mm_matches or
+        if (generic_name_matches or generic_name_mm_matches or indications_matches or indications_mm_matches or
             side_effects_matches or side_effects_mm_matches or contraindications_matches or contraindications_mm_matches or
             warnings_matches or warnings_mm_matches or interactions_matches or interactions_mm_matches or brand_name_matches):
             results.append(med)
@@ -104,9 +112,9 @@ if query:
     if results:
         st.markdown("## Results")
         for med in results:
-            st.markdown(f"### {med['generic_names'][0]['name']} ({med['generic_names'][0]['name_mm']})")
-            st.write(f"**Description:** {med.get('description', 'N/A')}")
-            st.write(f"**Mechanism of Action:** {med.get('mechanism_of_action', 'N/A')}")
+            st.markdown(f"### {generic_dict[med['generic_name_ids'][0]]['name']} ({generic_dict[med['generic_name_ids'][0]]['name_mm']})")
+            st.write(f"**Description:** {med.get('description', 'N/A')} ({med.get('description_mm', 'N/A')})")
+            st.write(f"**Mechanism of Action:** {med.get('mechanism_of_action', 'N/A')} ({med.get('mechanism_of_action_mm', 'N/A')})")
             
             col1, col2 = st.columns(2)
             
@@ -141,8 +149,10 @@ if query:
             for brand_info in med['brands']:
                 brand = brand_dict[brand_info['brand_id']]
                 manufacturer = manufacturer_dict[brand['manufacturer_id']]
-                st.markdown(f"**Brand Name:** {brand['name']}")
+                form = form_dict[brand_info['form_id']]
+                st.markdown(f"**Brand Name:** {brand['name']} ({brand['name_mm']})")
                 st.write(f"**Dosages:** {', '.join(brand_info['dosages'])}")
+                st.write(f"**Form:** {form['name']} ({form['name_mm']})")
                 st.write(f"**Manufacturer:** {manufacturer['name']}")
                 st.write(f"**Contact Info:**")
                 st.write(f"Phone: {manufacturer['contact_info']['phone']}")
@@ -150,10 +160,25 @@ if query:
                 st.write(f"Address: {manufacturer['contact_info']['address']}")
                 st.markdown("---")
 
+            # Display symptoms
+            st.markdown("**Symptoms Treated**")
+            for symptom_id in med['symptom_ids']:
+                symptom = symptom_dict[symptom_id]
+                st.write(f"{symptom['name']} ({symptom['name_mm']})")
+
+            # Display diseases
+            st.markdown("**Diseases Treated**")
+            for disease_id in med['disease_ids']:
+                disease = disease_dict[disease_id]
+                st.write(f"{disease['name']} ({disease['name_mm']})")
+
+            st.markdown("**Additional Information:**")
+            st.write(f"{med.get('additional_info', 'N/A')} ({med.get('additional_info_mm', 'N/A')})")
+
         # Use the Q&A model to generate more user-friendly answers
         st.markdown("## Generated Answers")
         for med in results:
-            context = f"Generic Names: {', '.join([gname['name'] for gname in med['generic_names']])}\n" \
+            context = f"Generic Name: {generic_dict[med['generic_name_ids'][0]]['name']}\n" \
                       f"Description: {med.get('description', 'N/A')}\n" \
                       f"Mechanism of Action: {med.get('mechanism_of_action', 'N/A')}\n" \
                       f"Indications: {', '.join(med.get('indications', []))}\n" \
