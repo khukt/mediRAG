@@ -27,6 +27,7 @@ medicines, generic_names, brand_names, manufacturers, forms, symptoms, diseases 
 # Create dictionaries for quick lookups
 generic_dict = {generic['id']: generic for generic in generic_names}
 brand_dict = {brand['id']: brand for brand in brand_names}
+manufacturer_dict = {manufacturer['id']: manufacturer for manufacturer in manufacturers}
 form_dict = {form['id']: form for form in forms}
 symptom_dict = {symptom['id']: symptom for symptom in symptoms}
 disease_dict = {disease['id']: disease for disease in diseases}
@@ -53,6 +54,7 @@ def parse_query(query):
         "brand_names": [],
         "diseases": [],
         "generic_names": [],
+        "manufacturers": [],
         "medicines": [],
         "symptoms": []
     }
@@ -74,6 +76,11 @@ def parse_query(query):
         for generic in generic_names:
             if token in generic['name'].lower() or token in generic['name_mm'].lower():
                 results['generic_names'].append(generic)
+
+        # Prioritize manufacturers
+        for manufacturer in manufacturers:
+            if token in manufacturer['name'].lower():
+                results['manufacturers'].append(manufacturer)
 
         # Prioritize medicines
         for med in medicines:
@@ -102,9 +109,13 @@ def parse_query(query):
 
 # Display functions
 def display_brand_info(brand):
+    manufacturer = manufacturer_dict[brand['manufacturer_id']]
     st.markdown(f"### {brand['name']} ({brand['name_mm']})")
-    st.markdown(f"**Dosages:** {', '.join(brand['dosages'])}")
-    st.markdown(f"**Form:** {form_dict[brand['form_id']]['name']} ({form_dict[brand['form_id']]['name_mm']})")
+    st.markdown(f"**Manufacturer:** {manufacturer['name']}")
+    st.markdown(f"**Contact Info:**")
+    st.write(f"Phone: {manufacturer['contact_info']['phone']}")
+    st.write(f"Email: {manufacturer['contact_info']['email']}")
+    st.write(f"Address: {manufacturer['contact_info']['address']}")
     st.markdown("---")
 
 def display_disease_info(disease):
@@ -113,13 +124,14 @@ def display_disease_info(disease):
 
 def display_generic_name_info(generic):
     st.markdown(f"### {generic['name']} ({generic['name_mm']})")
-    st.markdown(f"**Description:** {generic.get('description', 'N/A')} ({generic.get('description_mm', 'N/A')})")
-    st.markdown(f"**Mechanism of Action:** {generic.get('mechanism_of_action', 'N/A')} ({generic.get('mechanism_of_action_mm', 'N/A')})")
-    st.markdown(f"**Indications:** {', '.join(generic.get('indications', []))} ({', '.join(generic.get('indications_mm', []))})")
-    st.markdown(f"**Side Effects:** {', '.join(generic.get('side_effects', []))} ({', '.join(generic.get('side_effects_mm', []))})")
-    st.markdown(f"**Contraindications:** {', '.join(generic.get('contraindications', []))} ({', '.join(generic.get('contraindications_mm', []))})")
-    st.markdown(f"**Warnings:** {', '.join(generic.get('warnings', []))} ({', '.join(generic.get('warnings_mm', []))})")
-    st.markdown(f"**Drug Interactions:** {', '.join(generic.get('interactions', []))} ({', '.join(generic.get('interactions_mm', []))})")
+    st.markdown("---")
+
+def display_manufacturer_info(manufacturer):
+    st.markdown(f"### {manufacturer['name']}")
+    st.markdown(f"**Contact Info:**")
+    st.write(f"Phone: {manufacturer['contact_info']['phone']}")
+    st.write(f"Email: {manufacturer['contact_info']['email']}")
+    st.write(f"Address: {manufacturer['contact_info']['address']}")
     st.markdown("---")
 
 def display_medicine_info(med, query_tokens):
@@ -233,6 +245,11 @@ def main():
                 st.markdown("## Generic Names")
                 for generic in results['generic_names']:
                     display_generic_name_info(generic)
+
+            if results['manufacturers']:
+                st.markdown("## Manufacturers")
+                for manufacturer in results['manufacturers']:
+                    display_manufacturer_info(manufacturer)
 
             if results['medicines']:
                 st.markdown("## Medicines")
