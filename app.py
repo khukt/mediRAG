@@ -38,16 +38,18 @@ data = {
 
 df = pd.DataFrame(data)
 
-# List of all possible drug names and terms
-all_terms = set(df['Generic Name'].tolist() + df['Commercial Names'].tolist() + df['Drug Class'].tolist() + df['Disease Names'].tolist() + df['Symptoms'].tolist() + df['Treatment Protocols'].tolist() + df['Medical Procedures'].tolist())
-
-def retrieve_drug_info(query, df, retriever):
-    # Concatenate all relevant data into a single list for encoding
+# Precompute embeddings for all texts in the dataframe
+@st.cache_data
+def precompute_embeddings(df, retriever):
     all_texts = df['Generic Name'].tolist() + df['Commercial Names'].tolist() + df['Drug Class'].tolist() + df['Disease Names'].tolist() + df['Symptoms'].tolist() + df['Treatment Protocols'].tolist() + df['Medical Procedures'].tolist()
-    
-    # Encode the query and data
-    query_embedding = retriever.encode(query)
-    data_embeddings = retriever.encode(all_texts)
+    data_embeddings = retriever.encode(all_texts, convert_to_tensor=True)
+    return all_texts, data_embeddings
+
+all_texts, data_embeddings = precompute_embeddings(df, retriever)
+
+def retrieve_drug_info(query, all_texts, data_embeddings, retriever):
+    # Encode the query
+    query_embedding = retriever.encode(query, convert_to_tensor=True)
 
     # Compute cosine similarities
     similarities = util.pytorch_cos_sim(query_embedding, data_embeddings)
@@ -78,9 +80,9 @@ def generate_response(drug_info):
     response = generator(prompt, max_length=300, num_return_sequences=1, truncation=True, pad_token_id=50256)
     return response[0]['generated_text']
 
-def rag_system(query, df, retriever, generator):
+def rag_system(query, all_texts, data_embeddings, retriever, generator):
     try:
-        drug_info = retrieve_drug_info(query, df, retriever)
+        drug_info = retrieve_drug_info(query, all_texts, data_embeddings, retriever)
         response = generate_response(drug_info)
         return response
     except Exception as e:
@@ -96,11 +98,11 @@ st.title("Drug Information Retrieval and Generation")
 language = st.selectbox("Select language:", ["English", "Myanmar (Burmese)"])
 
 # Input with suggestions
-query_prefix = st.text_input("Enter the drug name or query (type 'p' for suggestions):")
+query_prefix = st.text_input("Enter the drug name or query:")
 
 suggestions = []
 if query_prefix:
-    suggestions = get_suggestions(query_prefix, all_terms)
+    suggestions = get_suggestions(query_prefix, all_texts)
 
 if suggestions:
     query = st.selectbox("Did you mean:", suggestions)
@@ -112,10 +114,10 @@ if st.button("Get Information"):
         try:
             if language == "Myanmar (Burmese)":
                 query = translator.translate(query, src='my', dest='en').text
-                response = rag_system(query, df, retriever, generator)
+                response = rag_system(query, all_texts, data_embeddings, retriever, generator)
                 response = translator.translate(response, src='en', dest='my').text
             else:
-                response = rag_system(query, df, retriever, generator)
+                response = rag_system(query, all_texts, data_embeddings, retriever, generator)
             st.write(response)
         except Exception as e:
             st.write(f"An error occurred: {e}")
