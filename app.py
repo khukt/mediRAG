@@ -108,8 +108,7 @@ def parse_query(query):
     return results
 
 # Display functions
-def display_brand_info(brand_info):
-    brand = brand_dict[brand_info['id']]
+def display_brand_info(brand):
     manufacturer = manufacturer_dict[brand['manufacturer_id']]
     st.markdown(f"### {brand['name']} ({brand['name_mm']})")
     st.markdown(f"**Manufacturer:** {manufacturer['name']}")
@@ -167,7 +166,7 @@ def display_medicine_info(med, query_tokens):
 
     st.markdown("### Brands and Dosages")
     for brand_info in med['brands']:
-        display_brand_info(brand_info)
+        display_brand_info(brand_dict[brand_info['brand_id']])
 
     st.markdown("### Symptoms Treated")
     symptom_names = [f"{symptom_dict[symptom_id]['name']} ({symptom_dict[symptom_id]['name_mm']})" for symptom_id in med['symptom_ids']]
