@@ -81,7 +81,7 @@ else:
     query_label = 'Query'
 
 # Display GENI logo, URL, and research team information
-st.sidebar.image("https://www.geni.asia/wp-content/uploads/2020/09/geni-logo.png", use_column_width=True)
+st.sidebar.image("https://geni.asia/wp-content/uploads/2021/12/Full_logo_Color.png", use_column_width=True)
 st.sidebar.write("[GENI Research Team](https://geni.asia)")
 st.sidebar.write("This is part of CareDiary development by the GENI Research Team.")
 
