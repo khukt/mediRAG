@@ -26,6 +26,11 @@ model = SentenceTransformer('all-MiniLM-L6-v2')
 
 # Function to retrieve information
 def retrieve_information(data, query, top_k=5):
+    # Check if 'description' column exists
+    if 'description' not in data.columns:
+        st.error("The 'description' column is missing from the medicines data.")
+        return pd.DataFrame()
+    
     # Encode the query and the descriptions
     query_embedding = model.encode(query, convert_to_tensor=True)
     doc_embeddings = model.encode(data['description'].tolist(), convert_to_tensor=True)
