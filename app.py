@@ -1,6 +1,6 @@
 import streamlit as st
 import json
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
+from transformers import AutoTokenizer, AutoModelForMaskedLM
 import torch
 
 # Function to load JSON data with caching
@@ -21,23 +21,27 @@ manufacturer_dict = {manufacturer['id']: manufacturer for manufacturer in manufa
 @st.cache_resource
 def load_nlp_model():
     tokenizer = AutoTokenizer.from_pretrained("xlm-roberta-base")
-    model = AutoModelForSequenceClassification.from_pretrained("xlm-roberta-base")
+    model = AutoModelForMaskedLM.from_pretrained("xlm-roberta-base")
     return tokenizer, model
 
 tokenizer, model = load_nlp_model()
 
 # Function to parse the query and retrieve medicine information
 def parse_query(query):
-    query = query.lower()
+    # Tokenize and encode the query using the model
+    inputs = tokenizer(query, return_tensors="pt")
+    tokens = tokenizer.convert_ids_to_tokens(inputs["input_ids"].squeeze().tolist())
+    
     results = []
-    query_tokens = query.split()
 
     for med in medicines:
-        if any(token in med['generic_name'].lower() for token in query_tokens) or \
-           any(token in brand_dict[brand_id]['name'].lower() for brand_id in med['brand_names'] for token in query_tokens) or \
-           any(token in use.lower() for use in med['uses'] for token in query_tokens):
+        generic_match = any(token in med['generic_name'].lower() for token in tokens)
+        brand_match = any(any(token in brand_dict[brand_id]['name'].lower() for token in tokens) for brand_id in med['brand_names'])
+        uses_match = any(any(token in use.lower() for token in tokens) for use in med['uses'])
+        
+        if generic_match or brand_match or uses_match:
             results.append(med)
-            
+    
     return results
 
 # Streamlit app
