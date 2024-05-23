@@ -47,71 +47,96 @@ def contains_burmese(text):
     burmese_characters = set("ကခဂဃငစဆဇဈညဋဌဍဎဏတထဒဓနပဖဗဘမယရလဝသဟဠအဣဤဥဦဧဩဪါာိီုူေဲံ့းွှဿ၀၁၂၃၄၅၆၇၈၉")
     return any(char in burmese_characters for char in text)
 
-# Function to parse the query and retrieve medicine information
+# Function to parse the query and prioritize results
 def parse_query(query):
     query = query.lower()
-    results = []
+    results = {
+        "brand_names": [],
+        "diseases": [],
+        "generic_names": [],
+        "manufacturers": [],
+        "medicines": [],
+        "symptoms": []
+    }
     inputs = tokenizer(query, return_tensors="pt")
     tokens = tokenizer.convert_ids_to_tokens(inputs["input_ids"].squeeze().tolist())
 
-    for med in medicines:
-        score = 0
+    for token in tokens:
+        # Prioritize brand names
+        for brand in brand_names:
+            if token in brand['name'].lower() or token in brand['name_mm'].lower():
+                results['brand_names'].append(brand)
 
-        # Check for matches in brand names
-        if any(any(token in brand_dict[brand_info['brand_id']]['name'].lower() for token in tokens) for brand_info in med['brands']):
-            score += 6
+        # Prioritize diseases
+        for disease in diseases:
+            if token in disease['name'].lower() or token in disease['name_mm'].lower():
+                results['diseases'].append(disease)
 
-        # Check for matches in diseases
-        if any(any(token in disease_dict[disease_id]['name'].lower() for token in tokens) for disease_id in med['disease_ids']):
-            score += 5
+        # Prioritize generic names
+        for generic in generic_names:
+            if token in generic['name'].lower() or token in generic['name_mm'].lower():
+                results['generic_names'].append(generic)
 
-        # Check for matches in generic names
-        if any(any(token in generic_dict[gname_id]['name'].lower() for token in tokens) for gname_id in med['generic_name_ids']):
-            score += 4
+        # Prioritize manufacturers
+        for manufacturer in manufacturers:
+            if token in manufacturer['name'].lower():
+                results['manufacturers'].append(manufacturer)
 
-        # Check for matches in manufacturers
-        if any(any(token in manufacturer_dict[brand_dict[brand_info['brand_id']]['manufacturer_id']]['name'].lower() for token in tokens) for brand_info in med['brands']):
-            score += 3
+        # Prioritize medicines
+        for med in medicines:
+            if any([
+                any(token in generic_dict[gname_id]['name'].lower() for gname_id in med['generic_name_ids']),
+                any(token in generic_dict[gname_id]['name_mm'].lower() for gname_id in med['generic_name_ids']),
+                any(token in ' '.join(med.get('indications', [])).lower() for token in tokens),
+                any(token in ' '.join(med.get('indications_mm', [])).lower() for token in tokens),
+                any(token in ' '.join(med.get('side_effects', [])).lower() for token in tokens),
+                any(token in ' '.join(med.get('side_effects_mm', [])).lower() for token in tokens),
+                any(token in ' '.join(med.get('contraindications', [])).lower() for token in tokens),
+                any(token in ' '.join(med.get('contraindications_mm', [])).lower() for token in tokens),
+                any(token in ' '.join(med.get('warnings', [])).lower() for token in tokens),
+                any(token in ' '.join(med.get('warnings_mm', [])).lower() for token in tokens),
+                any(token in ' '.join(med.get('interactions', [])).lower() for token in tokens),
+                any(token in ' '.join(med.get('interactions_mm', [])).lower() for token in tokens)
+            ]):
+                results['medicines'].append(med)
 
-        # Check for matches in medicine descriptions, indications, side effects, etc.
-        if any([
-            any(token in med.get('description', '').lower() for token in tokens),
-            any(token in med.get('mechanism_of_action', '').lower() for token in tokens),
-            any(token in ' '.join(med.get('indications', [])).lower() for token in tokens),
-            any(token in ' '.join(med.get('side_effects', [])).lower() for token in tokens),
-            any(token in ' '.join(med.get('contraindications', [])).lower() for token in tokens),
-            any(token in ' '.join(med.get('warnings', [])).lower() for token in tokens),
-            any(token in ' '.join(med.get('interactions', [])).lower() for token in tokens)
-        ]):
-            score += 2
+        # Prioritize symptoms
+        for symptom in symptoms:
+            if token in symptom['name'].lower() or token in symptom['name_mm'].lower():
+                results['symptoms'].append(symptom)
 
-        # Check for matches in symptoms
-        if any(any(token in symptom_dict[symptom_id]['name'].lower() for token in tokens) for symptom_id in med['symptom_ids']):
-            score += 1
-
-        if score > 0:
-            results.append((score, med))
-
-    results.sort(reverse=True, key=lambda x: x[0])
-    return [med for score, med in results]
+    return results
 
 # Display functions
 def display_brand_info(brand_info):
-    brand = brand_dict[brand_info['brand_id']]
+    brand = brand_dict[brand_info['id']]
     manufacturer = manufacturer_dict[brand['manufacturer_id']]
-    form = form_dict[brand_info['form_id']]
-    with st.expander(f"{brand['name']} ({brand['name_mm']})"):
-        st.markdown(f"**Dosages:** {', '.join(brand_info['dosages'])}")
-        st.markdown(f"**Form:** {form['name']} ({form['name_mm']})")
-        st.markdown(f"**Manufacturer:** {manufacturer['name']}")
-        st.markdown(f"**Contact Info:**")
-        st.write(f"Phone: {manufacturer['contact_info']['phone']}")
-        st.write(f"Email: {manufacturer['contact_info']['email']}")
-        st.write(f"Address: {manufacturer['contact_info']['address']}")
+    st.markdown(f"### {brand['name']} ({brand['name_mm']})")
+    st.markdown(f"**Manufacturer:** {manufacturer['name']}")
+    st.markdown(f"**Contact Info:**")
+    st.write(f"Phone: {manufacturer['contact_info']['phone']}")
+    st.write(f"Email: {manufacturer['contact_info']['email']}")
+    st.write(f"Address: {manufacturer['contact_info']['address']}")
+    st.markdown("---")
+
+def display_disease_info(disease):
+    st.markdown(f"### {disease['name']} ({disease['name_mm']})")
+    st.markdown("---")
+
+def display_generic_name_info(generic):
+    st.markdown(f"### {generic['name']} ({generic['name_mm']})")
+    st.markdown("---")
+
+def display_manufacturer_info(manufacturer):
+    st.markdown(f"### {manufacturer['name']}")
+    st.markdown(f"**Contact Info:**")
+    st.write(f"Phone: {manufacturer['contact_info']['phone']}")
+    st.write(f"Email: {manufacturer['contact_info']['email']}")
+    st.write(f"Address: {manufacturer['contact_info']['address']}")
+    st.markdown("---")
 
 def display_medicine_info(med, query_tokens):
     st.markdown(f"### {generic_dict[med['generic_name_ids'][0]]['name']} ({generic_dict[med['generic_name_ids'][0]]['name_mm']})")
-
     st.markdown(f"**Description:** {med.get('description', 'N/A')} ({med.get('description_mm', 'N/A')})")
     st.markdown(f"**Mechanism of Action:** {med.get('mechanism_of_action', 'N/A')} ({med.get('mechanism_of_action_mm', 'N/A')})")
 
@@ -154,6 +179,10 @@ def display_medicine_info(med, query_tokens):
 
     st.markdown("### Additional Information")
     st.write(f"{med.get('additional_info', 'N/A')} ({med.get('additional_info_mm', 'N/A')})")
+
+def display_symptom_info(symptom):
+    st.markdown(f"### {symptom['name']} ({symptom['name_mm']})")
+    st.markdown("---")
 
 def display_generated_answers(query, med):
     context = f"Generic Name: {generic_dict[med['generic_name_ids'][0]]['name']}\n" \
@@ -202,13 +231,39 @@ def main():
     if query:
         results = parse_query(query)
         query_tokens = tokenizer.tokenize(query.lower())
-        if results:
-            st.markdown("## Results")
-            for med in results:
-                display_medicine_info(med, query_tokens)
+        if any(results.values()):
+            if results['brand_names']:
+                st.markdown("## Brand Names")
+                for brand in results['brand_names']:
+                    display_brand_info(brand)
+
+            if results['diseases']:
+                st.markdown("## Diseases")
+                for disease in results['diseases']:
+                    display_disease_info(disease)
+
+            if results['generic_names']:
+                st.markdown("## Generic Names")
+                for generic in results['generic_names']:
+                    display_generic_name_info(generic)
+
+            if results['manufacturers']:
+                st.markdown("## Manufacturers")
+                for manufacturer in results['manufacturers']:
+                    display_manufacturer_info(manufacturer)
+
+            if results['medicines']:
+                st.markdown("## Medicines")
+                for med in results['medicines']:
+                    display_medicine_info(med, query_tokens)
             
+            if results['symptoms']:
+                st.markdown("## Symptoms")
+                for symptom in results['symptoms']:
+                    display_symptom_info(symptom)
+
             st.markdown("## Generated Answers")
-            for med in results:
+            for med in results['medicines']:
                 display_generated_answers(query, med)
         else:
             st.write('No results found.')
