@@ -1,38 +1,34 @@
 import streamlit as st
 import json
 import spacy
-import os
-from spacy.cli import download as spacy_download
-from pathlib import Path
+from spacy.cli import download
 
 # Function to download the SpaCy model
+def download_spacy_model(model_name="en_core_web_sm"):
+    download(model_name)
+
+# Check if the SpaCy model is already installed, if not, download it
+model_name = "en_core_web_sm"
+if not spacy.util.is_package(model_name):
+    with st.spinner("Downloading SpaCy model..."):
+        download_spacy_model(model_name)
+
+# Function to load the SpaCy model with caching
 @st.cache_resource
 def load_spacy_model(model_name="en_core_web_sm"):
-    # Define the cache path for the spacy model
-    cache_dir = Path(st.__path__[0]) / 'cache' / 'spacy_models'
-    model_path = cache_dir / model_name
-
-    if not model_path.exists():
-        # Ensure the cache directory exists
-        cache_dir.mkdir(parents=True, exist_ok=True)
-        # Download the model to the cache directory
-        spacy_download(model_name, False, model_path)
-
-    # Load the model from the cache directory
     return spacy.load(model_name)
 
-# Load the SpaCy model with caching
 nlp = load_spacy_model()
 
-# Load the JSON data
-with open('medicines.json') as f:
-    medicines = json.load(f)['medicines']
+# Function to load JSON data with caching
+@st.cache_data
+def load_json_data(file_path):
+    with open(file_path) as f:
+        return json.load(f)
 
-with open('brand_names.json') as f:
-    brand_names = json.load(f)['brand_names']
-
-with open('manufacturers.json') as f:
-    manufacturers = json.load(f)['manufacturers']
+medicines = load_json_data('medicines.json')['medicines']
+brand_names = load_json_data('brand_names.json')['brand_names']
+manufacturers = load_json_data('manufacturers.json')['manufacturers']
 
 # Create dictionaries for quick lookups
 brand_dict = {brand['id']: brand for brand in brand_names}
