@@ -137,31 +137,29 @@ if query:
                 st.markdown(f"**English:** {', '.join(med.get('interactions', []))}")
                 st.markdown(f"**Burmese:** {', '.join(med.get('interactions_mm', []))}")
 
-            st.markdown("**Brands and Dosages**")
+            st.markdown("### Brands and Dosages")
             for brand_info in med['brands']:
                 brand = brand_dict[brand_info['brand_id']]
                 manufacturer = manufacturer_dict[brand['manufacturer_id']]
                 form = form_dict[brand_info['form_id']]
                 with st.expander(f"{brand['name']} ({brand['name_mm']})"):
-                    st.write(f"**Dosages:** {', '.join(brand_info['dosages'])}")
-                    st.write(f"**Form:** {form['name']} ({form['name_mm']})")
-                    st.write(f"**Manufacturer:** {manufacturer['name']}")
-                    st.write(f"**Contact Info:**")
+                    st.markdown(f"**Dosages:** {', '.join(brand_info['dosages'])}")
+                    st.markdown(f"**Form:** {form['name']} ({form['name_mm']})")
+                    st.markdown(f"**Manufacturer:** {manufacturer['name']}")
+                    st.markdown(f"**Contact Info:**")
                     st.write(f"Phone: {manufacturer['contact_info']['phone']}")
                     st.write(f"Email: {manufacturer['contact_info']['email']}")
                     st.write(f"Address: {manufacturer['contact_info']['address']}")
 
-            st.markdown("**Symptoms Treated**")
-            for symptom_id in med['symptom_ids']:
-                symptom = symptom_dict[symptom_id]
-                st.write(f"{symptom['name']} ({symptom['name_mm']})")
+            st.markdown("### Symptoms Treated")
+            symptom_names = [f"{symptom_dict[symptom_id]['name']} ({symptom_dict[symptom_id]['name_mm']})" for symptom_id in med['symptom_ids']]
+            st.write(', '.join(symptom_names))
 
-            st.markdown("**Diseases Treated**")
-            for disease_id in med['disease_ids']:
-                disease = disease_dict[disease_id]
-                st.write(f"{disease['name']} ({disease['name_mm']})")
+            st.markdown("### Diseases Treated")
+            disease_names = [f"{disease_dict[disease_id]['name']} ({disease_dict[disease_id]['name_mm']})" for disease_id in med['disease_ids']]
+            st.write(', '.join(disease_names))
 
-            st.markdown("**Additional Information:**")
+            st.markdown("### Additional Information")
             st.write(f"{med.get('additional_info', 'N/A')} ({med.get('additional_info_mm', 'N/A')})")
 
         st.markdown("## Generated Answers")
@@ -176,6 +174,6 @@ if query:
                       f"Drug Interactions: {', '.join(med.get('interactions', []))}\n" \
                       f"Brands: {', '.join(brand_dict[brand_info['brand_id']]['name'] for brand_info in med['brands'])}\n"
             qa_result = qa_pipeline(question=query, context=context)
-            st.write(f"**Answer:** {qa_result['answer']}")
+            st.markdown(f"**Answer:** {qa_result['answer']}")
     else:
         st.write('No results found.')
