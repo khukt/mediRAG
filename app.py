@@ -37,14 +37,14 @@ def create_combined_text(item):
         'contraindications', 'warnings', 'interactions', 
         'side_effects', 'additional_info'
     ]
-    combined_text = ' '.join([item[field] for field in fields if field in item])
+    combined_text = ' '.join([item[field] for field in fields if field in item]).lower()
     return combined_text
 
 # Function to retrieve information
-def retrieve_information(data, query, top_k=5):
+def retrieve_information(data, query, top_k=1):
     try:
         # Encode the query
-        query_embedding = model.encode(query, convert_to_tensor=True)
+        query_embedding = model.encode(query.lower(), convert_to_tensor=True)
 
         combined_texts = [create_combined_text(item) for item in data]
         
