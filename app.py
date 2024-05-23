@@ -52,6 +52,15 @@ def is_burmese(query):
     return any(char in burmese_characters for char in query)
 
 # Streamlit app
+st.set_page_config(page_title="Medicine Information Retrieval", layout="wide")
+
+# Sidebar with instructions
+st.sidebar.title("Instructions")
+st.sidebar.write("""
+Enter your query about a medicine name (generic or brand) or a symptom in the input box. 
+The app will display relevant medicine information based on your query. You can search in either English or Burmese.
+""")
+
 st.title('Medicine Information Retrieval')
 
 st.write('Enter your query about a medicine name (generic or brand) or a symptom.')
@@ -63,20 +72,26 @@ if query:
     if results:
         display_in_burmese = is_burmese(query)
         for med in results:
-            if display_in_burmese:
-                st.subheader(f"Generic Name: {med.get('generic_name_mm', med['generic_name'])}")
-                st.write('**Uses:**', ', '.join(med.get('uses_mm', med['uses'])))
-                st.write('**Side Effects:**', ', '.join(med.get('side_effects_mm', med['side_effects'])))
-            else:
-                st.subheader(f"Generic Name: {med['generic_name']}")
-                st.write('**Uses:**', ', '.join(med['uses']))
-                st.write('**Side Effects:**', ', '.join(med['side_effects']))
+            st.markdown(f"### {med['generic_name']} ({med.get('generic_name_mm', '')})")
+            
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.markdown("**Uses**")
+                st.write(', '.join(med.get('uses_mm', med['uses'])))
+            
+            with col2:
+                st.markdown("**Side Effects**")
+                st.write(', '.join(med.get('side_effects_mm', med['side_effects'])))
+            
+            st.markdown("**Brands and Dosages**")
             for brand_id in med['brand_names']:
                 brand = brand_dict[brand_id]
                 manufacturer = manufacturer_dict[brand['manufacturer_id']]
-                st.write(f"**Brand Name:** {brand['name']}")
+                st.markdown(f"**{brand['name']}**")
                 st.write(f"**Dosages:** {', '.join(brand['dosages'])}")
                 st.write(f"**Manufacturer:** {manufacturer['name']}")
                 st.write(f"**Contact Info:** Phone: {manufacturer['contact_info']['phone']}, Email: {manufacturer['contact_info']['email']}, Address: {manufacturer['contact_info']['address']}")
+                st.markdown("---")
     else:
         st.write('No results found.')
