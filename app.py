@@ -53,6 +53,9 @@ def retrieve_information(data, query, top_k=5):
     # Compute cosine similarities
     cos_scores = util.pytorch_cos_sim(query_embedding, doc_embeddings)[0]
 
+    # Ensure top_k does not exceed the number of available documents
+    top_k = min(top_k, len(data))
+
     # Get the top_k results
     top_results = cos_scores.topk(k=top_k)
 
