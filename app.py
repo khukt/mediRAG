@@ -80,6 +80,14 @@ else:
     st.write('Enter your query about a medicine name (generic or brand) or a symptom.')
     query_label = 'Query'
 
+# Display GENI logo, URL, and research team information
+st.sidebar.image("https://www.geni.asia/wp-content/uploads/2020/09/geni-logo.png", use_column_width=True)
+st.sidebar.write("[GENI Research Team](https://geni.asia)")
+st.sidebar.write("This is part of CareDiary development by the GENI Research Team.")
+
+# Add disclaimers
+st.sidebar.write("**Disclaimer:** This is a demo transformer-based data retrieval system for educational purposes only. It is not intended for medical use. Please consult a healthcare professional for medical advice.")
+
 query = st.text_input(query_label)
 
 if query:
