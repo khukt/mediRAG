@@ -57,12 +57,22 @@ def parse_query(query):
     
     return results
 
-# Sidebar with instructions
-st.sidebar.title("Instructions")
-st.sidebar.write("""
-Enter your query about a medicine name (generic or brand) or a symptom in the input box. 
-The app will display relevant medicine information based on your query. You can search in either English or Burmese.
-""")
+# Sidebar with language switcher
+language = st.sidebar.selectbox("Select Language", ["Burmese", "English"])
+
+if language == "Burmese":
+    st.sidebar.title("ညွှန်ကြားချက်များ")
+    st.sidebar.write("""
+    မေးမြန်းမှုအကြောင်းအရာကို (အထွေထွေသော နာမည် သို့မဟုတ် အမှတ်တံဆိပ်နာမည် သို့မဟုတ် ရောဂါလက္ခဏာ) အထဲသို့ ရိုက်ထည့်ပါ။
+    မေးမြန်းမှုအရ ဆေးဝါးအကြောင်းအရာများကို ပြသပေးပါမည်။ 
+    မြန်မာဘာသာဖြင့် ရှာဖွေနိုင်သည်။
+    """)
+else:
+    st.sidebar.title("Instructions")
+    st.sidebar.write("""
+    Enter your query about a medicine name (generic or brand) or a symptom in the input box. 
+    The app will display relevant medicine information based on your query. You can search in either English or Burmese.
+    """)
 
 st.title('Medicine Information Retrieval')
 
