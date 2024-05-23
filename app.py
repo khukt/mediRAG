@@ -29,19 +29,35 @@ def load_nlp_model():
 
 tokenizer, model = load_nlp_model()
 
+# Function to detect if a string contains Burmese characters
+def contains_burmese(text):
+    burmese_characters = set("ကခဂဃငစဆဇဈညဋဌဍဎဏတထဒဓနပဖဗဘမယရလဝသဟဠအဣဤဥဦဧဩဪါာိီုူေဲံ့းွှဿ၀၁၂၃၄၅၆၇၈၉")
+    return any(char in burmese_characters for char in text)
+
 # Function to parse the query and retrieve medicine information
 def parse_query(query):
     query = query.lower()
+    search_in_english = any(char.isascii() for char in query)
+    search_in_burmese = contains_burmese(query)
     results = []
 
     for med in medicines:
-        if (query in med['generic_name'].lower() or
-            query in med.get('generic_name_mm', '').lower() or
-            any(query in use.lower() for use in med['uses']) or
-            any(query in use.lower() for use in med.get('uses_mm', [])) or
-            any(query in effect.lower() for effect in med['side_effects']) or
-            any(query in effect.lower() for effect in med.get('side_effects_mm', [])) or
-            any(query in brand_dict[brand_id]['name'].lower() for brand_id in med['brand_names'])):
+        match = False
+
+        if search_in_english:
+            if (query in med['generic_name'].lower() or
+                any(query in use.lower() for use in med['uses']) or
+                any(query in effect.lower() for effect in med['side_effects']) or
+                any(query in brand_dict[brand_id]['name'].lower() for brand_id in med['brand_names'])):
+                match = True
+
+        if search_in_burmese:
+            if (query in med.get('generic_name_mm', '').lower() or
+                any(query in use.lower() for use in med.get('uses_mm', [])) or
+                any(query in effect.lower() for effect in med.get('side_effects_mm', []))):
+                match = True
+
+        if match:
             results.append(med)
     
     return results
