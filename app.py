@@ -217,7 +217,6 @@ def main():
     if query:
         results = parse_query(query)
         query_tokens = query.split()
-    
         if any(results.values()):
             st.markdown("### Search Results")
 
@@ -232,7 +231,7 @@ def main():
                     st.markdown("**Available Forms:**")
                     available_forms = [form_dict[b['form_id']]['name'] for med in medicines for b in med['brands'] if b['brand_id'] == brand['id']]
                     st.write(', '.join(available_forms))
-        
+
             if results['diseases']:
                 st.markdown("## Diseases")
                 for disease in results['diseases']:
@@ -275,7 +274,7 @@ def main():
                     if similar_meds:
                         st.markdown("**Similar Medicines:**")
                         st.write(', '.join(similar_meds))
-
+            
             if results['symptoms']:
                 st.markdown("## Symptoms")
                 for symptom in results['symptoms']:
@@ -287,14 +286,12 @@ def main():
                     st.markdown("**Recommended Medicines:**")
                     recommended_meds = [med['description'] for med in medicines if symptom['id'] in med['symptom_ids']]
                     st.write(', '.join(recommended_meds))
-        
+            
             st.markdown("## Generated Answers")
             for med in results['medicines']:
                 display_generated_answers(query, med)
-    
         else:
             st.write('No results found.')
 
-    if __name__ == "__main__":
-        main()
-
+if __name__ == "__main__":
+    main()
