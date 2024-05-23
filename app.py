@@ -35,9 +35,11 @@ def parse_query(query):
     results = []
 
     for med in medicines:
-        generic_match = any(token in med['generic_name'].lower() for token in tokens)
+        generic_match = any(token in med['generic_name'].lower() for token in tokens) or \
+                        any(token in med.get('generic_name_mm', '').lower() for token in tokens)
         brand_match = any(any(token in brand_dict[brand_id]['name'].lower() for token in tokens) for brand_id in med['brand_names'])
-        uses_match = any(any(token in use.lower() for token in tokens) for use in med['uses'])
+        uses_match = any(any(token in use.lower() for token in tokens) for use in med['uses']) or \
+                     any(any(token in use.lower() for token in tokens) for use in med.get('uses_mm', []))
         
         if generic_match or brand_match or uses_match:
             results.append(med)
@@ -55,9 +57,9 @@ if query:
     results = parse_query(query)
     if results:
         for med in results:
-            st.subheader(f"Generic Name: {med['generic_name']}")
-            st.write('**Uses:**', ', '.join(med['uses']))
-            st.write('**Side Effects:**', ', '.join(med['side_effects']))
+            st.subheader(f"Generic Name: {med['generic_name']} ({med.get('generic_name_mm', '')})")
+            st.write('**Uses:**', ', '.join(med['uses']) + ', ' + ', '.join(med.get('uses_mm', [])))
+            st.write('**Side Effects:**', ', '.join(med['side_effects']) + ', ' + ', '.join(med.get('side_effects_mm', [])))
             for brand_id in med['brand_names']:
                 brand = brand_dict[brand_id]
                 manufacturer = manufacturer_dict[brand['manufacturer_id']]
