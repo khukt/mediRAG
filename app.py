@@ -113,60 +113,49 @@ if query:
         st.markdown("## Results")
         for med in results:
             st.markdown(f"### {generic_dict[med['generic_name_ids'][0]]['name']} ({generic_dict[med['generic_name_ids'][0]]['name_mm']})")
-            st.write(f"**Description:** {med.get('description', 'N/A')} ({med.get('description_mm', 'N/A')})")
-            st.write(f"**Mechanism of Action:** {med.get('mechanism_of_action', 'N/A')} ({med.get('mechanism_of_action_mm', 'N/A')})")
-            
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                with st.expander("Indications (English)"):
-                    st.write(', '.join(med.get('indications', [])))
-                with st.expander("Indications (Burmese)"):
-                    st.write(', '.join(med.get('indications_mm', [])))
 
-                with st.expander("Side Effects (English)"):
-                    st.write(', '.join(med.get('side_effects', [])))
-                with st.expander("Side Effects (Burmese)"):
-                    st.write(', '.join(med.get('side_effects_mm', [])))
+            st.markdown(f"**Description:** {med.get('description', 'N/A')} ({med.get('description_mm', 'N/A')})")
+            st.markdown(f"**Mechanism of Action:** {med.get('mechanism_of_action', 'N/A')} ({med.get('mechanism_of_action_mm', 'N/A')})")
 
-            with col2:
-                with st.expander("Contraindications (English)"):
-                    st.write(', '.join(med.get('contraindications', [])))
-                with st.expander("Contraindications (Burmese)"):
-                    st.write(', '.join(med.get('contraindications_mm', [])))
+            with st.expander("Indications"):
+                st.markdown(f"**English:** {', '.join(med.get('indications', []))}")
+                st.markdown(f"**Burmese:** {', '.join(med.get('indications_mm', []))}")
 
-                with st.expander("Warnings (English)"):
-                    st.write(', '.join(med.get('warnings', [])))
-                with st.expander("Warnings (Burmese)"):
-                    st.write(', '.join(med.get('warnings_mm', [])))
+            with st.expander("Side Effects"):
+                st.markdown(f"**English:** {', '.join(med.get('side_effects', []))}")
+                st.markdown(f"**Burmese:** {', '.join(med.get('side_effects_mm', []))}")
 
-                with st.expander("Drug Interactions (English)"):
-                    st.write(', '.join(med.get('interactions', [])))
-                with st.expander("Drug Interactions (Burmese)"):
-                    st.write(', '.join(med.get('interactions_mm', [])))
+            with st.expander("Contraindications"):
+                st.markdown(f"**English:** {', '.join(med.get('contraindications', []))}")
+                st.markdown(f"**Burmese:** {', '.join(med.get('contraindications_mm', []))}")
+
+            with st.expander("Warnings"):
+                st.markdown(f"**English:** {', '.join(med.get('warnings', []))}")
+                st.markdown(f"**Burmese:** {', '.join(med.get('warnings_mm', []))}")
+
+            with st.expander("Drug Interactions"):
+                st.markdown(f"**English:** {', '.join(med.get('interactions', []))}")
+                st.markdown(f"**Burmese:** {', '.join(med.get('interactions_mm', []))}")
 
             st.markdown("**Brands and Dosages**")
             for brand_info in med['brands']:
                 brand = brand_dict[brand_info['brand_id']]
                 manufacturer = manufacturer_dict[brand['manufacturer_id']]
                 form = form_dict[brand_info['form_id']]
-                st.markdown(f"**Brand Name:** {brand['name']} ({brand['name_mm']})")
-                st.write(f"**Dosages:** {', '.join(brand_info['dosages'])}")
-                st.write(f"**Form:** {form['name']} ({form['name_mm']})")
-                st.write(f"**Manufacturer:** {manufacturer['name']}")
-                st.write(f"**Contact Info:**")
-                st.write(f"Phone: {manufacturer['contact_info']['phone']}")
-                st.write(f"Email: {manufacturer['contact_info']['email']}")
-                st.write(f"Address: {manufacturer['contact_info']['address']}")
-                st.markdown("---")
+                with st.expander(f"{brand['name']} ({brand['name_mm']})"):
+                    st.write(f"**Dosages:** {', '.join(brand_info['dosages'])}")
+                    st.write(f"**Form:** {form['name']} ({form['name_mm']})")
+                    st.write(f"**Manufacturer:** {manufacturer['name']}")
+                    st.write(f"**Contact Info:**")
+                    st.write(f"Phone: {manufacturer['contact_info']['phone']}")
+                    st.write(f"Email: {manufacturer['contact_info']['email']}")
+                    st.write(f"Address: {manufacturer['contact_info']['address']}")
 
-            # Display symptoms
             st.markdown("**Symptoms Treated**")
             for symptom_id in med['symptom_ids']:
                 symptom = symptom_dict[symptom_id]
                 st.write(f"{symptom['name']} ({symptom['name_mm']})")
 
-            # Display diseases
             st.markdown("**Diseases Treated**")
             for disease_id in med['disease_ids']:
                 disease = disease_dict[disease_id]
@@ -175,7 +164,6 @@ if query:
             st.markdown("**Additional Information:**")
             st.write(f"{med.get('additional_info', 'N/A')} ({med.get('additional_info_mm', 'N/A')})")
 
-        # Use the Q&A model to generate more user-friendly answers
         st.markdown("## Generated Answers")
         for med in results:
             context = f"Generic Name: {generic_dict[med['generic_name_ids'][0]]['name']}\n" \
