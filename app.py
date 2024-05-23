@@ -3,13 +3,19 @@ import pandas as pd
 from transformers import pipeline, GPT2Tokenizer
 from sentence_transformers import SentenceTransformer, util
 from googletrans import Translator
+from functools import lru_cache
 
 # Initialize the translator
 translator = Translator()
 
-# Load the transformer models
-generator = pipeline('text-generation', model='gpt2', tokenizer=GPT2Tokenizer.from_pretrained('gpt2'))
-retriever = SentenceTransformer('paraphrase-MiniLM-L6-v2')
+# Load the transformer models with caching to improve performance
+@lru_cache(maxsize=1)
+def load_models():
+    generator = pipeline('text-generation', model='gpt2', tokenizer=GPT2Tokenizer.from_pretrained('gpt2'))
+    retriever = SentenceTransformer('paraphrase-MiniLM-L6-v2')
+    return generator, retriever
+
+generator, retriever = load_models()
 
 # Sample expanded data with additional categories
 data = {
@@ -31,6 +37,9 @@ data = {
 }
 
 df = pd.DataFrame(data)
+
+# List of all possible drug names and terms
+all_terms = set(df['Generic Name'].tolist() + df['Commercial Names'].tolist() + df['Drug Class'].tolist() + df['Disease Names'].tolist() + df['Symptoms'].tolist() + df['Treatment Protocols'].tolist() + df['Medical Procedures'].tolist())
 
 def retrieve_drug_info(query, df, retriever):
     # Concatenate all relevant data into a single list for encoding
@@ -70,9 +79,15 @@ def generate_response(drug_info):
     return response[0]['generated_text']
 
 def rag_system(query, df, retriever, generator):
-    drug_info = retrieve_drug_info(query, df, retriever)
-    response = generate_response(drug_info)
-    return response
+    try:
+        drug_info = retrieve_drug_info(query, df, retriever)
+        response = generate_response(drug_info)
+        return response
+    except Exception as e:
+        return f"An error occurred: {e}"
+
+def get_suggestions(prefix, terms):
+    return [term for term in terms if term.lower().startswith(prefix.lower())]
 
 # Streamlit app
 st.title("Drug Information Retrieval and Generation")
@@ -80,16 +95,29 @@ st.title("Drug Information Retrieval and Generation")
 # Language selection
 language = st.selectbox("Select language:", ["English", "Myanmar (Burmese)"])
 
-query = st.text_input("Enter the drug name or query:")
+# Input with suggestions
+query_prefix = st.text_input("Enter the drug name or query (type 'p' for suggestions):")
+
+suggestions = []
+if query_prefix:
+    suggestions = get_suggestions(query_prefix, all_terms)
+
+if suggestions:
+    query = st.selectbox("Did you mean:", suggestions)
+else:
+    query = query_prefix
 
 if st.button("Get Information"):
     if query:
-        if language == "Myanmar (Burmese)":
-            query = translator.translate(query, src='my', dest='en').text
-            response = rag_system(query, df, retriever, generator)
-            response = translator.translate(response, src='en', dest='my').text
-        else:
-            response = rag_system(query, df, retriever, generator)
-        st.write(response)
+        try:
+            if language == "Myanmar (Burmese)":
+                query = translator.translate(query, src='my', dest='en').text
+                response = rag_system(query, df, retriever, generator)
+                response = translator.translate(response, src='en', dest='my').text
+            else:
+                response = rag_system(query, df, retriever, generator)
+            st.write(response)
+        except Exception as e:
+            st.write(f"An error occurred: {e}")
     else:
         st.write("Please enter a valid query.")
