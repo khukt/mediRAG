@@ -41,19 +41,9 @@ def create_combined_text(item):
         combined_text = ' '.join([item.get(field, '') for field in fields]).lower()
         return combined_text
     else:
-        # Attempt to convert item to dictionary if it is a string
-        try:
-            item_dict = json.loads(item)
-            fields = [
-                'description', 'mechanism_of_action', 'indications', 
-                'contraindications', 'warnings', 'interactions', 
-                'side_effects', 'additional_info'
-            ]
-            combined_text = ' '.join([item_dict.get(field, '') for field in fields]).lower()
-            return combined_text
-        except (json.JSONDecodeError, TypeError) as e:
-            st.error(f"Failed to convert item to dict: {item}")
-            return ""
+        # Log the unexpected data format
+        st.error(f"Unexpected data format: {item}")
+        return ""
 
 # Function to retrieve information
 def retrieve_information(data, query, top_k=5):
@@ -96,6 +86,10 @@ def generate_response(data, query):
 
 # Load the data
 medicines, symptoms, diseases, generic_names, forms, brand_names, manufacturers = load_data()
+
+# Debug the structure of medicines data
+st.write("Loaded medicines data:")
+st.write(medicines[:5])  # Display first 5 items for debugging
 
 # Print initial memory usage
 print_memory_usage()
