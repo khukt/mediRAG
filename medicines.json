@@ -3,54 +3,32 @@
         {
             "id": 1,
             "generic_name": "Aspirin",
-            "brand_names": [
-                1,
-                2
-            ],
-            "uses": [
-                "Pain relief",
-                "Anti-inflammatory",
-                "Antipyretic"
-            ],
-            "side_effects": [
-                "Nausea",
-                "Vomiting",
-                "Stomach pain",
-                "Heartburn"
-            ]
+            "generic_name_mm": "အက်စပီရင်",
+            "brand_names": [1, 2],
+            "uses": ["Pain relief", "Anti-inflammatory", "Antipyretic"],
+            "uses_mm": ["နာကျင်မှု သက်သာ", "ရောင်ရမ်းခြင်းကို အထောက်အကူဖြစ်စေ", "အဖျားကျစေ"],
+            "side_effects": ["Nausea", "Vomiting", "Stomach pain", "Heartburn"],
+            "side_effects_mm": ["အန်ခြင်း", "အစာအိမ်နာ", "ရင်ပူခြင်း"]
         },
         {
             "id": 2,
             "generic_name": "Ibuprofen",
-            "brand_names": [
-                3
-            ],
-            "uses": [
-                "Pain relief",
-                "Anti-inflammatory"
-            ],
-            "side_effects": [
-                "Nausea",
-                "Vomiting",
-                "Headache",
-                "Dizziness"
-            ]
+            "generic_name_mm": "အိုက်ဘူပရိုဖင်",
+            "brand_names": [3],
+            "uses": ["Pain relief", "Anti-inflammatory"],
+            "uses_mm": ["နာကျင်မှု သက်သာ", "ရောင်ရမ်းခြင်းကို အထောက်အကူဖြစ်စေ"],
+            "side_effects": ["Nausea", "Vomiting", "Headache", "Dizziness"],
+            "side_effects_mm": ["အန်ခြင်း", "ခေါင်းကိုက်ခြင်း", "မူးဝေခြင်း"]
         },
         {
             "id": 3,
             "generic_name": "Paracetamol",
-            "brand_names": [
-                4
-            ],
-            "uses": [
-                "Pain relief",
-                "Fever reduction"
-            ],
-            "side_effects": [
-                "Liver damage with overdose",
-                "Rash",
-                "Low blood pressure"
-            ]
+            "generic_name_mm": "ပါရာစီတမော",
+            "brand_names": [4],
+            "uses": ["Pain relief", "Fever reduction"],
+            "uses_mm": ["နာကျင်မှု သက်သာ", "အဖျားကျစေ"],
+            "side_effects": ["Liver damage with overdose", "Rash", "Low blood pressure"],
+            "side_effects_mm": ["အသည်းပျက်စီးခြင်း", "အဖုအပိန့်ထခြင်း", "သွေးပေါင်ချိုင့်နင်းခြင်း"]
         }
     ]
 }
