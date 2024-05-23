@@ -45,8 +45,8 @@ def parse_query(query):
     tokens = tokenizer.convert_ids_to_tokens(inputs["input_ids"].squeeze().tolist())
 
     for med in medicines:
-        generic_name_matches = any(token in gname['name'].lower() for gname in med['generic_names'] for token in tokens)
-        generic_name_mm_matches = any(token in gname['name_mm'].lower() for gname in med['generic_names'] for token in tokens)
+        # Access generic names and check for matches
+        generic_name_matches = any(token in name.lower() for gname in med['generic_names'] for name in [gname['name'], gname['name_mm']] for token in tokens)
         indications_matches = any(token in ' '.join(med.get('indications', [])).lower() for token in tokens)
         indications_mm_matches = any(token in ' '.join(med.get('indications_mm', [])).lower() for token in tokens)
         side_effects_matches = any(token in ' '.join(med.get('side_effects', [])).lower() for token in tokens)
@@ -59,7 +59,7 @@ def parse_query(query):
         interactions_mm_matches = any(token in ' '.join(med.get('interactions_mm', [])).lower() for token in tokens)
         brand_name_matches = any(any(token in brand_dict[brand_info['brand_id']]['name'].lower() for token in tokens) for brand_info in med['brands'])
 
-        if (generic_name_matches or generic_name_mm_matches or indications_matches or indications_mm_matches or
+        if (generic_name_matches or indications_matches or indications_mm_matches or
             side_effects_matches or side_effects_mm_matches or contraindications_matches or contraindications_mm_matches or
             warnings_matches or warnings_mm_matches or interactions_matches or interactions_mm_matches or brand_name_matches):
             results.append(med)
@@ -153,7 +153,7 @@ if query:
         # Use the Q&A model to generate more user-friendly answers
         st.markdown("## Generated Answers")
         for med in results:
-            context = f"Generic Name: {med['generic_names'][0]['name']}\n" \
+            context = f"Generic Names: {', '.join([gname['name'] for gname in med['generic_names']])}\n" \
                       f"Description: {med.get('description', 'N/A')}\n" \
                       f"Mechanism of Action: {med.get('mechanism_of_action', 'N/A')}\n" \
                       f"Indications: {', '.join(med.get('indications', []))}\n" \
