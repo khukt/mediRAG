@@ -226,11 +226,21 @@ def main():
                     display_brand_info(brand)
                     # Additional info for brand
                     st.markdown("**Related Generic Names:**")
-                    related_generics = [generic_dict[med['generic_name_ids'][0]]['name'] for med in medicines if any(b['brand_id'] == brand['id'] for b in med['brands'])]
+                    related_generics = list(set([generic_dict[med['generic_name_ids'][0]]['name'] for med in medicines if any(b['brand_id'] == brand['id'] for b in med['brands'])]))
                     st.write(', '.join(related_generics))
-                    st.markdown("**Available Forms:**")
-                    available_forms = [form_dict[b['form_id']]['name'] for med in medicines for b in med['brands'] if b['brand_id'] == brand['id']]
-                    st.write(', '.join(available_forms))
+
+                    st.markdown("**Available Forms and Dosages:**")
+                    forms_and_dosages = {form_dict[b['form_id']]['name']: b['dosages'] for med in medicines for b in med['brands'] if b['brand_id'] == brand['id']}
+                    for form, dosages in forms_and_dosages.items():
+                        st.write(f"{form}: {', '.join(dosages)}")
+
+                    st.markdown("**Indications:**")
+                    indications = list(set([ind for med in medicines if any(b['brand_id'] == brand['id'] for b in med['brands']) for ind in med.get('indications', [])]))
+                    st.write(', '.join(indications))
+
+                    st.markdown("**Associated Diseases:**")
+                    associated_diseases = list(set([disease_dict[disease_id]['name'] for med in medicines if any(b['brand_id'] == brand['id'] for b in med['brands']) for disease_id in med.get('disease_ids', [])]))
+                    st.write(', '.join(associated_diseases))
 
             if results['diseases']:
                 st.markdown("## Diseases")
@@ -238,7 +248,7 @@ def main():
                     display_disease_info(disease)
                     # Additional info for disease
                     st.markdown("**Related Symptoms:**")
-                    related_symptoms = [symptom_dict[symptom_id]['name'] for symptom_id in disease['symptom_ids']]
+                    related_symptoms = [symptom_dict[symptom_id]['name'] for symptom_id in disease.get('symptom_ids', [])]
                     st.write(', '.join(related_symptoms))
                     st.markdown("**Recommended Medicines:**")
                     recommended_meds = [med['description'] for med in medicines if disease['id'] in med['disease_ids']]
