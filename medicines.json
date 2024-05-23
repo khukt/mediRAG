@@ -1,104 +1,48 @@
 {
     "medicines": [
         {
-            "generic_name": "Paracetamol",
-            "generic_name_mm": "\u1015\u102b\u101b\u102c\u1005\u102e\u1010\u1019\u1031\u102c",
+            "id": 1,
+            "generic_names": [
+                {"name": "Paracetamol", "name_mm": "ပါရာစီတမော"},
+                {"name": "Acetaminophen", "name_mm": "အက်ဆီတမီနိုဖင်"}
+            ],
             "description": "Paracetamol is a pain reliever and a fever reducer.",
             "mechanism_of_action": "Paracetamol works by inhibiting the production of prostaglandins in the brain.",
-            "indications": [
-                "Pain relief",
-                "Fever reduction"
-            ],
-            "indications_mm": [
-                "\u1014\u102c\u1000\u103b\u1004\u103a\u1019\u103e\u102f\u101e\u1000\u103a\u101e\u102c\u101b\u1031\u1038",
-                "\u1016\u103b\u102c\u1038\u1001\u103c\u1004\u103a\u1038\u101c\u103b\u103e\u1031\u102c\u1037\u1001\u103b\u1015\u1031\u1038\u1001\u103c\u1004\u103a\u1038"
-            ],
-            "contraindications": [
-                "Liver disease",
-                "Alcoholism"
-            ],
-            "contraindications_mm": [
-                "\u1021\u101e\u100a\u103a\u1038\u101b\u1031\u102c\u1002\u102b",
-                "\u1021\u101b\u1000\u103a\u1021\u101c\u103d\u1014\u103a\u1021\u1000\u103b\u103d\u1036\u101e\u1031\u102c\u1000\u103a\u1001\u103c\u1004\u103a\u1038"
-            ],
-            "warnings": [
-                "Do not exceed the recommended dosage.",
-                "May cause liver damage if taken in large amounts."
-            ],
-            "warnings_mm": [
-                "\u1021\u1000\u103c\u1036\u1015\u103c\u102f\u1011\u102c\u1038\u101e\u1031\u102c \u1021\u1019\u102d\u1014\u103a\u1037\u1000\u102d\u102f \u1019\u1000\u103b\u1031\u102c\u103a\u101e\u1004\u1037\u103a\u1015\u102b\u104b",
-                "\u1021\u101c\u103d\u1014\u103a\u1021\u1000\u103b\u103d\u1036 \u1021\u101b\u1031\u1021\u1010\u103d\u1000\u103a \u1005\u102c\u1038\u101e\u102f\u1036\u1038\u1015\u102b\u1000 \u1021\u101e\u100a\u103a\u1038\u1011\u102d\u1001\u102d\u102f\u1000\u103a\u1005\u1031\u1014\u102d\u102f\u1004\u103a\u101e\u100a\u103a\u104b"
-            ],
-            "interactions": [
-                "Warfarin",
-                "Rifampin"
-            ],
-            "interactions_mm": [
-                "Warfarin",
-                "Rifampin"
-            ],
-            "side_effects": [
-                "Nausea",
-                "Rash"
-            ],
-            "side_effects_mm": [
-                "\u101d\u1019\u103a\u1038\u1014\u100a\u103a\u1038\u1001\u103c\u1004\u103a\u1038",
-                "\u1021\u1016\u102f\u1021\u1011\u1005\u103a\u1011\u1001\u103c\u1004\u103a\u1038"
-            ],
-            "brand_names": [
-                1
+            "indications": ["Pain relief", "Fever reduction"],
+            "indications_mm": ["နာကျင်မှုသက်သာရေး", "ဖျားခြင်းလျှော့ချပေးခြင်း"],
+            "contraindications": ["Liver disease", "Alcoholism"],
+            "contraindications_mm": ["အသည်းရောဂါ", "အရက်အလွန်အကျွံသောက်ခြင်း"],
+            "warnings": ["Do not exceed the recommended dosage.", "May cause liver damage if taken in large amounts."],
+            "warnings_mm": ["အကြံပြုထားသော အမိန့်ကို မကျော်သင့်ပါ။", "အလွန်အကျွံ အရေအတွက် စားသုံးပါက အသည်းထိခိုက်စေနိုင်သည်။"],
+            "interactions": ["Warfarin", "Rifampin"],
+            "interactions_mm": ["Warfarin", "Rifampin"],
+            "side_effects": ["Nausea", "Rash"],
+            "side_effects_mm": ["ဝမ်းနည်းခြင်း", "အဖုအထစ်ထခြင်း"],
+            "brands": [
+                {"brand_id": 1, "dosages": ["500 mg", "1000 mg"]},
+                {"brand_id": 3, "dosages": ["325 mg"]}
             ],
             "additional_info": "Paracetamol is commonly used in over-the-counter medications."
         },
         {
-            "generic_name": "Ibuprofen",
-            "generic_name_mm": "\u1021\u102d\u102f\u1004\u103a\u1018\u1030\u1015\u101b\u102d\u102f\u1016\u1004\u103a",
+            "id": 2,
+            "generic_names": [
+                {"name": "Ibuprofen", "name_mm": "အိုင်ဘူပရိုဖင်"}
+            ],
             "description": "Ibuprofen is a nonsteroidal anti-inflammatory drug (NSAID) that reduces inflammation and pain.",
             "mechanism_of_action": "Ibuprofen works by inhibiting the enzymes COX-1 and COX-2, which are involved in the production of inflammatory chemicals in the body.",
-            "indications": [
-                "Pain relief",
-                "Inflammation reduction",
-                "Fever reduction"
-            ],
-            "indications_mm": [
-                "\u1014\u102c\u1000\u103b\u1004\u103a\u1019\u103e\u102f\u101e\u1000\u103a\u101e\u102c\u101b\u1031\u1038",
-                "\u101b\u1031\u102c\u1004\u103a\u101b\u1019\u103a\u1038\u1001\u103c\u1004\u103a\u1038\u101c\u103b\u103e\u1031\u102c\u1037\u1001\u103b\u1015\u1031\u1038\u1001\u103c\u1004\u103a\u1038",
-                "\u1016\u103b\u102c\u1038\u1001\u103c\u1004\u103a\u1038\u101c\u103b\u103e\u1031\u102c\u1037\u1001\u103b\u1015\u1031\u1038\u1001\u103c\u1004\u103a\u1038"
-            ],
-            "contraindications": [
-                "Stomach ulcers",
-                "Kidney disease"
-            ],
-            "contraindications_mm": [
-                "\u1021\u1005\u102c\u1021\u102d\u1019\u103a\u1021\u1014\u102c",
-                "\u1000\u103b\u1031\u102c\u1000\u103a\u1000\u1015\u103a\u101b\u1031\u102c\u1002\u102b"
-            ],
-            "warnings": [
-                "May cause stomach bleeding.",
-                "Do not use if you have a history of stomach ulcers."
-            ],
-            "warnings_mm": [
-                "\u1021\u1005\u102c\u1021\u102d\u1019\u103a\u101e\u103d\u1031\u1038\u101a\u102d\u102f\u1005\u1031\u1014\u102d\u102f\u1004\u103a\u101e\u100a\u103a\u104b",
-                "\u1021\u1005\u102c\u1021\u102d\u1019\u103a\u1021\u1014\u102c \u101b\u103e\u102d\u1016\u1030\u1038\u101e\u1030\u1019\u103b\u102c\u1038 \u1019\u101e\u102f\u1036\u1038\u101e\u1004\u1037\u103a\u1015\u102b\u104b"
-            ],
-            "interactions": [
-                "Aspirin",
-                "Methotrexate"
-            ],
-            "interactions_mm": [
-                "Aspirin",
-                "Methotrexate"
-            ],
-            "side_effects": [
-                "Stomach pain",
-                "Dizziness"
-            ],
-            "side_effects_mm": [
-                "\u1021\u1005\u102c\u1021\u102d\u1019\u103a\u1014\u102c\u1001\u103c\u1004\u103a\u1038",
-                "\u1001\u1031\u102b\u1004\u103a\u1038\u1019\u1030\u1038\u1001\u103c\u1004\u103a\u1038"
-            ],
-            "brand_names": [
-                2
+            "indications": ["Pain relief", "Inflammation reduction", "Fever reduction"],
+            "indications_mm": ["နာကျင်မှုသက်သာရေး", "ရောင်ရမ်းခြင်းလျှော့ချပေးခြင်း", "ဖျားခြင်းလျှော့ချပေးခြင်း"],
+            "contraindications": ["Stomach ulcers", "Kidney disease"],
+            "contraindications_mm": ["အစာအိမ်အနာ", "ကျောက်ကပ်ရောဂါ"],
+            "warnings": ["May cause stomach bleeding.", "Do not use if you have a history of stomach ulcers."],
+            "warnings_mm": ["အစာအိမ်သွေးယိုစေနိုင်သည်။", "အစာအိမ်အနာ ရှိဖူးသူများ မသုံးသင့်ပါ။"],
+            "interactions": ["Aspirin", "Methotrexate"],
+            "interactions_mm": ["Aspirin", "Methotrexate"],
+            "side_effects": ["Stomach pain", "Dizziness"],
+            "side_effects_mm": ["အစာအိမ်နာခြင်း", "ခေါင်းမူးခြင်း"],
+            "brands": [
+                {"brand_id": 2, "dosages": ["200 mg", "400 mg"]}
             ],
             "additional_info": "Ibuprofen is commonly available in over-the-counter medications."
         }
