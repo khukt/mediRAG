@@ -3,37 +3,25 @@
         {
             "id": 1,
             "name": "Bayer",
-            "dosages": [
-                "50 mg",
-                "100 mg"
-            ],
+            "dosages": ["50 mg", "100 mg"],
             "manufacturer_id": 1
         },
         {
             "id": 2,
             "name": "Ecotrin",
-            "dosages": [
-                "50 mg",
-                "100 mg"
-            ],
+            "dosages": ["50 mg", "100 mg"],
             "manufacturer_id": 1
         },
         {
             "id": 3,
             "name": "Advil",
-            "dosages": [
-                "200 mg",
-                "400 mg"
-            ],
+            "dosages": ["200 mg", "400 mg"],
             "manufacturer_id": 2
         },
         {
             "id": 4,
             "name": "Tylenol",
-            "dosages": [
-                "500 mg",
-                "1000 mg"
-            ],
+            "dosages": ["500 mg", "1000 mg"],
             "manufacturer_id": 3
         }
     ]
