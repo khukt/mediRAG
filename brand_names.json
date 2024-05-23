@@ -3,20 +3,17 @@
         {
             "id": 1,
             "name": "Tylenol",
-            "manufacturer_id": 1,
-            "dosages": [
-                "500 mg",
-                "1000 mg"
-            ]
+            "manufacturer_id": 1
         },
         {
             "id": 2,
             "name": "Advil",
-            "manufacturer_id": 2,
-            "dosages": [
-                "200 mg",
-                "400 mg"
-            ]
+            "manufacturer_id": 2
+        },
+        {
+            "id": 3,
+            "name": "Panadol",
+            "manufacturer_id": 1
         }
     ]
 }
