@@ -29,35 +29,25 @@ def load_nlp_model():
 
 tokenizer, model = load_nlp_model()
 
-# Function to detect if a string contains Burmese characters
-def contains_burmese(text):
-    burmese_characters = set("ကခဂဃငစဆဇဈညဋဌဍဎဏတထဒဓနပဖဗဘမယရလဝသဟဠအဣဤဥဦဧဩဪါာိီုူေဲံ့းွှဿ၀၁၂၃၄၅၆၇၈၉")
-    return any(char in burmese_characters for char in text)
-
 # Function to parse the query and retrieve medicine information
 def parse_query(query):
-    query = query.lower()
-    search_in_english = any(char.isascii() for char in query)
-    search_in_burmese = contains_burmese(query)
+    # Tokenize the query using the tokenizer
+    inputs = tokenizer(query, return_tensors="pt")
+    tokens = tokenizer.convert_ids_to_tokens(inputs["input_ids"].squeeze().tolist())
+
     results = []
 
     for med in medicines:
-        match = False
+        # Check for matches in all relevant fields
+        generic_name_matches = any(token in med['generic_name'].lower() for token in tokens)
+        generic_name_mm_matches = any(token in med.get('generic_name_mm', '').lower() for token in tokens)
+        uses_matches = any(token in ' '.join(med['uses']).lower() for token in tokens)
+        uses_mm_matches = any(token in ' '.join(med.get('uses_mm', [])).lower() for token in tokens)
+        side_effects_matches = any(token in ' '.join(med['side_effects']).lower() for token in tokens)
+        side_effects_mm_matches = any(token in ' '.join(med.get('side_effects_mm', [])).lower() for token in tokens)
+        brand_name_matches = any(any(token in brand_dict[brand_id]['name'].lower() for token in tokens) for brand_id in med['brand_names'])
 
-        if search_in_english:
-            if (query in med['generic_name'].lower() or
-                any(query in use.lower() for use in med['uses']) or
-                any(query in effect.lower() for effect in med['side_effects']) or
-                any(query in brand_dict[brand_id]['name'].lower() for brand_id in med['brand_names'])):
-                match = True
-
-        if search_in_burmese:
-            if (query in med.get('generic_name_mm', '').lower() or
-                any(query in use.lower() for use in med.get('uses_mm', [])) or
-                any(query in effect.lower() for effect in med.get('side_effects_mm', []))):
-                match = True
-
-        if match:
+        if generic_name_matches or generic_name_mm_matches or uses_matches or uses_mm_matches or side_effects_matches or side_effects_mm_matches or brand_name_matches:
             results.append(med)
     
     return results
