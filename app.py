@@ -34,7 +34,7 @@ def parse_query(query):
     # Tokenize and encode the query using the model
     inputs = tokenizer(query, return_tensors="pt")
     tokens = tokenizer.convert_ids_to_tokens(inputs["input_ids"].squeeze().tolist())
-    
+
     results = []
 
     for med in medicines:
@@ -43,8 +43,10 @@ def parse_query(query):
         brand_match = any(any(token in brand_dict[brand_id]['name'].lower() for token in tokens) for brand_id in med['brand_names'])
         uses_match = any(any(token in use.lower() for token in tokens) for use in med['uses']) or \
                      any(any(token in use.lower() for token in tokens) for use in med.get('uses_mm', []))
+        side_effects_match = any(any(token in effect.lower() for token in tokens) for effect in med['side_effects']) or \
+                             any(any(token in effect.lower() for token in tokens) for effect in med.get('side_effects_mm', []))
         
-        if generic_match or brand_match or uses_match:
+        if generic_match or brand_match or uses_match or side_effects_match:
             results.append(med)
     
     return results
