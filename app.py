@@ -2,38 +2,53 @@ import streamlit as st
 import pandas as pd
 from sentence_transformers import SentenceTransformer, util
 import psutil
+import json
 
-# Function to print memory usage
+# Function to print memory usage in GB
 def print_memory_usage():
     process = psutil.Process()
     mem_info = process.memory_info()
-    st.write(f"RSS: {mem_info.rss / (1024 ** 2)} MB, VMS: {mem_info.vms / (1024 ** 2)} MB")
+    st.write(f"RSS: {mem_info.rss / (1024 ** 3):.2f} GB, VMS: {mem_info.vms / (1024 ** 3):.2f} GB")
+
+# Function to load data from JSON
+def load_json(filename):
+    with open(filename, 'r') as file:
+        return json.load(file)
 
 # Function to load data
 def load_data():
-    medicines = pd.read_json('medicines.json')
-    symptoms = pd.read_json('symptoms.json')
-    diseases = pd.read_json('diseases.json')
-    generic_names = pd.read_json('generic_names.json')
-    forms = pd.read_json('forms.json')
-    brand_names = pd.read_json('brand_names.json')
-    manufacturers = pd.read_json('manufacturers.json')
+    medicines = load_json('medicines.json')
+    symptoms = load_json('symptoms.json')
+    diseases = load_json('diseases.json')
+    generic_names = load_json('generic_names.json')
+    forms = load_json('forms.json')
+    brand_names = load_json('brand_names.json')
+    manufacturers = load_json('manufacturers.json')
     
     return medicines, symptoms, diseases, generic_names, forms, brand_names, manufacturers
 
 # Load the pre-trained transformer model
 model = SentenceTransformer('all-MiniLM-L6-v2')
 
+# Function to create combined text from various fields for retrieval
+def create_combined_text(item):
+    fields = [
+        'description', 'mechanism_of_action', 'indications', 
+        'contraindications', 'warnings', 'interactions', 
+        'side_effects', 'additional_info'
+    ]
+    combined_text = ' '.join([item[field] for field in fields if field in item])
+    return combined_text
+
 # Function to retrieve information
 def retrieve_information(data, query, top_k=5):
-    # Check if 'description' column exists
-    if 'description' not in data.columns:
-        st.error("The 'description' column is missing from the medicines data.")
-        return pd.DataFrame()
-    
-    # Encode the query and the descriptions
+    # Encode the query
     query_embedding = model.encode(query, convert_to_tensor=True)
-    doc_embeddings = model.encode(data['description'].tolist(), convert_to_tensor=True)
+
+    combined_texts = [create_combined_text(item) for item in data]
+    
+    # Encode the combined texts
+    doc_embeddings = model.encode(combined_texts, convert_to_tensor=True)
 
     # Compute cosine similarities
     cos_scores = util.pytorch_cos_sim(query_embedding, doc_embeddings)[0]
@@ -41,17 +56,20 @@ def retrieve_information(data, query, top_k=5):
     # Get the top_k results
     top_results = cos_scores.topk(k=top_k)
 
-    return data.iloc[top_results[1]].reset_index(drop=True)
+    # Retrieve the top_k medicines
+    top_medicines = [data[idx] for idx in top_results[1].tolist()]
+    return top_medicines
 
 # Function to generate response
 def generate_response(data, query):
     # Retrieve relevant information based on the query
     relevant_data = retrieve_information(data, query)
-    if relevant_data.empty:
+    if not relevant_data:
         return "No relevant information found for your query."
     else:
         response = "Here are the details:\n"
-        response += relevant_data.to_string(index=False)
+        for item in relevant_data:
+            response += json.dumps(item, indent=2) + "\n"
         return response
 
 # Load the data
