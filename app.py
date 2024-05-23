@@ -31,19 +31,21 @@ tokenizer, model = load_nlp_model()
 
 # Function to parse the query and retrieve medicine information
 def parse_query(query):
-    # Tokenize and lowercase the query
-    query_tokens = query.lower().split()
+    # Tokenize the query using the tokenizer
+    inputs = tokenizer(query, return_tensors="pt")
+    tokens = tokenizer.convert_ids_to_tokens(inputs["input_ids"].squeeze().tolist())
+
     results = []
 
     for med in medicines:
         # Check for matches in all relevant fields
-        generic_name_matches = any(token in med['generic_name'].lower() for token in query_tokens)
-        generic_name_mm_matches = any(token in med.get('generic_name_mm', '').lower() for token in query_tokens)
-        uses_matches = any(token in ' '.join(med['uses']).lower() for token in query_tokens)
-        uses_mm_matches = any(token in ' '.join(med.get('uses_mm', [])).lower() for token in query_tokens)
-        side_effects_matches = any(token in ' '.join(med['side_effects']).lower() for token in query_tokens)
-        side_effects_mm_matches = any(token in ' '.join(med.get('side_effects_mm', [])).lower() for token in query_tokens)
-        brand_name_matches = any(any(token in brand_dict[brand_id]['name'].lower() for token in query_tokens) for brand_id in med['brand_names'])
+        generic_name_matches = any(token in med['generic_name'].lower() for token in tokens)
+        generic_name_mm_matches = any(token in med.get('generic_name_mm', '').lower() for token in tokens)
+        uses_matches = any(token in ' '.join(med['uses']).lower() for token in tokens)
+        uses_mm_matches = any(token in ' '.join(med.get('uses_mm', [])).lower() for token in tokens)
+        side_effects_matches = any(token in ' '.join(med['side_effects']).lower() for token in tokens)
+        side_effects_mm_matches = any(token in ' '.join(med.get('side_effects_mm', [])).lower() for token in tokens)
+        brand_name_matches = any(any(token in brand_dict[brand_id]['name'].lower() for token in tokens) for brand_id in med['brand_names'])
 
         if generic_name_matches or generic_name_mm_matches or uses_matches or uses_mm_matches or side_effects_matches or side_effects_mm_matches or brand_name_matches:
             results.append(med)
