@@ -58,6 +58,14 @@ def parse_query(query):
     
     return results
 
+# Function to generate context for question-answering
+def generate_context(med_names):
+    context_parts = []
+    for med in medicines:
+        if med['generic_name'].lower() in med_names or med.get('generic_name_mm', '').lower() in med_names:
+            context_parts.append(f"{med['generic_name']} ({med.get('generic_name_mm', '')}): Uses: {', '.join(med['uses'])}. Side Effects: {', '.join(med['side_effects'])}.")
+    return " ".join(context_parts)
+
 # Function to answer complex questions
 def answer_question(question, context):
     result = qa_pipeline(question=question, context=context)
@@ -98,10 +106,16 @@ query = st.text_input(query_label)
 
 if query:
     # Check if the query is a complex question
-    if "difference" in query:
-        context = " ".join([f"{med['generic_name']} ({med.get('generic_name_mm', '')}): {med['uses']}, {med['side_effects']}" for med in medicines])
-        answer = answer_question(query, context)
-        st.write(f"**Answer:** {answer}")
+    if "difference" in query.lower():
+        # Extract the medicine names from the query
+        med_names = set(word.strip() for word in query.lower().replace("difference between", "").replace("and", ",").split(","))
+        # Generate context from the extracted medicine names
+        context = generate_context(med_names)
+        if context:
+            answer = answer_question(query, context)
+            st.write(f"**Answer:** {answer}")
+        else:
+            st.write("No relevant information found for the specified medicines.")
     else:
         results = parse_query(query)
         if results:
@@ -119,7 +133,7 @@ if query:
 
                 with col2:
                     with st.expander("Side Effects (English)"):
-                        st.write(', '.join(med['side_effects']))
+                        st.write(', '. join(med['side_effects']))
                     with st.expander("Side Effects (Burmese)"):
                         if 'side_effects_mm' in med:
                             st.write(', '. join(med['side_effects_mm']))
