@@ -1,0 +1,56 @@
+{
+    "medicines": [
+        {
+            "id": 1,
+            "generic_name": "Aspirin",
+            "brand_names": [
+                1,
+                2
+            ],
+            "uses": [
+                "Pain relief",
+                "Anti-inflammatory",
+                "Antipyretic"
+            ],
+            "side_effects": [
+                "Nausea",
+                "Vomiting",
+                "Stomach pain",
+                "Heartburn"
+            ]
+        },
+        {
+            "id": 2,
+            "generic_name": "Ibuprofen",
+            "brand_names": [
+                3
+            ],
+            "uses": [
+                "Pain relief",
+                "Anti-inflammatory"
+            ],
+            "side_effects": [
+                "Nausea",
+                "Vomiting",
+                "Headache",
+                "Dizziness"
+            ]
+        },
+        {
+            "id": 3,
+            "generic_name": "Paracetamol",
+            "brand_names": [
+                4
+            ],
+            "uses": [
+                "Pain relief",
+                "Fever reduction"
+            ],
+            "side_effects": [
+                "Liver damage with overdose",
+                "Rash",
+                "Low blood pressure"
+            ]
+        }
+    ]
+}
