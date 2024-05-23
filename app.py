@@ -47,13 +47,21 @@ def parse_query(query):
     for med in medicines:
         generic_name_matches = any(token in med['generic_name'].lower() for token in tokens)
         generic_name_mm_matches = any(token in med.get('generic_name_mm', '').lower() for token in tokens)
-        uses_matches = any(token in ' '.join(med['indications']).lower() for token in tokens)
-        uses_mm_matches = any(token in ' '.join(med.get('indications_mm', [])).lower() for token in tokens)
-        side_effects_matches = any(token in ' '.join(med['side_effects']).lower() for token in tokens)
+        indications_matches = any(token in ' '.join(med.get('indications', [])).lower() for token in tokens)
+        indications_mm_matches = any(token in ' '.join(med.get('indications_mm', [])).lower() for token in tokens)
+        side_effects_matches = any(token in ' '.join(med.get('side_effects', [])).lower() for token in tokens)
         side_effects_mm_matches = any(token in ' '.join(med.get('side_effects_mm', [])).lower() for token in tokens)
+        contraindications_matches = any(token in ' '.join(med.get('contraindications', [])).lower() for token in tokens)
+        contraindications_mm_matches = any(token in ' '.join(med.get('contraindications_mm', [])).lower() for token in tokens)
+        warnings_matches = any(token in ' '.join(med.get('warnings', [])).lower() for token in tokens)
+        warnings_mm_matches = any(token in ' '.join(med.get('warnings_mm', [])).lower() for token in tokens)
+        interactions_matches = any(token in ' '.join(med.get('interactions', [])).lower() for token in tokens)
+        interactions_mm_matches = any(token in ' '.join(med.get('interactions_mm', [])).lower() for token in tokens)
         brand_name_matches = any(any(token in brand_dict[brand_id]['name'].lower() for token in tokens) for brand_id in med['brand_names'])
 
-        if generic_name_matches or generic_name_mm_matches or uses_matches or uses_mm_matches or side_effects_matches or side_effects_mm_matches or brand_name_matches:
+        if (generic_name_matches or generic_name_mm_matches or indications_matches or indications_mm_matches or
+            side_effects_matches or side_effects_mm_matches or contraindications_matches or contraindications_mm_matches or
+            warnings_matches or warnings_mm_matches or interactions_matches or interactions_mm_matches or brand_name_matches):
             results.append(med)
     
     return results
@@ -105,35 +113,30 @@ if query:
             
             with col1:
                 with st.expander("Indications (English)"):
-                    st.write(', '.join(med['indications']))
+                    st.write(', '.join(med.get('indications', [])))
                 with st.expander("Indications (Burmese)"):
-                    if 'indications_mm' in med:
-                        st.write(', '.join(med['indications_mm']))
+                    st.write(', '.join(med.get('indications_mm', [])))
 
                 with st.expander("Side Effects (English)"):
-                    st.write(', '.join(med['side_effects']))
+                    st.write(', '.join(med.get('side_effects', [])))
                 with st.expander("Side Effects (Burmese)"):
-                    if 'side_effects_mm' in med:
-                        st.write(', '.join(med['side_effects_mm']))
+                    st.write(', '.join(med.get('side_effects_mm', [])))
 
             with col2:
                 with st.expander("Contraindications (English)"):
-                    st.write(', '.join(med['contraindications']))
+                    st.write(', '.join(med.get('contraindications', [])))
                 with st.expander("Contraindications (Burmese)"):
-                    if 'contraindications_mm' in med:
-                        st.write(', '.join(med['contraindications_mm']))
+                    st.write(', '.join(med.get('contraindications_mm', [])))
 
                 with st.expander("Warnings (English)"):
-                    st.write(', '.join(med['warnings']))
+                    st.write(', '.join(med.get('warnings', [])))
                 with st.expander("Warnings (Burmese)"):
-                    if 'warnings_mm' in med:
-                        st.write(', '.join(med['warnings_mm']))
+                    st.write(', '.join(med.get('warnings_mm', [])))
 
                 with st.expander("Drug Interactions (English)"):
-                    st.write(', '.join(med['interactions']))
+                    st.write(', '.join(med.get('interactions', [])))
                 with st.expander("Drug Interactions (Burmese)"):
-                    if 'interactions_mm' in med:
-                        st.write(', '.join(med['interactions_mm']))
+                    st.write(', '.join(med.get('interactions_mm', [])))
 
             st.markdown("**Brands and Dosages**")
             for brand_id in med['brand_names']:
@@ -154,11 +157,11 @@ if query:
             context = f"Generic Name: {med['generic_name']}\n" \
                       f"Description: {med.get('description', 'N/A')}\n" \
                       f"Mechanism of Action: {med.get('mechanism_of_action', 'N/A')}\n" \
-                      f"Indications: {', '.join(med['indications'])}\n" \
-                      f"Side Effects: {', '.join(med['side_effects'])}\n" \
-                      f"Contraindications: {', '.join(med['contraindications'])}\n" \
-                      f"Warnings: {', '.join(med['warnings'])}\n" \
-                      f"Drug Interactions: {', '.join(med['interactions'])}\n" \
+                      f"Indications: {', '.join(med.get('indications', []))}\n" \
+                      f"Side Effects: {', '.join(med.get('side_effects', []))}\n" \
+                      f"Contraindications: {', '.join(med.get('contraindications', []))}\n" \
+                      f"Warnings: {', '.join(med.get('warnings', []))}\n" \
+                      f"Drug Interactions: {', '.join(med.get('interactions', []))}\n" \
                       f"Brands: {', '.join(brand_dict[brand_id]['name'] for brand_id in med['brand_names'])}\n"
             qa_result = qa_pipeline(question=query, context=context)
             st.write(f"**Answer:** {qa_result['answer']}")
