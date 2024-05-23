@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-from transformers import pipeline, GPT2Tokenizer
 from sentence_transformers import SentenceTransformer, util
 from googletrans import Translator
 from functools import lru_cache
@@ -8,16 +7,15 @@ from functools import lru_cache
 # Initialize the translator
 translator = Translator()
 
-# Load the transformer models with caching to improve performance
+# Load the transformer model with caching to improve performance
 @lru_cache(maxsize=1)
-def load_models():
-    generator = pipeline('text-generation', model='gpt2', tokenizer=GPT2Tokenizer.from_pretrained('gpt2'))
+def load_model():
     retriever = SentenceTransformer('paraphrase-MiniLM-L6-v2')
-    return generator, retriever
+    return retriever
 
-generator, retriever = load_models()
+retriever = load_model()
 
-# Sample expanded data with additional categories
+# Sample data with additional categories
 data = {
     "Generic Name": ["Ibuprofen", "Paracetamol"],
     "Commercial Names": ["Advil, Motrin", "Tylenol"],
@@ -40,14 +38,14 @@ df = pd.DataFrame(data)
 
 # Precompute embeddings for all texts in the dataframe
 @st.cache_data
-def precompute_embeddings(_retriever):
+def precompute_embeddings():
     all_texts = df['Generic Name'].tolist() + df['Commercial Names'].tolist() + df['Drug Class'].tolist() + df['Disease Names'].tolist() + df['Symptoms'].tolist() + df['Treatment Protocols'].tolist() + df['Medical Procedures'].tolist()
-    data_embeddings = _retriever.encode(all_texts, convert_to_tensor=True)
+    data_embeddings = retriever.encode(all_texts, convert_to_tensor=True)
     return all_texts, data_embeddings
 
-all_texts, data_embeddings = precompute_embeddings(retriever)
+all_texts, data_embeddings = precompute_embeddings()
 
-def retrieve_drug_info(query, all_texts, data_embeddings, retriever):
+def retrieve_drug_info(query, all_texts, data_embeddings):
     # Encode the query
     query_embedding = retriever.encode(query, convert_to_tensor=True)
 
@@ -70,29 +68,11 @@ def retrieve_drug_info(query, all_texts, data_embeddings, retriever):
     else:
         return df.iloc[best_match_idx - 5 * num_records]
 
-def generate_response(drug_info):
-    if drug_info is None:
-        return "No information available for this drug."
-
-    drug_info_dict = drug_info.to_dict()
-    prompt = f"Provide detailed information about the drug with the following data:\n{drug_info_dict}"
-
-    response = generator(prompt, max_length=300, num_return_sequences=1, truncation=True, pad_token_id=50256)
-    return response[0]['generated_text']
-
-def rag_system(query, all_texts, data_embeddings, retriever, generator):
-    try:
-        drug_info = retrieve_drug_info(query, all_texts, data_embeddings, retriever)
-        response = generate_response(drug_info)
-        return response
-    except Exception as e:
-        return f"An error occurred: {e}"
-
 def get_suggestions(prefix, terms):
     return [term for term in terms if term.lower().startswith(prefix.lower())]
 
 # Streamlit app
-st.title("Drug Information Retrieval and Generation")
+st.title("Drug Information Retrieval")
 
 # Language selection
 language = st.selectbox("Select language:", ["English", "Myanmar (Burmese)"])
@@ -119,15 +99,16 @@ if st.button("Get Information"):
                     st.write(f"Translation error: {e}")
                     query = query_prefix  # fallback to original query if translation fails
                 
-                response = rag_system(query, all_texts, data_embeddings, retriever, generator)
+                drug_info = retrieve_drug_info(query, all_texts, data_embeddings)
                 
                 try:
-                    response = translator.translate(response, src='en', dest='my').text
+                    response = translator.translate(str(drug_info.to_dict()), src='en', dest='my').text
                 except Exception as e:
                     st.write(f"Translation error: {e}")
-                    response = response  # fallback to English response if translation fails
+                    response = str(drug_info.to_dict())  # fallback to English response if translation fails
             else:
-                response = rag_system(query, all_texts, data_embeddings, retriever, generator)
+                drug_info = retrieve_drug_info(query, all_texts, data_embeddings)
+                response = str(drug_info.to_dict())
             st.write(response)
         except Exception as e:
             st.write(f"An error occurred: {e}")
