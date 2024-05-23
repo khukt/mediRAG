@@ -37,8 +37,6 @@ def contains_burmese(text):
 # Function to parse the query and retrieve medicine information
 def parse_query(query):
     query = query.lower()
-    search_in_english = any(char.isascii() for char in query)
-    search_in_burmese = contains_burmese(query)
     results = []
 
     # Tokenize the query using the tokenizer
@@ -78,17 +76,15 @@ if query:
         for med in results:
             st.markdown(f"### {med['generic_name']} ({med.get('generic_name_mm', '')})")
             
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                st.markdown("**Uses**")
+            with st.expander("Uses (English)"):
                 st.write(', '.join(med['uses']))
+            with st.expander("Uses (Burmese)"):
                 if 'uses_mm' in med:
                     st.write(', '.join(med['uses_mm']))
-            
-            with col2:
-                st.markdown("**Side Effects**")
+
+            with st.expander("Side Effects (English)"):
                 st.write(', '.join(med['side_effects']))
+            with st.expander("Side Effects (Burmese)"):
                 if 'side_effects_mm' in med:
                     st.write(', '.join(med['side_effects_mm']))
             
