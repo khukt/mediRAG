@@ -41,11 +41,6 @@ def load_nlp_model():
 
 tokenizer, model, qa_pipeline = load_nlp_model()
 
-# Function to detect if a string contains Burmese characters
-def contains_burmese(text):
-    burmese_characters = set("ကခဂဃငစဆဇဈညဋဌဍဎဏတထဒဓနပဖဗဘမယရလဝသဟဠအဣဤဥဦဧဩဪါာိီုူေဲံ့းွှဿ၀၁၂၃၄၅၆၇၈၉")
-    return any(char in burmese_characters for char in text)
-
 # Function to parse the query and prioritize results
 def parse_query(query):
     query = query.lower()
@@ -57,49 +52,42 @@ def parse_query(query):
         "medicines": [],
         "symptoms": []
     }
-    inputs = tokenizer(query, return_tensors="pt")
-    tokens = tokenizer.convert_ids_to_tokens(inputs["input_ids"].squeeze().tolist())
+    tokens = query.split()
 
     for token in tokens:
-        # Prioritize brand names
         for brand in brand_names:
             if token in brand['name'].lower() or token in brand['name_mm'].lower():
                 results['brand_names'].append(brand)
 
-        # Prioritize diseases
         for disease in diseases:
             if token in disease['name'].lower() or token in disease['name_mm'].lower():
                 results['diseases'].append(disease)
 
-        # Prioritize generic names
         for generic in generic_names:
             if token in generic['name'].lower() or token in generic['name_mm'].lower():
                 results['generic_names'].append(generic)
 
-        # Prioritize manufacturers
         for manufacturer in manufacturers:
             if token in manufacturer['name'].lower():
                 results['manufacturers'].append(manufacturer)
 
-        # Prioritize medicines
         for med in medicines:
             if any([
                 any(token in generic_dict[gname_id]['name'].lower() for gname_id in med['generic_name_ids']),
                 any(token in generic_dict[gname_id]['name_mm'].lower() for gname_id in med['generic_name_ids']),
-                any(token in ' '.join(med.get('indications', [])).lower() for token in tokens),
-                any(token in ' '.join(med.get('indications_mm', [])).lower() for token in tokens),
-                any(token in ' '.join(med.get('side_effects', [])).lower() for token in tokens),
-                any(token in ' '.join(med.get('side_effects_mm', [])).lower() for token in tokens),
-                any(token in ' '.join(med.get('contraindications', [])).lower() for token in tokens),
-                any(token in ' '.join(med.get('contraindications_mm', [])).lower() for token in tokens),
-                any(token in ' '.join(med.get('warnings', [])).lower() for token in tokens),
-                any(token in ' '.join(med.get('warnings_mm', [])).lower() for token in tokens),
-                any(token in ' '.join(med.get('interactions', [])).lower() for token in tokens),
-                any(token in ' '.join(med.get('interactions_mm', [])).lower() for token in tokens)
+                token in ' '.join(med.get('indications', [])).lower(),
+                token in ' '.join(med.get('indications_mm', [])).lower(),
+                token in ' '.join(med.get('side_effects', [])).lower(),
+                token in ' '.join(med.get('side_effects_mm', [])).lower(),
+                token in ' '.join(med.get('contraindications', [])).lower(),
+                token in ' '.join(med.get('contraindications_mm', [])).lower(),
+                token in ' '.join(med.get('warnings', [])).lower(),
+                token in ' '.join(med.get('warnings_mm', [])).lower(),
+                token in ' '.join(med.get('interactions', [])).lower(),
+                token in ' '.join(med.get('interactions_mm', [])).lower()
             ]):
                 results['medicines'].append(med)
 
-        # Prioritize symptoms
         for symptom in symptoms:
             if token in symptom['name'].lower() or token in symptom['name_mm'].lower():
                 results['symptoms'].append(symptom)
@@ -228,7 +216,7 @@ def main():
 
     if query:
         results = parse_query(query)
-        query_tokens = tokenizer.tokenize(query.lower())
+        query_tokens = query.split()
         if any(results.values()):
             if results['brand_names']:
                 st.markdown("## Brand Names")
