@@ -1,11 +1,15 @@
 import streamlit as st
 import json
 import spacy
-from spacy.cli import download
+import os
 
 # Function to download the SpaCy model
 def download_spacy_model(model_name="en_core_web_sm"):
-    download(model_name)
+    from spacy.cli import download
+    try:
+        download(model_name)
+    except Exception as e:
+        st.error(f"Error downloading SpaCy model: {e}")
 
 # Check if the SpaCy model is already installed, if not, download it
 model_name = "en_core_web_sm"
