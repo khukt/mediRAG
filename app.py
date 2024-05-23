@@ -82,7 +82,7 @@ else:
 
 # Display GENI logo, URL, and research team information
 st.sidebar.image("https://geni.asia/wp-content/uploads/2021/12/Full_logo_Color.png", use_column_width=True)
-st.sidebar.write("[GENI Research Team](https://geni.asia)")
+st.sidebar.write("[GENI Research Team](https://geni.asia/research-internship-batch-1/")
 st.sidebar.write("This is part of CareDiary development by the GENI Research Team.")
 
 # Add disclaimers
