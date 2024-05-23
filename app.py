@@ -217,42 +217,84 @@ def main():
     if query:
         results = parse_query(query)
         query_tokens = query.split()
+    
         if any(results.values()):
+            st.markdown("### Search Results")
+
             if results['brand_names']:
                 st.markdown("## Brand Names")
                 for brand in results['brand_names']:
                     display_brand_info(brand)
-
+                    # Additional info for brand
+                    st.markdown("**Related Generic Names:**")
+                    related_generics = [generic_dict[med['generic_name_ids'][0]]['name'] for med in medicines if any(b['brand_id'] == brand['id'] for b in med['brands'])]
+                    st.write(', '.join(related_generics))
+                    st.markdown("**Available Forms:**")
+                    available_forms = [form_dict[b['form_id']]['name'] for med in medicines for b in med['brands'] if b['brand_id'] == brand['id']]
+                    st.write(', '.join(available_forms))
+        
             if results['diseases']:
                 st.markdown("## Diseases")
                 for disease in results['diseases']:
                     display_disease_info(disease)
+                    # Additional info for disease
+                    st.markdown("**Related Symptoms:**")
+                    related_symptoms = [symptom_dict[symptom_id]['name'] for symptom_id in disease['symptom_ids']]
+                    st.write(', '.join(related_symptoms))
+                    st.markdown("**Recommended Medicines:**")
+                    recommended_meds = [med['description'] for med in medicines if disease['id'] in med['disease_ids']]
+                    st.write(', '.join(recommended_meds))
 
             if results['generic_names']:
                 st.markdown("## Generic Names")
                 for generic in results['generic_names']:
                     display_generic_name_info(generic)
+                    # Additional info for generic name
+                    st.markdown("**Associated Brand Names:**")
+                    associated_brands = [brand['name'] for brand in brand_names if any(generic['id'] in med['generic_name_ids'] for med in medicines if any(b['brand_id'] == brand['id'] for b in med['brands']))]
+                    st.write(', '.join(associated_brands))
+                    st.markdown("**Indications:**")
+                    indications = [med['description'] for med in medicines if generic['id'] in med['generic_name_ids']]
+                    st.write(', '.join(indications))
 
             if results['manufacturers']:
                 st.markdown("## Manufacturers")
                 for manufacturer in results['manufacturers']:
                     display_manufacturer_info(manufacturer)
+                    # Additional info for manufacturer
+                    st.markdown("**Produced Medicines:**")
+                    produced_meds = [brand['name'] for brand in brand_names if brand['manufacturer_id'] == manufacturer['id']]
+                    st.write(', '.join(produced_meds))
 
             if results['medicines']:
                 st.markdown("## Medicines")
                 for med in results['medicines']:
                     display_medicine_info(med, query_tokens)
-            
+                    # Cross-reference to similar medicines
+                    similar_meds = [m['description'] for m in medicines if any(ind in m['indications'] for ind in med['indications']) and m['id'] != med['id']]
+                    if similar_meds:
+                        st.markdown("**Similar Medicines:**")
+                        st.write(', '.join(similar_meds))
+
             if results['symptoms']:
                 st.markdown("## Symptoms")
                 for symptom in results['symptoms']:
                     display_symptom_info(symptom)
-
+                    # Additional info for symptom
+                    st.markdown("**Potential Diseases:**")
+                    potential_diseases = [disease_dict[disease_id]['name'] for disease_id in [d['id'] for d in diseases if symptom['id'] in d['symptom_ids']]]
+                    st.write(', '.join(potential_diseases))
+                    st.markdown("**Recommended Medicines:**")
+                    recommended_meds = [med['description'] for med in medicines if symptom['id'] in med['symptom_ids']]
+                    st.write(', '.join(recommended_meds))
+        
             st.markdown("## Generated Answers")
             for med in results['medicines']:
                 display_generated_answers(query, med)
+    
         else:
             st.write('No results found.')
 
-if __name__ == "__main__":
-    main()
+    if __name__ == "__main__":
+        main()
+
