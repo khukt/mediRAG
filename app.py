@@ -2,6 +2,7 @@ import streamlit as st
 import json
 from transformers import AutoTokenizer, AutoModelForMaskedLM, pipeline
 import torch
+import re
 
 # Set page configuration
 st.set_page_config(page_title="Medicine Information Retrieval", layout="wide")
