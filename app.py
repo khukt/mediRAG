@@ -26,10 +26,10 @@ manufacturer_dict = {manufacturer['id']: manufacturer for manufacturer in manufa
 def load_nlp_model():
     tokenizer = AutoTokenizer.from_pretrained("distilbert-base-multilingual-cased")
     model = AutoModelForMaskedLM.from_pretrained("distilbert-base-multilingual-cased")
-    qa_model = pipeline("question-answering", model="distilbert-base-cased-distilled-squad", tokenizer="distilbert-base-cased-distilled-squad")
-    return tokenizer, model, qa_model
+    qa_pipeline = pipeline("question-answering", model=model, tokenizer=tokenizer)
+    return tokenizer, model, qa_pipeline
 
-tokenizer, model, qa_model = load_nlp_model()
+tokenizer, model, qa_pipeline = load_nlp_model()
 
 # Function to detect if a string contains Burmese characters
 def contains_burmese(text):
