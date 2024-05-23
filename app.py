@@ -1,7 +1,6 @@
 import streamlit as st
 import json
 from transformers import AutoTokenizer, AutoModelForQuestionAnswering, pipeline
-import torch
 
 # Set page configuration
 st.set_page_config(page_title="Medicine Information Retrieval", layout="wide")
@@ -43,8 +42,21 @@ def contains_burmese(text):
     burmese_characters = set("ကခဂဃငစဆဇဈညဋဌဍဎဏတထဒဓနပဖဗဘမယရလဝသဟဠအဣဤဥဦဧဩဪါာိီုူေဲံ့းွှဿ၀၁၂၃၄၅၆၇၈၉")
     return any(char in burmese_characters for char in text)
 
+# Function to determine the type of query
+def determine_query_type(query):
+    if any(query.lower() in generic['name'].lower() for generic in generic_names):
+        return "generic"
+    if any(query.lower() in brand['name'].lower() for brand in brand_names):
+        return "brand"
+    if any(query.lower() in symptom['name'].lower() for symptom in symptoms):
+        return "symptom"
+    if any(query.lower() in disease['name'].lower() for disease in diseases):
+        return "disease"
+    return "unknown"
+
 # Function to parse the query and retrieve medicine information
 def parse_query(query):
+    query_type = determine_query_type(query)
     query = query.lower()
     results = []
 
@@ -71,7 +83,17 @@ def parse_query(query):
             side_effects_matches or side_effects_mm_matches or contraindications_matches or contraindications_mm_matches or
             warnings_matches or warnings_mm_matches or interactions_matches or interactions_mm_matches or brand_name_matches):
             results.append(med)
-    
+
+    # Sort results based on query type
+    if query_type == "generic":
+        results.sort(key=lambda med: any(generic_dict[gname_id]['name'].lower() == query for gname_id in med['generic_name_ids']), reverse=True)
+    elif query_type == "brand":
+        results.sort(key=lambda med: any(brand_dict[brand_info['brand_id']]['name'].lower() == query for brand_info in med['brands']), reverse=True)
+    elif query_type == "symptom":
+        results.sort(key=lambda med: any(symptom_dict[symptom_id]['name'].lower() == query for symptom_id in med['symptom_ids']), reverse=True)
+    elif query_type == "disease":
+        results.sort(key=lambda med: any(disease_dict[disease_id]['name'].lower() == query for disease_id in med['disease_ids']), reverse=True)
+
     return results
 
 # Sidebar with language switcher
