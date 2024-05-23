@@ -67,18 +67,20 @@ if language == "Burmese":
     မေးမြန်းမှုအရ ဆေးဝါးအကြောင်းအရာများကို ပြသပေးပါမည်။ 
     မြန်မာဘာသာဖြင့် ရှာဖွေနိုင်သည်။
     """)
+    st.title('ဆေးဝါးအကြောင်း အချက်အလက် ရှာဖွေမှု')
+    st.write('ဆေးဝါးအမည် (အထွေထွေ နာမည် သို့မဟုတ် အမှတ်တံဆိပ် နာမည်) သို့မဟုတ် ရောဂါလက္ခဏာအား ရိုက်ထည့်ပါ။')
+    query_label = 'မေးမြန်းမှု'
 else:
     st.sidebar.title("Instructions")
     st.sidebar.write("""
     Enter your query about a medicine name (generic or brand) or a symptom in the input box. 
     The app will display relevant medicine information based on your query. You can search in either English or Burmese.
     """)
+    st.title('Medicine Information Retrieval')
+    st.write('Enter your query about a medicine name (generic or brand) or a symptom.')
+    query_label = 'Query'
 
-st.title('Medicine Information Retrieval')
-
-st.write('Enter your query about a medicine name (generic or brand) or a symptom.')
-
-query = st.text_input('Query')
+query = st.text_input(query_label)
 
 if query:
     results = parse_query(query)
