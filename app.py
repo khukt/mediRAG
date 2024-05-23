@@ -46,6 +46,11 @@ def parse_query(query):
     
     return results
 
+# Function to determine if the query is in Burmese
+def is_burmese(query):
+    burmese_characters = set("ကခဂဃငစဆဇဈညဋဌဍဎဏတထဒဓနပဖဗဘမယရလဝသဟဠအဣဤဥဦဧဩဪါာိီုူေဲံ့းွှဿ၀၁၂၃၄၅၆၇၈၉")
+    return any(char in burmese_characters for char in query)
+
 # Streamlit app
 st.title('Medicine Information Retrieval')
 
@@ -56,10 +61,16 @@ query = st.text_input('Query')
 if query:
     results = parse_query(query)
     if results:
+        display_in_burmese = is_burmese(query)
         for med in results:
-            st.subheader(f"Generic Name: {med['generic_name']} ({med.get('generic_name_mm', '')})")
-            st.write('**Uses:**', ', '.join(med['uses']) + ', ' + ', '.join(med.get('uses_mm', [])))
-            st.write('**Side Effects:**', ', '.join(med['side_effects']) + ', ' + ', '.join(med.get('side_effects_mm', [])))
+            if display_in_burmese:
+                st.subheader(f"Generic Name: {med.get('generic_name_mm', med['generic_name'])}")
+                st.write('**Uses:**', ', '.join(med.get('uses_mm', med['uses'])))
+                st.write('**Side Effects:**', ', '.join(med.get('side_effects_mm', med['side_effects'])))
+            else:
+                st.subheader(f"Generic Name: {med['generic_name']}")
+                st.write('**Uses:**', ', '.join(med['uses']))
+                st.write('**Side Effects:**', ', '.join(med['side_effects']))
             for brand_id in med['brand_names']:
                 brand = brand_dict[brand_id]
                 manufacturer = manufacturer_dict[brand['manufacturer_id']]
