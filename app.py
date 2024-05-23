@@ -32,13 +32,17 @@ model = SentenceTransformer('all-MiniLM-L6-v2')  # Smaller, efficient model
 
 # Function to create combined text from various fields for retrieval
 def create_combined_text(item):
-    fields = [
-        'description', 'mechanism_of_action', 'indications', 
-        'contraindications', 'warnings', 'interactions', 
-        'side_effects', 'additional_info'
-    ]
-    combined_text = ' '.join([item.get(field, '') for field in fields]).lower()
-    return combined_text
+    if isinstance(item, dict):
+        fields = [
+            'description', 'mechanism_of_action', 'indications', 
+            'contraindications', 'warnings', 'interactions', 
+            'side_effects', 'additional_info'
+        ]
+        combined_text = ' '.join([item.get(field, '') for field in fields]).lower()
+        return combined_text
+    else:
+        st.error(f"Unexpected data format: {item}")
+        return ""
 
 # Function to retrieve information
 def retrieve_information(data, query, top_k=5):
