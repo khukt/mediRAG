@@ -217,6 +217,7 @@ def main():
     if query:
         results = parse_query(query)
         query_tokens = query.split()
+        
         if any(results.values()):
             st.markdown("### Search Results")
 
@@ -241,7 +242,7 @@ def main():
                     st.markdown("**Associated Diseases:**")
                     associated_diseases = list(set([disease_dict[disease_id]['name'] for med in medicines if any(b['brand_id'] == brand['id'] for b in med['brands']) for disease_id in med.get('disease_ids', [])]))
                     st.write(', '.join(associated_diseases))
-
+            
             if results['diseases']:
                 st.markdown("## Diseases")
                 for disease in results['diseases']:
@@ -284,14 +285,14 @@ def main():
                     if similar_meds:
                         st.markdown("**Similar Medicines:**")
                         st.write(', '.join(similar_meds))
-            
+
             if results['symptoms']:
                 st.markdown("## Symptoms")
                 for symptom in results['symptoms']:
                     display_symptom_info(symptom)
                     # Additional info for symptom
                     st.markdown("**Potential Diseases:**")
-                    potential_diseases = [disease_dict[disease_id]['name'] for disease_id in [d['id'] for d in diseases if symptom['id'] in d['symptom_ids']]]
+                    potential_diseases = [disease_dict[disease_id]['name'] for disease_id in disease_dict if symptom['id'] in disease_dict[disease_id].get('symptom_ids', [])]
                     st.write(', '.join(potential_diseases))
                     st.markdown("**Recommended Medicines:**")
                     recommended_meds = [med['description'] for med in medicines if symptom['id'] in med['symptom_ids']]
@@ -300,8 +301,10 @@ def main():
             st.markdown("## Generated Answers")
             for med in results['medicines']:
                 display_generated_answers(query, med)
+        
         else:
             st.write('No results found.')
 
 if __name__ == "__main__":
     main()
+
