@@ -31,23 +31,17 @@ tokenizer, model = load_nlp_model()
 
 # Function to parse the query and retrieve medicine information
 def parse_query(query):
-    # Tokenize the query using the tokenizer
-    inputs = tokenizer(query, return_tensors="pt")
-    tokens = tokenizer.convert_ids_to_tokens(inputs["input_ids"].squeeze().tolist())
-
+    query = query.lower()
     results = []
 
     for med in medicines:
-        # Check for matches in all relevant fields
-        generic_name_matches = any(token in med['generic_name'].lower() for token in tokens)
-        generic_name_mm_matches = any(token in med.get('generic_name_mm', '').lower() for token in tokens)
-        uses_matches = any(token in ' '.join(med['uses']).lower() for token in tokens)
-        uses_mm_matches = any(token in ' '.join(med.get('uses_mm', [])).lower() for token in tokens)
-        side_effects_matches = any(token in ' '.join(med['side_effects']).lower() for token in tokens)
-        side_effects_mm_matches = any(token in ' '.join(med.get('side_effects_mm', [])).lower() for token in tokens)
-        brand_name_matches = any(any(token in brand_dict[brand_id]['name'].lower() for token in tokens) for brand_id in med['brand_names'])
-
-        if generic_name_matches or generic_name_mm_matches or uses_matches or uses_mm_matches or side_effects_matches or side_effects_mm_matches or brand_name_matches:
+        if (query in med['generic_name'].lower() or
+            query in med.get('generic_name_mm', '').lower() or
+            any(query in use.lower() for use in med['uses']) or
+            any(query in use.lower() for use in med.get('uses_mm', [])) or
+            any(query in effect.lower() for effect in med['side_effects']) or
+            any(query in effect.lower() for effect in med.get('side_effects_mm', [])) or
+            any(query in brand_dict[brand_id]['name'].lower() for brand_id in med['brand_names'])):
             results.append(med)
     
     return results
