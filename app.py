@@ -31,10 +31,12 @@ tokenizer, model = load_nlp_model()
 
 # Function to parse the query and retrieve medicine information
 def parse_query(query):
+    # Tokenize and lowercase the query
     query_tokens = query.lower().split()
     results = []
 
     for med in medicines:
+        # Check for matches in all relevant fields
         generic_name_matches = any(token in med['generic_name'].lower() for token in query_tokens)
         generic_name_mm_matches = any(token in med.get('generic_name_mm', '').lower() for token in query_tokens)
         uses_matches = any(token in ' '.join(med['uses']).lower() for token in query_tokens)
