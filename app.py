@@ -48,7 +48,7 @@ df_medicines = df_medicines.explode('generic_name_ids').merge(df_generic_names, 
 df_medicines = df_medicines.explode('symptom_ids').merge(df_symptoms, left_on='symptom_ids', right_on='id', suffixes=('', '_symptom')).drop(columns=['symptom_ids', 'id_symptom'])
 
 # Merge diseases into medicines
-df_medicines = df_medicines.explode('disease_ids').merge(df_diseases, left_on='disease_ids', right_on='id', suffixes=('', '_disease')).drop(columns=['disease_ids', 'id_disease'])
+df_medicines = df_medicines.explode('disease_ids').merge(df_diseases, left_on='disease_ids', right_on='id', suffixes=('', '_disease')).drop(columns(['disease_ids', 'id_disease']))
 
 # Function to create combined text for medicines
 def create_combined_text(row):
@@ -72,22 +72,22 @@ def get_medicine_by_id(medicine_id):
 
 # Function to retrieve medicines by symptom
 def get_medicines_by_symptom(symptom_name):
-    result = df_medicines[df_medicines['name_symptom'].apply(lambda x: symptom_name.lower() in str(x).lower())]
+    result = df_medicines[df_medicines.apply(lambda row: symptom_name.lower() in [str(s).lower() for s in row['symptom_ids']], axis=1)]
     return result.drop_duplicates().to_dict(orient='records')
 
 # Function to retrieve medicines by disease
 def get_medicines_by_disease(disease_name):
-    result = df_medicines[df_medicines['name_disease'].apply(lambda x: disease_name.lower() in str(x).lower())]
+    result = df_medicines[df_medicines.apply(lambda row: disease_name.lower() in [str(d).lower() for d in row['disease_ids']], axis=1)]
     return result.drop_duplicates().to_dict(orient='records')
 
 # Function to retrieve medicines by generic name
 def get_medicines_by_generic_name(generic_name):
-    result = df_medicines[df_medicines['name_generic'].apply(lambda x: generic_name.lower() in str(x).lower())]
+    result = df_medicines[df_medicines.apply(lambda row: generic_name.lower() in [str(g).lower() for g in row['generic_name_ids']], axis=1)]
     return result.drop_duplicates().to_dict(orient='records')
 
 # Function to retrieve medicines by brand name
 def get_medicines_by_brand_name(brand_name):
-    result = df_medicines[df_medicines['name_brand'].apply(lambda x: brand_name.lower() in str(x).lower())]
+    result = df_medicines[df_medicines['name'].str.contains(brand_name, case=False, na=False)]
     return result.drop_duplicates().to_dict(orient='records')
 
 # Function to retrieve all details for a specific medicine
