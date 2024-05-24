@@ -82,12 +82,20 @@ def classify_query(query):
 
 # Function to handle symptom queries
 def handle_symptom_query(query, symptoms_df):
-    vectorizer = CountVectorizer().fit_transform(symptoms_df['description'].tolist())
-    vectors = vectorizer.toarray()
-    query_vector = vectorizer.transform([query]).toarray()
-    cosine_similarities = cosine_similarity(query_vector, vectors).flatten()
-    related_docs_indices = cosine_similarities.argsort()[:-5:-1]
-    return symptoms_df.iloc[related_docs_indices]
+    try:
+        if 'description' not in symptoms_df.columns:
+            st.error("The symptoms dataset does not contain a 'description' field.")
+            return pd.DataFrame()
+        
+        vectorizer = CountVectorizer().fit_transform(symptoms_df['description'].tolist())
+        vectors = vectorizer.toarray()
+        query_vector = vectorizer.transform([query]).toarray()
+        cosine_similarities = cosine_similarity(query_vector, vectors).flatten()
+        related_docs_indices = cosine_similarities.argsort()[:-5:-1]
+        return symptoms_df.iloc[related_docs_indices]
+    except Exception as e:
+        st.error(f"An error occurred while handling symptom query: {e}")
+        return pd.DataFrame()
 
 # Function to handle comparison queries
 def handle_comparison_query(query, medicines_df):
@@ -131,6 +139,8 @@ def generate_response(query, medicines_df, symptoms_df, combined_texts):
     
     if query_type == 'symptom':
         relevant_data = handle_symptom_query(query, symptoms_df)
+        if relevant_data.empty:
+            return "No relevant information found for your symptom query."
         response = "Based on your symptoms, here are some related medicines:\n"
         for item in relevant_data.to_dict(orient='records'):
             response += json.dumps(item, indent=2, ensure_ascii=False) + "\n"
@@ -145,6 +155,8 @@ def generate_response(query, medicines_df, symptoms_df, combined_texts):
         return response
     else:
         relevant_data = handle_medicine_query(query, combined_texts, medicines_df)
+        if not relevant_data:
+            return "No relevant information found for your medicine query."
         response = "Here are the details about the medicine:\n"
         for item in relevant_data:
             response += json.dumps(item, indent=2, ensure_ascii=False) + "\n"
