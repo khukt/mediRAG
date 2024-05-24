@@ -1,22 +1,16 @@
 {
-    "brand_names": [
-        {
-            "id": 1,
-            "name": "Tylenol",
-            "name_mm": "တိုင်လီနော",
-            "manufacturer_id": 1
-        },
-        {
-            "id": 2,
-            "name": "Advil",
-            "name_mm": "အက်ဒ်ဗီးလ်",
-            "manufacturer_id": 2
-        },
-        {
-            "id": 3,
-            "name": "Panadol",
-            "name_mm": "ပန်းနဒေါ်",
-            "manufacturer_id": 1
-        }
-    ]
+  "brand_names": [
+    {
+      "id": 1,
+      "name": "Tylenol",
+      "name_mm": "တိုင်းလွန်",
+      "manufacturer_id": 1
+    },
+    {
+      "id": 2,
+      "name": "Advil",
+      "name_mm": "အက်ဒဗေးလ်",
+      "manufacturer_id": 2
+    }
+  ]
 }
