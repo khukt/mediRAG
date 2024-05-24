@@ -134,10 +134,10 @@ if query:
     if relevant_data:
         for item in relevant_data:
             st.subheader(f"Medicine ID: {item.get('id')}")
-            st.write(f"**Description**: {item.get('description')}")
-            st.write(f"**Description (MM)**: {item.get('description_mm')}")
-            st.write(f"**Mechanism of Action**: {item.get('mechanism_of_action')}")
-            st.write(f"**Mechanism of Action (MM)**: {item.get('mechanism_of_action_mm')}")
+            st.write(f"**Description**: {item.get('description', 'N/A')}")
+            st.write(f"**Description (MM)**: {item.get('description_mm', 'N/A')}")
+            st.write(f"**Mechanism of Action**: {item.get('mechanism_of_action', 'N/A')}")
+            st.write(f"**Mechanism of Action (MM)**: {item.get('mechanism_of_action_mm', 'N/A')}")
             st.write(f"**Indications**: {', '.join(item.get('indications', []))}")
             st.write(f"**Indications (MM)**: {', '.join(item.get('indications_mm', []))}")
             st.write(f"**Contraindications**: {', '.join(item.get('contraindications', []))}")
@@ -148,8 +148,8 @@ if query:
             st.write(f"**Interactions (MM)**: {', '.join(item.get('interactions_mm', []))}")
             st.write(f"**Side Effects**: {', '.join(item.get('side_effects', []))}")
             st.write(f"**Side Effects (MM)**: {', '.join(item.get('side_effects_mm', []))}")
-            st.write(f"**Additional Info**: {item.get('additional_info')}")
-            st.write(f"**Additional Info (MM)**: {item.get('additional_info_mm')}")
+            st.write(f"**Additional Info**: {item.get('additional_info', 'N/A')}")
+            st.write(f"**Additional Info (MM)**: {item.get('additional_info_mm', 'N/A')}")
             st.write("---")
     
     # Print memory usage after processing the query
