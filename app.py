@@ -3,6 +3,7 @@ from sentence_transformers import SentenceTransformer, util
 import json
 import psutil
 import torch
+import pandas as pd
 
 # Function to print memory usage in GB
 def print_memory_usage():
@@ -12,10 +13,14 @@ def print_memory_usage():
 
 # Function to load data from JSON
 def load_json(filename):
-    with open(filename, 'r') as file:
-        return json.load(file)
+    try:
+        with open(filename, 'r') as file:
+            return json.load(file)
+    except Exception as e:
+        st.error(f"Error loading {filename}: {e}")
+        return []
 
-# Function to load data
+# Function to load all data
 def load_data():
     medicines = load_json('medicines.json')
     symptoms = load_json('symptoms.json')
@@ -27,17 +32,18 @@ def load_data():
     
     return medicines, symptoms, diseases, generic_names, forms, brand_names, manufacturers
 
+# Detecting data structure
+def detect_structure(data):
+    if isinstance(data, list) and len(data) > 0:
+        return list(data[0].keys())
+    return []
+
 # Load the pre-trained transformer model
 model = SentenceTransformer('all-MiniLM-L6-v2')  # Smaller, efficient model
 
 # Function to create combined text from various fields for retrieval
-def create_combined_text(item):
-    fields = [
-        'description', 'mechanism_of_action', 'indications', 
-        'contraindications', 'warnings', 'interactions', 
-        'side_effects', 'additional_info'
-    ]
-    combined_text = ' '.join([item.get(field, '') for field in fields if field in item]).lower()
+def create_combined_text(item, fields):
+    combined_text = ' '.join([item.get(field, '') for field in fields]).lower()
     return combined_text
 
 # Function to retrieve information
@@ -80,18 +86,30 @@ def generate_response(data, combined_texts, query):
 # Load the data
 medicines, symptoms, diseases, generic_names, forms, brand_names, manufacturers = load_data()
 
+# Detect structure of medicines data
+medicine_fields = detect_structure(medicines)
+
+# Validate data structure
+if not medicine_fields:
+    st.error("Invalid data format in medicines.json")
+
 # Create combined texts for each medicine
-combined_texts = [create_combined_text(item) for item in medicines]
+combined_texts = [create_combined_text(item, medicine_fields) for item in medicines]
 
 # Debug the structure of medicines data
 st.write("Loaded medicines data:")
 st.write(medicines[:5])  # Display first 5 items for debugging
+st.write("Detected fields in medicines data:")
+st.write(medicine_fields)
 
 # Print initial memory usage
 print_memory_usage()
 
 # Title of the Streamlit app
 st.title("Medicine Information Retrieval")
+
+# Instructions for the user
+st.write("Enter the name or description of the medicine you are looking for in the input box below.")
 
 # Input text box for user query
 query = st.text_input("Enter your query about medicine:")
