@@ -3,7 +3,6 @@ from sentence_transformers import SentenceTransformer, util
 import json
 import psutil
 import torch
-import pandas as pd
 
 # Function to print memory usage in GB
 def print_memory_usage():
@@ -86,6 +85,10 @@ def generate_response(data, combined_texts, query):
 # Load the data
 medicines, symptoms, diseases, generic_names, forms, brand_names, manufacturers = load_data()
 
+# Debugging type and content of medicines data
+st.write("Type of medicines data:", type(medicines))
+st.write("Content of medicines data:", medicines)
+
 # Detect structure of medicines data
 medicine_fields = detect_structure(medicines)
 
@@ -94,13 +97,7 @@ if not medicine_fields:
     st.error("Invalid data format in medicines.json")
 
 # Create combined texts for each medicine
-combined_texts = [create_combined_text(item, medicine_fields) for item in medicines]
-
-# Debug the structure of medicines data
-st.write("Loaded medicines data:")
-st.write(medicines[:5])  # Display first 5 items for debugging
-st.write("Detected fields in medicines data:")
-st.write(medicine_fields)
+combined_texts = [create_combined_text(item, medicine_fields) for item in medicines if isinstance(item, dict)]
 
 # Print initial memory usage
 print_memory_usage()
