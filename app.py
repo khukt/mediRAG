@@ -3,6 +3,7 @@ from sentence_transformers import SentenceTransformer, util
 import json
 import psutil
 import torch
+import pandas as pd
 
 # Function to print memory usage in GB
 def print_memory_usage():
@@ -31,18 +32,36 @@ def load_data():
     
     return medicines, symptoms, diseases, generic_names, forms, brand_names, manufacturers
 
-# Detecting data structure
-def detect_structure(data):
-    if isinstance(data, list) and len(data) > 0:
-        return list(data[0].keys())
-    return []
+# Merge related data based on foreign keys
+def merge_data(medicines, generic_names, brand_names, manufacturers):
+    # Convert lists to DataFrames for easier manipulation
+    df_medicines = pd.DataFrame(medicines)
+    df_generic_names = pd.DataFrame(generic_names)
+    df_brand_names = pd.DataFrame(brand_names)
+    df_manufacturers = pd.DataFrame(manufacturers)
+
+    # Merge generic names
+    if 'generic_name_ids' in df_medicines.columns:
+        df_medicines = df_medicines.explode('generic_name_ids')
+        df_medicines = df_medicines.merge(df_generic_names, left_on='generic_name_ids', right_on='id', suffixes=('', '_generic')).drop(columns=['generic_name_ids', 'id_generic'])
+
+    # Merge brand names and manufacturers
+    if 'brands' in df_medicines.columns:
+        df_medicines = df_medicines.explode('brands')
+        df_brands = pd.json_normalize(df_medicines['brands'])
+        df_medicines = df_medicines.drop(columns=['brands']).reset_index(drop=True)
+        df_medicines = df_medicines.join(df_brands)
+        df_medicines = df_medicines.merge(df_brand_names, left_on='brand_id', right_on='id', suffixes=('', '_brand')).drop(columns=['brand_id', 'id_brand'])
+        df_medicines = df_medicines.merge(df_manufacturers, left_on='manufacturer_id', right_on='id', suffixes=('', '_manufacturer')).drop(columns=['manufacturer_id', 'id_manufacturer'])
+
+    return df_medicines
 
 # Load the pre-trained transformer model
 model = SentenceTransformer('all-MiniLM-L6-v2')  # Smaller, efficient model
 
 # Function to create combined text from various fields for retrieval
 def create_combined_text(item, fields):
-    combined_text = ' '.join([item.get(field, '') for field in fields]).lower()
+    combined_text = ' '.join([str(item.get(field, '')) for field in fields]).lower()
     return combined_text
 
 # Function to retrieve information
@@ -64,7 +83,7 @@ def retrieve_information(data, combined_texts, query, top_k=5):
         top_results = torch.topk(cos_scores, k=top_k)
 
         # Retrieve the top_k medicines
-        top_medicines = [data[idx] for idx in top_results.indices.tolist()]
+        top_medicines = [data.iloc[idx].to_dict() for idx in top_results.indices.tolist()]
         return top_medicines
     except Exception as e:
         st.error(f"An error occurred during information retrieval: {e}")
@@ -85,19 +104,18 @@ def generate_response(data, combined_texts, query):
 # Load the data
 medicines, symptoms, diseases, generic_names, forms, brand_names, manufacturers = load_data()
 
-# Debugging type and content of medicines data
-st.write("Type of medicines data:", type(medicines))
-st.write("Content of medicines data:", medicines)
+# Merge related data
+df_medicines = merge_data(medicines, generic_names, brand_names, manufacturers)
 
 # Detect structure of medicines data
-medicine_fields = detect_structure(medicines)
+medicine_fields = list(df_medicines.columns)
 
 # Validate data structure
 if not medicine_fields:
     st.error("Invalid data format in medicines.json")
 
 # Create combined texts for each medicine
-combined_texts = [create_combined_text(item, medicine_fields) for item in medicines if isinstance(item, dict)]
+combined_texts = [create_combined_text(row, medicine_fields) for _, row in df_medicines.iterrows()]
 
 # Print initial memory usage
 print_memory_usage()
@@ -113,7 +131,7 @@ query = st.text_input("Enter your query about medicine:")
 
 if query:
     # Generate a response based on the query
-    response = generate_response(medicines, combined_texts, query)
+    response = generate_response(df_medicines, combined_texts, query)
     
     # Display the response in the Streamlit app
     st.write(response)
