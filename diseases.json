@@ -1,19 +1,14 @@
 {
-    "diseases": [
-        {
-            "id": 1,
-            "name": "Flu",
-            "name_mm": "ဖလူးရောဂါ"
-        },
-        {
-            "id": 2,
-            "name": "Arthritis",
-            "name_mm": "အာသရိုက်တစ်ရောဂါ"
-        },
-        {
-            "id": 3,
-            "name": "Common Cold",
-            "name_mm": "အအေးမိရောဂါ"
-        }
-    ]
+  "diseases": [
+    {
+      "id": 1,
+      "name": "Common Cold",
+      "name_mm": "အအေးမိခြင်း"
+    },
+    {
+      "id": 2,
+      "name": "Flu",
+      "name_mm": "တုပ်ကွေး"
+    }
+  ]
 }
