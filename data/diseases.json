@@ -1,0 +1,14 @@
+{
+  "diseases": [
+    {
+      "id": 1,
+      "name": "Common Cold",
+      "name_mm": "အအေးမိခြင်း"
+    },
+    {
+      "id": 2,
+      "name": "Flu",
+      "name_mm": "တုပ်ကွေး"
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "symptoms": [
+    {
+      "id": 1,
+      "name": "Headache",
+      "name_mm": "ခေါင်းကိုက်"
+    },
+    {
+      "id": 2,
+      "name": "Fever",
+      "name_mm": "ဖျား"
+    }
+  ]
+}
