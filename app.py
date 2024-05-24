@@ -1,140 +1,70 @@
 import streamlit as st
 import json
 import pandas as pd
+import os
 
-# Function to load data from JSON files
-def load_json(filename):
-    with open(filename, 'r', encoding='utf-8') as file:
-        return json.load(file)
+# Function to load data from JSON files dynamically
+def load_data(folder):
+    data = {}
+    for filename in os.listdir(folder):
+        if filename.endswith(".json"):
+            table_name = filename.replace(".json", "")
+            with open(os.path.join(folder, filename), 'r', encoding='utf-8') as file:
+                data[table_name] = json.load(file)
+    return data
 
-# Load all data
-symptoms = load_json('symptoms.json')["symptoms"]
-generic_names = load_json('generic_names.json')["generic_names"]
-diseases = load_json('diseases.json')["diseases"]
-forms = load_json('forms.json')["forms"]
-brand_names = load_json('brand_names.json')["brand_names"]
-manufacturers = load_json('manufacturers.json')["manufacturers"]
-medicines = load_json('medicines.json')["medicines"]
+# Function to inspect data structure
+def inspect_data(data):
+    structure = {}
+    for table_name, content in data.items():
+        if isinstance(content, list) and len(content) > 0:
+            structure[table_name] = list(content[0].keys())
+        else:
+            structure[table_name] = []
+    return structure
 
-# Convert lists to DataFrames for easier manipulation
-df_symptoms = pd.DataFrame(symptoms)
-df_generic_names = pd.DataFrame(generic_names)
-df_diseases = pd.DataFrame(diseases)
-df_forms = pd.DataFrame(forms)
-df_brand_names = pd.DataFrame(brand_names)
-df_manufacturers = pd.DataFrame(manufacturers)
-df_medicines = pd.DataFrame(medicines)
+# Load all data from the 'data' folder
+data = load_data('data')
+data_structure = inspect_data(data)
 
-# Merge brands with manufacturers
-df_brand_names = df_brand_names.merge(df_manufacturers, left_on='manufacturer_id', right_on='id', suffixes=('', '_manufacturer')).drop(columns=['manufacturer_id'])
+# Display data structure for debugging
+st.write("Data Structure:", data_structure)
 
-# Expand brands in medicines
-df_medicines = df_medicines.explode('brands').reset_index(drop=True)
 
-# Normalize nested brand information in medicines
-brands_normalized = pd.json_normalize(df_medicines['brands'])
-df_medicines = df_medicines.drop(columns=['brands']).join(brands_normalized)
+# Function to normalize and merge data based on foreign keys
+def normalize_and_merge(data, data_structure):
+    df_dict = {table_name: pd.DataFrame(content) for table_name, content in data.items()}
 
-# Merge brand names into medicines
-df_medicines = df_medicines.merge(df_brand_names, left_on='brand_id', right_on='id', suffixes=('', '_brand')).drop(columns=['brand_id', 'id_brand'])
+    # Merging based on assumed foreign key convention (e.g., "table_id")
+    for table_name, columns in data_structure.items():
+        df = df_dict[table_name]
+        for col in columns:
+            if col.endswith("_id") and col[:-3] in data_structure:
+                foreign_table = col[:-3]
+                df = df.merge(df_dict[foreign_table], left_on=col, right_on="id", suffixes=('', f'_{foreign_table}')).drop(columns=[col, 'id_' + foreign_table])
 
-# Merge forms into medicines
-df_medicines = df_medicines.merge(df_forms, left_on='form_id', right_on='id', suffixes=('', '_form')).drop(columns=['form_id', 'id_form'])
+        df_dict[table_name] = df
 
-# Merge generic names into medicines
-df_medicines = df_medicines.explode('generic_name_ids').merge(df_generic_names, left_on='generic_name_ids', right_on='id', suffixes=('', '_generic')).drop(columns=['generic_name_ids', 'id_generic'])
+    return df_dict
 
-# Merge symptoms into medicines
-df_medicines = df_medicines.explode('symptom_ids').merge(df_symptoms, left_on='symptom_ids', right_on='id', suffixes=('', '_symptom')).drop(columns=['symptom_ids', 'id_symptom'])
+# Normalize and merge data
+df_dict = normalize_and_merge(data, data_structure)
 
-# Merge diseases into medicines
-df_medicines = df_medicines.explode('disease_ids').merge(df_diseases, left_on='disease_ids', right_on='id', suffixes=('', '_disease')).drop(columns(['disease_ids', 'id_disease']))
 
-# Function to create combined text for medicines
-def create_combined_text(row):
-    fields = [
-        'description', 'description_mm', 'mechanism_of_action', 'mechanism_of_action_mm', 
-        'indications', 'indications_mm', 'contraindications', 'contraindications_mm',
-        'warnings', 'warnings_mm', 'interactions', 'interactions_mm', 'side_effects',
-        'side_effects_mm', 'name', 'name_generic', 'name_brand', 'name_symptom',
-        'name_disease', 'additional_info', 'additional_info_mm'
-    ]
-    combined_text = ' '.join([str(row[field]) for field in fields if field in row])
-    return combined_text
+# Streamlit app to query data dynamically
+st.title("Dynamic Data Retrieval App")
 
-# Add combined text column
-df_medicines['combined_text'] = df_medicines.apply(create_combined_text, axis=1)
+# Select table to query
+selected_table = st.selectbox("Select Table", list(df_dict.keys()))
 
-# Function to retrieve data by medicine ID
-def get_medicine_by_id(medicine_id):
-    result = df_medicines[df_medicines['id'] == medicine_id]
-    return result.to_dict(orient='records')
+if selected_table:
+    df = df_dict[selected_table]
+    st.write(f"Columns in {selected_table}:", df.columns.tolist())
 
-# Function to retrieve medicines by symptom
-def get_medicines_by_symptom(symptom_name):
-    result = df_medicines[df_medicines.apply(lambda row: symptom_name.lower() in [str(s).lower() for s in row['symptom_ids']], axis=1)]
-    return result.drop_duplicates().to_dict(orient='records')
+    # Select column to filter
+    selected_column = st.selectbox("Select Column to Filter", df.columns)
+    filter_value = st.text_input(f"Enter value to filter {selected_column}")
 
-# Function to retrieve medicines by disease
-def get_medicines_by_disease(disease_name):
-    result = df_medicines[df_medicines.apply(lambda row: disease_name.lower() in [str(d).lower() for d in row['disease_ids']], axis=1)]
-    return result.drop_duplicates().to_dict(orient='records')
-
-# Function to retrieve medicines by generic name
-def get_medicines_by_generic_name(generic_name):
-    result = df_medicines[df_medicines.apply(lambda row: generic_name.lower() in [str(g).lower() for g in row['generic_name_ids']], axis=1)]
-    return result.drop_duplicates().to_dict(orient='records')
-
-# Function to retrieve medicines by brand name
-def get_medicines_by_brand_name(brand_name):
-    result = df_medicines[df_medicines['name'].str.contains(brand_name, case=False, na=False)]
-    return result.drop_duplicates().to_dict(orient='records')
-
-# Function to retrieve all details for a specific medicine
-def get_medicine_details(medicine_id):
-    medicine_details = get_medicine_by_id(medicine_id)
-    if not medicine_details:
-        return "No medicine found with the given ID."
-    return medicine_details
-
-# Streamlit App
-st.title("Medicine Information Retrieval")
-
-st.write("Use the options below to query the medicine database:")
-
-# Sidebar options
-query_type = st.sidebar.selectbox("Select Query Type", ["By ID", "By Symptom", "By Disease", "By Generic Name", "By Brand Name"])
-
-if query_type == "By ID":
-    medicine_id = st.sidebar.number_input("Enter Medicine ID", min_value=1)
-    if st.sidebar.button("Search"):
-        result = get_medicine_by_id(medicine_id)
+    if st.button("Search"):
+        result = df[df[selected_column].astype(str).str.contains(filter_value, case=False, na=False)]
         st.write(result)
-
-elif query_type == "By Symptom":
-    symptom_name = st.sidebar.selectbox("Select Symptom Name", df_symptoms['name'].tolist())
-    if st.sidebar.button("Search"):
-        result = get_medicines_by_symptom(symptom_name)
-        st.write(result)
-
-elif query_type == "By Disease":
-    disease_name = st.sidebar.selectbox("Select Disease Name", df_diseases['name'].tolist())
-    if st.sidebar.button("Search"):
-        result = get_medicines_by_disease(disease_name)
-        st.write(result)
-
-elif query_type == "By Generic Name":
-    generic_name = st.sidebar.selectbox("Select Generic Name", df_generic_names['name'].tolist())
-    if st.sidebar.button("Search"):
-        result = get_medicines_by_generic_name(generic_name)
-        st.write(result)
-
-elif query_type == "By Brand Name":
-    brand_name = st.sidebar.selectbox("Select Brand Name", df_brand_names['name'].tolist())
-    if st.sidebar.button("Search"):
-        result = get_medicines_by_brand_name(brand_name)
-        st.write(result)
-
-# Debugging Information
-st.write("Columns in df_medicines:", df_medicines.columns)
-st.write("Sample data in df_medicines:", df_medicines.head())
