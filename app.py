@@ -14,7 +14,7 @@ def print_memory_usage():
 # Function to load data from JSON
 def load_json(filename):
     try:
-        with open(filename, 'r') as file:
+        with open(filename, 'r', encoding='utf-8') as file:
             return json.load(file)
     except Exception as e:
         st.error(f"Error loading {filename}: {e}")
@@ -98,7 +98,7 @@ def generate_response(data, combined_texts, query):
     else:
         response = "Here are the details:\n"
         for item in relevant_data:
-            response += json.dumps(item, indent=2) + "\n"
+            response += json.dumps(item, indent=2, ensure_ascii=False) + "\n"
         return response
 
 # Load the data
