@@ -39,13 +39,13 @@ df_medicines = df_medicines.drop(columns=['brands']).join(brands_normalized)
 df_medicines = df_medicines.merge(df_brand_names, left_on='brand_id', right_on='id', suffixes=('', '_brand')).drop(columns=['brand_id', 'id_brand'])
 
 # Merge forms into medicines
-df_medicines = df_medicines.merge(df_forms, left_on='form_id', right_on='id', suffixes=('', '_form')).drop(columns=['form_id', 'id_form'])
+df_medicines = df_medicines.merge(df_forms, left_on='form_id', right_on='id', suffixes=('', '_form')).drop(columns(['form_id', 'id_form']))
 
 # Merge generic names into medicines
-df_medicines = df_medicines.explode('generic_name_ids').merge(df_generic_names, left_on='generic_name_ids', right_on='id', suffixes=('', '_generic')).drop(columns=['generic_name_ids', 'id_generic'])
+df_medicines = df_medicines.explode('generic_name_ids').merge(df_generic_names, left_on='generic_name_ids', right_on='id', suffixes=('', '_generic')).drop(columns(['generic_name_ids', 'id_generic']))
 
 # Merge symptoms into medicines
-df_medicines = df_medicines.explode('symptom_ids').merge(df_symptoms, left_on='symptom_ids', right_on='id', suffixes=('', '_symptom')).drop(columns=['symptom_ids', 'id_symptom'])
+df_medicines = df_medicines.explode('symptom_ids').merge(df_symptoms, left_on='symptom_ids', right_on='id', suffixes=('', '_symptom')).drop(columns(['symptom_ids', 'id_symptom']))
 
 # Merge diseases into medicines
 df_medicines = df_medicines.explode('disease_ids').merge(df_diseases, left_on='disease_ids', right_on='id', suffixes=('', '_disease')).drop(columns(['disease_ids', 'id_disease']))
@@ -112,25 +112,29 @@ if query_type == "By ID":
         st.write(result)
 
 elif query_type == "By Symptom":
-    symptom_name = st.sidebar.text_input("Enter Symptom Name")
+    symptom_name = st.sidebar.selectbox("Select Symptom Name", df_symptoms['name'].tolist())
     if st.sidebar.button("Search"):
         result = get_medicines_by_symptom(symptom_name)
         st.write(result)
 
 elif query_type == "By Disease":
-    disease_name = st.sidebar.text_input("Enter Disease Name")
+    disease_name = st.sidebar.selectbox("Select Disease Name", df_diseases['name'].tolist())
     if st.sidebar.button("Search"):
         result = get_medicines_by_disease(disease_name)
         st.write(result)
 
 elif query_type == "By Generic Name":
-    generic_name = st.sidebar.text_input("Enter Generic Name")
+    generic_name = st.sidebar.selectbox("Select Generic Name", df_generic_names['name'].tolist())
     if st.sidebar.button("Search"):
         result = get_medicines_by_generic_name(generic_name)
         st.write(result)
 
 elif query_type == "By Brand Name":
-    brand_name = st.sidebar.text_input("Enter Brand Name")
+    brand_name = st.sidebar.selectbox("Select Brand Name", df_brand_names['name'].tolist())
     if st.sidebar.button("Search"):
         result = get_medicines_by_brand_name(brand_name)
         st.write(result)
+
+# Debugging Information
+st.write("Columns in df_medicines:", df_medicines.columns)
+st.write("Sample data in df_medicines:", df_medicines.head())
