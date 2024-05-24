@@ -96,7 +96,10 @@ def generate_response(data, combined_texts, query):
     if not relevant_data:
         return "No relevant information found for your query."
     else:
-        return relevant_data
+        response = "Here are the details:\n"
+        for item in relevant_data:
+            response += json.dumps(item, indent=2, ensure_ascii=False) + "\n"
+        return response
 
 # Load the data
 medicines, symptoms, diseases, generic_names, forms, brand_names, manufacturers = load_data()
@@ -128,29 +131,10 @@ query = st.text_input("Enter your query about medicine:")
 
 if query:
     # Generate a response based on the query
-    relevant_data = generate_response(df_medicines, combined_texts, query)
+    response = generate_response(df_medicines, combined_texts, query)
     
-    # Display the response in a structured format
-    if relevant_data:
-        for item in relevant_data:
-            st.subheader(f"Medicine ID: {item.get('id')}")
-            st.write(f"**Description**: {item.get('description', 'N/A')}")
-            st.write(f"**Description (MM)**: {item.get('description_mm', 'N/A')}")
-            st.write(f"**Mechanism of Action**: {item.get('mechanism_of_action', 'N/A')}")
-            st.write(f"**Mechanism of Action (MM)**: {item.get('mechanism_of_action_mm', 'N/A')}")
-            st.write(f"**Indications**: {', '.join(item.get('indications', []))}")
-            st.write(f"**Indications (MM)**: {', '.join(item.get('indications_mm', []))}")
-            st.write(f"**Contraindications**: {', '.join(item.get('contraindications', []))}")
-            st.write(f"**Contraindications (MM)**: {', '.join(item.get('contraindications_mm', []))}")
-            st.write(f"**Warnings**: {', '.join(item.get('warnings', []))}")
-            st.write(f"**Warnings (MM)**: {', '.join(item.get('warnings_mm', []))}")
-            st.write(f"**Interactions**: {', '.join(item.get('interactions', []))}")
-            st.write(f"**Interactions (MM)**: {', '.join(item.get('interactions_mm', []))}")
-            st.write(f"**Side Effects**: {', '.join(item.get('side_effects', []))}")
-            st.write(f"**Side Effects (MM)**: {', '.join(item.get('side_effects_mm', []))}")
-            st.write(f"**Additional Info**: {item.get('additional_info', 'N/A')}")
-            st.write(f"**Additional Info (MM)**: {item.get('additional_info_mm', 'N/A')}")
-            st.write("---")
+    # Display the response in the Streamlit app
+    st.write(response)
     
     # Print memory usage after processing the query
     print_memory_usage()
