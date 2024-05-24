@@ -1,24 +1,14 @@
 {
-    "forms": [
-        {
-            "id": 1,
-            "name": "Tablet",
-            "name_mm": "ပြား"
-        },
-        {
-            "id": 2,
-            "name": "Capsule",
-            "name_mm": "ပွား"
-        },
-        {
-            "id": 3,
-            "name": "Syrup",
-            "name_mm": "ဆာရပ်"
-        },
-        {
-            "id": 4,
-            "name": "Injection",
-            "name_mm": "ထိုးဆေး"
-        }
-    ]
+  "forms": [
+    {
+      "id": 1,
+      "name": "Tablet",
+      "name_mm": "လက်ဖက်ရည်"
+    },
+    {
+      "id": 2,
+      "name": "Syrup",
+      "name_mm": "ရည်ဆေး"
+    }
+  ]
 }
