@@ -1,19 +1,14 @@
 {
-    "symptoms": [
-        {
-            "id": 1,
-            "name": "Headache",
-            "name_mm": "ခေါင်းကိုက်"
-        },
-        {
-            "id": 2,
-            "name": "Fever",
-            "name_mm": "ဖျားခြင်း"
-        },
-        {
-            "id": 3,
-            "name": "Inflammation",
-            "name_mm": "ရောင်ရမ်းခြင်း"
-        }
-    ]
+  "symptoms": [
+    {
+      "id": 1,
+      "name": "Headache",
+      "name_mm": "ခေါင်းကိုက်"
+    },
+    {
+      "id": 2,
+      "name": "Fever",
+      "name_mm": "ဖျား"
+    }
+  ]
 }
