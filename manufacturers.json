@@ -1,22 +1,22 @@
 {
-    "manufacturers": [
-        {
-            "id": 1,
-            "name": "GlaxoSmithKline",
-            "contact_info": {
-                "phone": "+1234567890",
-                "email": "info@gsk.com",
-                "address": "123 Pharma Street, London, UK"
-            }
-        },
-        {
-            "id": 2,
-            "name": "Pfizer",
-            "contact_info": {
-                "phone": "+0987654321",
-                "email": "info@pfizer.com",
-                "address": "456 Medicine Avenue, New York, USA"
-            }
-        }
-    ]
+  "manufacturers": [
+    {
+      "id": 1,
+      "name": "Johnson & Johnson",
+      "contact_info": {
+        "phone": "+1234567890",
+        "email": "contact@jnj.com",
+        "address": "123 Main St, New York, NY"
+      }
+    },
+    {
+      "id": 2,
+      "name": "Pfizer",
+      "contact_info": {
+        "phone": "+0987654321",
+        "email": "info@pfizer.com",
+        "address": "456 Elm St, New York, NY"
+      }
+    }
+  ]
 }
