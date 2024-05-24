@@ -30,6 +30,7 @@ data_structure = inspect_data(data)
 # Display data structure for debugging
 st.write("Data Structure:", data_structure)
 
+
 # Function to normalize and merge data based on foreign keys
 def normalize_and_merge(data, data_structure):
     df_dict = {table_name: pd.DataFrame(content) for table_name, content in data.items()}
@@ -40,7 +41,8 @@ def normalize_and_merge(data, data_structure):
         for col in columns:
             if col.endswith("_id") and col[:-3] in data_structure:
                 foreign_table = col[:-3]
-                df = df.merge(df_dict[foreign_table], left_on=col, right_on="id", suffixes=('', f'_{foreign_table}')).drop(columns=[col, 'id_' + foreign_table])
+                df = df.merge(df_dict[foreign_table], left_on=col, right_on="id", suffixes=('', f'_{foreign_table}'))
+                df = df.drop(columns=[col, 'id_' + foreign_table])
 
         df_dict[table_name] = df
 
@@ -48,7 +50,6 @@ def normalize_and_merge(data, data_structure):
 
 # Normalize and merge data
 df_dict = normalize_and_merge(data, data_structure)
-
 
 # Streamlit app to query data dynamically
 st.title("Dynamic Data Retrieval App")
@@ -68,4 +69,14 @@ if selected_table:
         result = df[df[selected_column].astype(str).str.contains(filter_value, case=False, na=False)]
         st.write(result)
 
+# Function to replace IDs with real names
+def replace_ids_with_names(df, data_structure, df_dict):
+    for col in df.columns:
+        if col.endswith("_id") and col[:-3] in data_structure:
+            foreign_table = col[:-3]
+            foreign_df = df_dict[foreign_table].set_index('id')
+            df[col] = df[col].map(foreign_df['name'])
+    return df
 
+# Replace IDs with real names in all DataFrames
+df_dict = {table_name: replace_ids_with_names(df, data_structure, df_dict) for table_name, df in df_dict.items()}
