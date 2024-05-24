@@ -30,7 +30,6 @@ data_structure = inspect_data(data)
 # Display data structure for debugging
 st.write("Data Structure:", data_structure)
 
-
 # Function to normalize and merge data based on foreign keys
 def normalize_and_merge(data, data_structure):
     df_dict = {table_name: pd.DataFrame(content) for table_name, content in data.items()}
@@ -68,3 +67,5 @@ if selected_table:
     if st.button("Search"):
         result = df[df[selected_column].astype(str).str.contains(filter_value, case=False, na=False)]
         st.write(result)
+
+
