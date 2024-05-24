@@ -1,202 +1,137 @@
 import streamlit as st
-from sentence_transformers import SentenceTransformer, util
 import json
-import psutil
-import torch
 import pandas as pd
-from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
-import numpy as np
 
-# Function to print memory usage in GB
-def print_memory_usage():
-    process = psutil.Process()
-    mem_info = process.memory_info()
-    st.write(f"RSS: {mem_info.rss / (1024 ** 3):.2f} GB, VMS: {mem_info.vms / (1024 ** 3):.2f} GB")
-
-# Function to load data from JSON
+# Function to load data from JSON files
 def load_json(filename):
-    try:
-        with open(filename, 'r', encoding='utf-8') as file:
-            return json.load(file)
-    except Exception as e:
-        st.error(f"Error loading {filename}: {e}")
-        return []
+    with open(filename, 'r', encoding='utf-8') as file:
+        return json.load(file)
 
-# Function to load all data
-def load_data():
-    medicines = load_json('medicines.json')
-    symptoms = load_json('symptoms.json')
-    diseases = load_json('diseases.json')
-    generic_names = load_json('generic_names.json')
-    forms = load_json('forms.json')
-    brand_names = load_json('brand_names.json')
-    manufacturers = load_json('manufacturers.json')
-    
-    return medicines, symptoms, diseases, generic_names, forms, brand_names, manufacturers
+# Load all data
+symptoms = load_json('symptoms.json')["symptoms"]
+generic_names = load_json('generic_names.json')["generic_names"]
+diseases = load_json('diseases.json')["diseases"]
+forms = load_json('forms.json')["forms"]
+brand_names = load_json('brand_names.json')["brand_names"]
+manufacturers = load_json('manufacturers.json')["manufacturers"]
+medicines = load_json('medicines.json')["medicines"]
 
-# Merge related data based on foreign keys
-def merge_data(medicines, generic_names, brand_names, manufacturers):
-    # Convert lists to DataFrames for easier manipulation
-    df_medicines = pd.DataFrame(medicines)
-    df_generic_names = pd.DataFrame(generic_names)
-    df_brand_names = pd.DataFrame(brand_names)
-    df_manufacturers = pd.DataFrame(manufacturers)
+# Convert lists to DataFrames for easier manipulation
+df_symptoms = pd.DataFrame(symptoms)
+df_generic_names = pd.DataFrame(generic_names)
+df_diseases = pd.DataFrame(diseases)
+df_forms = pd.DataFrame(forms)
+df_brand_names = pd.DataFrame(brand_names)
+df_manufacturers = pd.DataFrame(manufacturers)
+df_medicines = pd.DataFrame(medicines)
 
-    # Merge generic names
-    if 'generic_name_ids' in df_medicines.columns:
-        df_medicines = df_medicines.explode('generic_name_ids')
-        df_medicines = df_medicines.merge(df_generic_names, left_on='generic_name_ids', right_on='id', suffixes=('', '_generic')).drop(columns=['generic_name_ids', 'id_generic'])
+# Merge brands with manufacturers
+df_brand_names = df_brand_names.merge(df_manufacturers, left_on='manufacturer_id', right_on='id', suffixes=('', '_manufacturer')).drop(columns=['manufacturer_id'])
 
-    # Merge brand names and manufacturers
-    if 'brands' in df_medicines.columns:
-        df_medicines = df_medicines.explode('brands')
-        df_brands = pd.json_normalize(df_medicines['brands'])
-        df_medicines = df_medicines.drop(columns=['brands']).reset_index(drop=True)
-        df_medicines = df_medicines.join(df_brands)
-        df_medicines = df_medicines.merge(df_brand_names, left_on='brand_id', right_on='id', suffixes=('', '_brand')).drop(columns=['brand_id', 'id_brand'])
-        df_medicines = df_medicines.merge(df_manufacturers, left_on='manufacturer_id', right_on='id', suffixes=('', '_manufacturer')).drop(columns=['manufacturer_id', 'id_manufacturer'])
+# Expand brands in medicines
+df_medicines = df_medicines.explode('brands').reset_index(drop=True)
 
-    return df_medicines
+# Normalize nested brand information in medicines
+brands_normalized = pd.json_normalize(df_medicines['brands'])
+df_medicines = df_medicines.drop(columns=['brands']).join(brands_normalized)
 
-# Load the pre-trained transformer model
-model = SentenceTransformer('all-MiniLM-L6-v2')  # Smaller, efficient model
+# Merge brand names into medicines
+df_medicines = df_medicines.merge(df_brand_names, left_on='brand_id', right_on='id', suffixes=('', '_brand')).drop(columns=['brand_id', 'id_brand'])
 
-# Function to create combined text from various fields for retrieval
-def create_combined_text(item, fields):
-    combined_text = ' '.join([str(item.get(field, '')) for field in fields]).lower()
+# Merge forms into medicines
+df_medicines = df_medicines.merge(df_forms, left_on='form_id', right_on='id', suffixes=('', '_form')).drop(columns=['form_id', 'id_form'])
+
+# Merge generic names into medicines
+df_medicines = df_medicines.explode('generic_name_ids').merge(df_generic_names, left_on='generic_name_ids', right_on='id', suffixes=('', '_generic')).drop(columns=['generic_name_ids', 'id_generic'])
+
+# Merge symptoms into medicines
+df_medicines = df_medicines.explode('symptom_ids').merge(df_symptoms, left_on='symptom_ids', right_on='id', suffixes=('', '_symptom')).drop(columns=['symptom_ids', 'id_symptom'])
+
+# Merge diseases into medicines
+df_medicines = df_medicines.explode('disease_ids').merge(df_diseases, left_on='disease_ids', right_on='id', suffixes=('', '_disease')).drop(columns=['disease_ids', 'id_disease'])
+
+# Function to create combined text for medicines
+def create_combined_text(row):
+    fields = [
+        'description', 'description_mm', 'mechanism_of_action', 'mechanism_of_action_mm', 
+        'indications', 'indications_mm', 'contraindications', 'contraindications_mm',
+        'warnings', 'warnings_mm', 'interactions', 'interactions_mm', 'side_effects',
+        'side_effects_mm', 'name', 'name_generic', 'name_brand', 'name_symptom',
+        'name_disease', 'additional_info', 'additional_info_mm'
+    ]
+    combined_text = ' '.join([str(row[field]) for field in fields if field in row])
     return combined_text
 
-# Function to classify the type of query
-def classify_query(query):
-    symptoms_keywords = ['headache', 'fever', 'cough', 'pain', 'symptoms', 'ache']
-    medicine_keywords = ['medicine', 'treatment', 'medication']
-    comparison_keywords = ['difference', 'compare', 'versus', 'vs']
+# Add combined text column
+df_medicines['combined_text'] = df_medicines.apply(create_combined_text, axis=1)
 
-    if any(keyword in query.lower() for keyword in symptoms_keywords):
-        return 'symptom'
-    elif any(keyword in query.lower() for keyword in comparison_keywords):
-        return 'comparison'
-    else:
-        return 'medicine'
+# Function to retrieve data by medicine ID
+def get_medicine_by_id(medicine_id):
+    result = df_medicines[df_medicines['id'] == medicine_id]
+    return result.to_dict(orient='records')
 
-# Function to handle symptom queries
-def handle_symptom_query(query, symptoms_df):
-    try:
-        if 'description' not in symptoms_df.columns:
-            st.error("The symptoms dataset does not contain a 'description' field.")
-            return pd.DataFrame()
-        
-        vectorizer = CountVectorizer().fit_transform(symptoms_df['description'].tolist())
-        vectors = vectorizer.toarray()
-        query_vector = vectorizer.transform([query]).toarray()
-        cosine_similarities = cosine_similarity(query_vector, vectors).flatten()
-        related_docs_indices = cosine_similarities.argsort()[:-5:-1]
-        return symptoms_df.iloc[related_docs_indices]
-    except Exception as e:
-        st.error(f"An error occurred while handling symptom query: {e}")
-        return pd.DataFrame()
+# Function to retrieve medicines by symptom
+def get_medicines_by_symptom(symptom_name):
+    result = df_medicines[df_medicines['name_symptom'].str.contains(symptom_name, case=False)]
+    return result.to_dict(orient='records')
 
-# Function to handle comparison queries
-def handle_comparison_query(query, medicines_df):
-    # Extract medicine names from the query
-    medicines_in_query = [name for name in medicines_df['name'].tolist() if name.lower() in query.lower()]
-    if len(medicines_in_query) < 2:
-        return "Please specify two medicines to compare."
+# Function to retrieve medicines by disease
+def get_medicines_by_disease(disease_name):
+    result = df_medicines[df_medicines['name_disease'].str.contains(disease_name, case=False)]
+    return result.to_dict(orient='records')
 
-    # Retrieve information for the specified medicines
-    results = medicines_df[medicines_df['name'].str.lower().isin([med.lower() for med in medicines_in_query])]
-    return results
+# Function to retrieve medicines by generic name
+def get_medicines_by_generic_name(generic_name):
+    result = df_medicines[df_medicines['name_generic'].str.contains(generic_name, case=False)]
+    return result.to_dict(orient='records')
 
-# Function to handle general medicine queries
-def handle_medicine_query(query, combined_texts, medicines_df):
-    try:
-        # Encode the query
-        query_embedding = model.encode(query.lower(), convert_to_tensor=True)
+# Function to retrieve medicines by brand name
+def get_medicines_by_brand_name(brand_name):
+    result = df_medicines[df_medicines['name_brand'].str.contains(brand_name, case=False)]
+    return result.to_dict(orient='records')
 
-        # Encode the combined texts
-        doc_embeddings = model.encode(combined_texts, convert_to_tensor=True)
+# Function to retrieve all details for a specific medicine
+def get_medicine_details(medicine_id):
+    medicine_details = get_medicine_by_id(medicine_id)
+    if not medicine_details:
+        return "No medicine found with the given ID."
+    return medicine_details
 
-        # Compute cosine similarities
-        cos_scores = util.pytorch_cos_sim(query_embedding, doc_embeddings)[0]
+# Streamlit App
 
-        # Ensure top_k does not exceed the number of available documents
-        top_k = min(5, len(medicines_df))
-
-        # Get the top_k results
-        top_results = torch.topk(cos_scores, k=top_k)
-
-        # Retrieve the top_k medicines
-        top_medicines = [medicines_df.iloc[idx].to_dict() for idx in top_results.indices.tolist()]
-        return top_medicines
-    except Exception as e:
-        st.error(f"An error occurred during information retrieval: {e}")
-        return []
-
-# Function to generate response based on query type
-def generate_response(query, medicines_df, symptoms_df, combined_texts):
-    query_type = classify_query(query)
-    
-    if query_type == 'symptom':
-        relevant_data = handle_symptom_query(query, symptoms_df)
-        if relevant_data.empty:
-            return "No relevant information found for your symptom query."
-        response = "Based on your symptoms, here are some related medicines:\n"
-        for item in relevant_data.to_dict(orient='records'):
-            response += json.dumps(item, indent=2, ensure_ascii=False) + "\n"
-        return response
-    elif query_type == 'comparison':
-        relevant_data = handle_comparison_query(query, medicines_df)
-        if isinstance(relevant_data, str):
-            return relevant_data
-        response = "Here is the comparison between the medicines:\n"
-        for item in relevant_data.to_dict(orient='records'):
-            response += json.dumps(item, indent=2, ensure_ascii=False) + "\n"
-        return response
-    else:
-        relevant_data = handle_medicine_query(query, combined_texts, medicines_df)
-        if not relevant_data:
-            return "No relevant information found for your medicine query."
-        response = "Here are the details about the medicine:\n"
-        for item in relevant_data:
-            response += json.dumps(item, indent=2, ensure_ascii=False) + "\n"
-        return response
-
-# Load the data
-medicines, symptoms, diseases, generic_names, forms, brand_names, manufacturers = load_data()
-
-# Merge related data
-df_medicines = merge_data(medicines, generic_names, brand_names, manufacturers)
-df_symptoms = pd.DataFrame(symptoms)
-
-# Detect structure of medicines data
-medicine_fields = list(df_medicines.columns)
-
-# Validate data structure
-if not medicine_fields:
-    st.error("Invalid data format in medicines.json")
-
-# Create combined texts for each medicine
-combined_texts = [create_combined_text(row, medicine_fields) for _, row in df_medicines.iterrows()]
-
-# Print initial memory usage
-print_memory_usage()
-
-# Title of the Streamlit app
 st.title("Medicine Information Retrieval")
 
-# Instructions for the user
-st.write("Enter your query about medicine in the input box below. You can ask about symptoms, specific medicines, or compare different medicines.")
+st.write("Use the options below to query the medicine database:")
 
-# Input text box for user query
-query = st.text_input("Enter your query about medicine:")
+# Sidebar options
+query_type = st.sidebar.selectbox("Select Query Type", ["By ID", "By Symptom", "By Disease", "By Generic Name", "By Brand Name"])
 
-if query:
-    # Generate a response based on the query
-    response = generate_response(query, df_medicines, df_symptoms, combined_texts)
-    
-    # Display the response in the Streamlit app
-    st.write(response)
-    
-    # Print memory usage after processing the query
-    print_memory_usage()
+if query_type == "By ID":
+    medicine_id = st.sidebar.number_input("Enter Medicine ID", min_value=1)
+    if st.sidebar.button("Search"):
+        result = get_medicine_by_id(medicine_id)
+        st.write(result)
+
+elif query_type == "By Symptom":
+    symptom_name = st.sidebar.text_input("Enter Symptom Name")
+    if st.sidebar.button("Search"):
+        result = get_medicines_by_symptom(symptom_name)
+        st.write(result)
+
+elif query_type == "By Disease":
+    disease_name = st.sidebar.text_input("Enter Disease Name")
+    if st.sidebar.button("Search"):
+        result = get_medicines_by_disease(disease_name)
+        st.write(result)
+
+elif query_type == "By Generic Name":
+    generic_name = st.sidebar.text_input("Enter Generic Name")
+    if st.sidebar.button("Search"):
+        result = get_medicines_by_generic_name(generic_name)
+        st.write(result)
+
+elif query_type == "By Brand Name":
+    brand_name = st.sidebar.text_input("Enter Brand Name")
+    if st.sidebar.button("Search"):
+        result = get_medicines_by_brand_name(brand_name)
+        st.write(result)
