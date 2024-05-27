@@ -1,14 +1,6 @@
 {
   "forms": [
-    {
-      "id": 1,
-      "name": "Tablet",
-      "name_mm": "လက်ဖက်ရည်"
-    },
-    {
-      "id": 2,
-      "name": "Syrup",
-      "name_mm": "ရည်ဆေး"
-    }
+    { "id": 1, "name": "Tablet", "name_mm": "ဆေးပြား" },
+    { "id": 2, "name": "Syrup", "name_mm": "ရည်ဆေး" }
   ]
 }
