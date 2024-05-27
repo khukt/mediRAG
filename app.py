@@ -43,12 +43,11 @@ def normalize_and_merge(data, data_structure):
         if intermediate_table in df_dict:
             df = df_dict[intermediate_table]
             main_table = intermediate_table.split('_to_')[1]
-            if main_table in df_dict:
-                for col in df.columns:
-                    if col.endswith("_id") and col[:-3] in data_structure:
-                        foreign_table = col[:-3]
-                        df = df.merge(df_dict[foreign_table], left_on=col, right_on="id", suffixes=('', f'_{foreign_table}')).drop(columns=[col, 'id_' + foreign_table])
-                df_dict[main_table] = df_dict[main_table].merge(df, how='left', left_on='id', right_on=f'{main_table}_id').drop(columns=[f'{main_table}_id'])
+            for col in df.columns:
+                if col.endswith("_id") and col[:-3] in data_structure:
+                    foreign_table = col[:-3]
+                    df = df.merge(df_dict[foreign_table], left_on=col, right_on="id", suffixes=('', f'_{foreign_table}')).drop(columns=[col, 'id_' + foreign_table])
+            df_dict[main_table] = df_dict[main_table].merge(df, how='left', left_on='id', right_on=f'{main_table}_id').drop(columns=[f'{main_table}_id'])
 
     # Handling one-to-many and many-to-one relationships
     for table_name, columns in data_structure.items():
@@ -58,7 +57,6 @@ def normalize_and_merge(data, data_structure):
                 foreign_table = col[:-3]
                 df = df.merge(df_dict[foreign_table], left_on=col, right_on="id", suffixes=('', f'_{foreign_table}'))
                 df = df.drop(columns=[col, 'id_' + foreign_table])
-
         df_dict[table_name] = df
 
     return df_dict
@@ -86,23 +84,32 @@ if selected_table:
 
         # Display related data
         if selected_table == "diseases":
-            related_medicines = df_dict["medicines"][df_dict["medicines"]["id"].isin(result["id"])]
-            related_symptoms = df_dict["symptoms"][df_dict["symptoms"]["id"].isin(result["id"])]
+            related_medicines_ids = df_dict["disease_to_medicine"]["medicine_id"][df_dict["disease_to_medicine"]["disease_id"].isin(result["id"])].unique()
+            related_medicines = df_dict["medicines"][df_dict["medicines"]["id"].isin(related_medicines_ids)]
+            related_symptoms_ids = df_dict["symptom_to_medicine"]["symptom_id"][df_dict["symptom_to_medicine"]["medicine_id"].isin(related_medicines_ids)].unique()
+            related_symptoms = df_dict["symptoms"][df_dict["symptoms"]["id"].isin(related_symptoms_ids)]
             st.write("Related Medicines:", related_medicines)
             st.write("Related Symptoms:", related_symptoms)
         elif selected_table == "symptoms":
-            related_diseases = df_dict["diseases"][df_dict["diseases"]["id"].isin(result["id"])]
-            related_medicines = df_dict["medicines"][df_dict["medicines"]["id"].isin(result["id"])]
+            related_medicines_ids = df_dict["symptom_to_medicine"]["medicine_id"][df_dict["symptom_to_medicine"]["symptom_id"].isin(result["id"])].unique()
+            related_medicines = df_dict["medicines"][df_dict["medicines"]["id"].isin(related_medicines_ids)]
+            related_diseases_ids = df_dict["disease_to_medicine"]["disease_id"][df_dict["disease_to_medicine"]["medicine_id"].isin(related_medicines_ids)].unique()
+            related_diseases = df_dict["diseases"][df_dict["diseases"]["id"].isin(related_diseases_ids)]
             st.write("Related Diseases:", related_diseases)
             st.write("Related Medicines:", related_medicines)
         elif selected_table == "medicines":
-            related_generic_names = df_dict["generic_names"][df_dict["generic_names"]["id"].isin(result["id"])]
-            related_brands = df_dict["brand_names"][df_dict["brand_names"]["id"].isin(result["id"])]
-            related_indications = df_dict["indications"][df_dict["indications"]["id"].isin(result["id"])]
-            related_contraindications = df_dict["contraindications"][df_dict["contraindications"]["id"].isin(result["id"])]
-            related_warnings = df_dict["warnings"][df_dict["warnings"]["id"].isin(result["id"])]
-            related_interactions = df_dict["interactions"][df_dict["interactions"]["id"].isin(result["id"])]
-            related_side_effects = df_dict["side_effects"][df_dict["side_effects"]["id"].isin(result["id"])]
+            related_generic_names = df_dict["generic_names"][df_dict["generic_names"]["id"].isin(result["generic_name_id"])]
+            related_brands = df_dict["brand_names"][df_dict["brand_names"]["id"].isin(result["brand_id"])]
+            related_indications_ids = df_dict["indication_to_medicine"]["indication_id"][df_dict["indication_to_medicine"]["medicine_id"].isin(result["id"])].unique()
+            related_indications = df_dict["indications"][df_dict["indications"]["id"].isin(related_indications_ids)]
+            related_contraindications_ids = df_dict["contraindication_to_medicine"]["contraindication_id"][df_dict["contraindication_to_medicine"]["medicine_id"].isin(result["id"])].unique()
+            related_contraindications = df_dict["contraindications"][df_dict["contraindications"]["id"].isin(related_contraindications_ids)]
+            related_warnings_ids = df_dict["warning_to_medicine"]["warning_id"][df_dict["warning_to_medicine"]["medicine_id"].isin(result["id"])].unique()
+            related_warnings = df_dict["warnings"][df_dict["warnings"]["id"].isin(related_warnings_ids)]
+            related_interactions_ids = df_dict["interaction_to_medicine"]["interaction_id"][df_dict["interaction_to_medicine"]["medicine_id"].isin(result["id"])].unique()
+            related_interactions = df_dict["interactions"][df_dict["interactions"]["id"].isin(related_interactions_ids)]
+            related_side_effects_ids = df_dict["side_effect_to_medicine"]["side_effect_id"][df_dict["side_effect_to_medicine"]["medicine_id"].isin(result["id"])].unique()
+            related_side_effects = df_dict["side_effects"][df_dict["side_effects"]["id"].isin(related_side_effects_ids)]
             st.write("Related Generic Names:", related_generic_names)
             st.write("Related Brands:", related_brands)
             st.write("Related Indications:", related_indications)
@@ -110,4 +117,3 @@ if selected_table:
             st.write("Related Warnings:", related_warnings)
             st.write("Related Interactions:", related_interactions)
             st.write("Related Side Effects:", related_side_effects)
-
