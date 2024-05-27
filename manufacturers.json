@@ -1,22 +1,6 @@
 {
   "manufacturers": [
-    {
-      "id": 1,
-      "name": "Johnson & Johnson",
-      "contact_info": {
-        "phone": "+1234567890",
-        "email": "contact@jnj.com",
-        "address": "123 Main St, New York, NY"
-      }
-    },
-    {
-      "id": 2,
-      "name": "Pfizer",
-      "contact_info": {
-        "phone": "+0987654321",
-        "email": "info@pfizer.com",
-        "address": "456 Elm St, New York, NY"
-      }
-    }
+    { "id": 1, "name": "Johnson & Johnson", "name_mm": "ဂျွန်ဆင်နှင့်ဂျွန်ဆင်" },
+    { "id": 2, "name": "Pfizer", "name_mm": "ဖိုင်ဇာ" }
   ]
 }
