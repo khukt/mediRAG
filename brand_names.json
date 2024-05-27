@@ -1,16 +1,6 @@
 {
   "brand_names": [
-    {
-      "id": 1,
-      "name": "Tylenol",
-      "name_mm": "တိုင်းလွန်",
-      "manufacturer_id": 1
-    },
-    {
-      "id": 2,
-      "name": "Advil",
-      "name_mm": "အက်ဒဗေးလ်",
-      "manufacturer_id": 2
-    }
+    { "id": 1, "name": "Tylenol", "name_mm": "တိုင်းနော်", "manufacturer_id": 1 },
+    { "id": 2, "name": "Advil", "name_mm": "အဒ်ဗီးလ်", "manufacturer_id": 2 }
   ]
 }
