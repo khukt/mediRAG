@@ -1,0 +1,8 @@
+{
+  "side_effect_to_medicine": [
+    { "side_effect_id": 1, "medicine_id": 1 },
+    { "side_effect_id": 2, "medicine_id": 1 },
+    { "side_effect_id": 3, "medicine_id": 2 },
+    { "side_effect_id": 4, "medicine_id": 2 }
+  ]
+}
