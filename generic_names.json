@@ -1,14 +1,6 @@
 {
   "generic_names": [
-    {
-      "id": 1,
-      "name": "Paracetamol",
-      "name_mm": "ပါရာစီတမော"
-    },
-    {
-      "id": 2,
-      "name": "Ibuprofen",
-      "name_mm": "အိုင်ဘူပရိုဖင်"
-    }
+    { "id": 1, "name": "Paracetamol", "name_mm": "ပါရာဆီတမော" },
+    { "id": 2, "name": "Ibuprofen", "name_mm": "အိုက်ဘူပရိုဖင်" }
   ]
 }
