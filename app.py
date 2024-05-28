@@ -64,7 +64,7 @@ def normalize_and_merge(data, data_structure):
 
 # Normalize and merge data
 df_dict = normalize_and_merge(data, data_structure)
-print(df_dict)
+st.write("Data dict:",df_dict)
 # Streamlit app to query data dynamically
 st.title("Enhanced Dynamic Data Retrieval App")
 
