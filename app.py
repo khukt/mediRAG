@@ -30,7 +30,6 @@ data_structure = inspect_data(data)
 # Display data structure for debugging
 st.write("Data Structure:", data_structure)
 
-
 # Function to normalize and merge data based on foreign keys
 def normalize_and_merge(data, data_structure):
     df_dict = {table_name: pd.DataFrame(content) for table_name, content in data.items()}
@@ -43,11 +42,11 @@ def normalize_and_merge(data, data_structure):
     ]:
         if intermediate_table in df_dict:
             df = df_dict[intermediate_table]
+            main_table = intermediate_table.split('_to_')[1]
             for col in df.columns:
                 if col.endswith("_id") and col[:-3] in data_structure:
                     foreign_table = col[:-3]
                     df = df.merge(df_dict[foreign_table], left_on=col, right_on="id", suffixes=('', f'_{foreign_table}')).drop(columns=[col, 'id_' + foreign_table])
-            main_table = intermediate_table.split('_to_')[1]
             df_dict[main_table] = df_dict[main_table].merge(df, how='left', left_on='id', right_on=f'{main_table}_id').drop(columns=[f'{main_table}_id'])
 
     # Handling one-to-many and many-to-one relationships
@@ -64,7 +63,7 @@ def normalize_and_merge(data, data_structure):
 
 # Normalize and merge data
 df_dict = normalize_and_merge(data, data_structure)
-st.write("Data dict:",df_dict)
+
 # Streamlit app to query data dynamically
 st.title("Enhanced Dynamic Data Retrieval App")
 
