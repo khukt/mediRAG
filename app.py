@@ -17,7 +17,7 @@ def load_data(folder):
 data = load_data('data')
 
 # Display data structure for debugging
-st.write("Loaded Data:", data)
+st.write("Loaded Data:", {key: len(value) for key, value in data.items()})
 
 # Function to convert a list of dictionaries to a DataFrame
 def list_to_dataframe(data, key):
@@ -36,10 +36,11 @@ def handle_many_to_many(df_dict, intermediate_table, main_table, related_table):
             if col.endswith("_id"):
                 related_df = df_dict[col[:-3]]
                 df = df.merge(related_df, left_on=col, right_on="id", suffixes=('', f'_{col[:-3]}')).drop(columns=[col])
-        df_dict[main_table] = df_dict[main_table].merge(df, how='left', left_on='id', right_on=f'{main_table}_id').drop(columns=[f'{main_table}_id'])
+        if main_table in df_dict:
+            df_dict[main_table] = df_dict[main_table].merge(df, how='left', left_on='id', right_on=f'{main_table}_id').drop(columns=[f'{main_table}_id'])
 
 # Handle many-to-many relationships
-for intermediate_table, main_table, related_table in [
+relationships = [
     ('generic_name_to_medicine', 'medicines', 'generic_names'),
     ('disease_to_medicine', 'diseases', 'medicines'),
     ('symptom_to_medicine', 'symptoms', 'medicines'),
@@ -49,11 +50,13 @@ for intermediate_table, main_table, related_table in [
     ('warning_to_medicine', 'medicines', 'warnings'),
     ('interaction_to_medicine', 'medicines', 'interactions'),
     ('side_effect_to_medicine', 'medicines', 'side_effects')
-]:
+]
+
+for intermediate_table, main_table, related_table in relationships:
     handle_many_to_many(df_dict, intermediate_table, main_table, related_table)
 
 # Display normalized and merged data for debugging
-st.write("Normalized and Merged Data:", df_dict)
+st.write("Normalized and Merged Data:", {key: df.shape for key, df in df_dict.items()})
 
 # Function to retrieve related data
 def get_related_data(main_table, result_ids, related_table, intermediate_table):
