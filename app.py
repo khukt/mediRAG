@@ -30,6 +30,7 @@ data_structure = inspect_data(data)
 # Display data structure for debugging
 st.write("Data Structure:", data_structure)
 
+
 # Function to normalize and merge data based on foreign keys
 def normalize_and_merge(data, data_structure):
     df_dict = {table_name: pd.DataFrame(content) for table_name, content in data.items()}
@@ -42,11 +43,11 @@ def normalize_and_merge(data, data_structure):
     ]:
         if intermediate_table in df_dict:
             df = df_dict[intermediate_table]
-            main_table = intermediate_table.split('_to_')[1]
             for col in df.columns:
                 if col.endswith("_id") and col[:-3] in data_structure:
                     foreign_table = col[:-3]
                     df = df.merge(df_dict[foreign_table], left_on=col, right_on="id", suffixes=('', f'_{foreign_table}')).drop(columns=[col, 'id_' + foreign_table])
+            main_table = intermediate_table.split('_to_')[1]
             df_dict[main_table] = df_dict[main_table].merge(df, how='left', left_on='id', right_on=f'{main_table}_id').drop(columns=[f'{main_table}_id'])
 
     # Handling one-to-many and many-to-one relationships
@@ -98,7 +99,8 @@ if selected_table:
             st.write("Related Diseases:", related_diseases)
             st.write("Related Medicines:", related_medicines)
         elif selected_table == "medicines":
-            related_generic_names = df_dict["generic_names"][df_dict["generic_names"]["id"].isin(result["generic_name_id"])]
+            related_generic_names_ids = df_dict["generic_name_to_medicine"]["generic_name_id"][df_dict["generic_name_to_medicine"]["medicine_id"].isin(result["id"])].unique()
+            related_generic_names = df_dict["generic_names"][df_dict["generic_names"]["id"].isin(related_generic_names_ids)]
             related_brands = df_dict["brand_names"][df_dict["brand_names"]["id"].isin(result["brand_id"])]
             related_indications_ids = df_dict["indication_to_medicine"]["indication_id"][df_dict["indication_to_medicine"]["medicine_id"].isin(result["id"])].unique()
             related_indications = df_dict["indications"][df_dict["indications"]["id"].isin(related_indications_ids)]
@@ -110,6 +112,8 @@ if selected_table:
             related_interactions = df_dict["interactions"][df_dict["interactions"]["id"].isin(related_interactions_ids)]
             related_side_effects_ids = df_dict["side_effect_to_medicine"]["side_effect_id"][df_dict["side_effect_to_medicine"]["medicine_id"].isin(result["id"])].unique()
             related_side_effects = df_dict["side_effects"][df_dict["side_effects"]["id"].isin(related_side_effects_ids)]
+            related_mechanisms_ids = df_dict["mechanism_of_action_to_medicine"]["mechanism_of_action_id"][df_dict["mechanism_of_action_to_medicine"]["medicine_id"].isin(result["id"])].unique()
+            related_mechanisms = df_dict["mechanism_of_action"][df_dict["mechanism_of_action"]["id"].isin(related_mechanisms_ids)]
             st.write("Related Generic Names:", related_generic_names)
             st.write("Related Brands:", related_brands)
             st.write("Related Indications:", related_indications)
@@ -117,3 +121,4 @@ if selected_table:
             st.write("Related Warnings:", related_warnings)
             st.write("Related Interactions:", related_interactions)
             st.write("Related Side Effects:", related_side_effects)
+            st.write("Related Mechanisms of Action:", related_mechanisms)
