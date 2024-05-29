@@ -45,23 +45,24 @@ brand_names_dict = to_dict(brand_names)
 generic_names_dict = to_dict(generic_names)
 manufacturers_dict = to_dict(manufacturers)
 
-# Load question-answering model
+# Load T5 model
 @st.cache(allow_output_mutation=True)
-def load_qa_model():
-    return pipeline("question-answering", model="distilbert-base-uncased-distilled-squad")
+def load_t5_model():
+    return pipeline("text2text-generation", model="t5-small")
 
-qa_model = load_qa_model()
+t5_model = load_t5_model()
 
 # Streamlit UI
-st.title('Advanced Medicine Knowledge Base with Lightweight NLP')
+st.title('Advanced Medicine Knowledge Base with T5')
 
 # RAG-based Search
 st.subheader('Ask a Question')
 query = st.text_input('Enter your query')
 if query:
     context = " ".join([med['description'] for med in medicines])  # Simplified context
-    result = qa_model(question=query, context=context)
-    st.write(result['answer'])
+    input_text = f"question: {query} context: {context}"
+    response = t5_model(input_text, max_length=150, num_return_sequences=1)
+    st.write(response[0]['generated_text'])
 
 # Run the app
 if __name__ == '__main__':
