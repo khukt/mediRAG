@@ -1,8 +1,0 @@
-{
-  "interactions": [
-    { "id": 1, "name": "Warfarin", "name_mm": "Warfarin" },
-    { "id": 2, "name": "Rifampin", "name_mm": "Rifampin" },
-    { "id": 3, "name": "Aspirin", "name_mm": "Aspirin" },
-    { "id": 4, "name": "Lithium", "name_mm": "Lithium" }
-  ]
-}
