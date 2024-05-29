@@ -66,6 +66,21 @@ def handle_specific_query(query):
     
     return None
 
+# Function to find related entities
+def find_related_entities(entity_id, relationship, entity_key='medicine_id'):
+    return [rel for rel in relationships[relationship] if rel[entity_key] == entity_id]
+
+# Function to create a focused context for the query
+def create_context():
+    context = ""
+    for medicine in medicines:
+        context += f"Medicine: {medicine['name']}\nDescription: {medicine['description']}\n\n"
+    for symptom in symptoms:
+        context += f"Symptom: {symptom['name']}\n\n"
+    for indication in indications:
+        context += f"Indication: {indication['name']}\n\n"
+    return context
+
 # Streamlit UI
 st.title('Medicine Knowledge Base with Advanced Search')
 
@@ -79,16 +94,29 @@ if query:
         st.write(specific_answer)
     else:
         # Create a focused context for the query
-        context = ""
-        for medicine in medicines:
-            context += f"Medicine: {medicine['name']}\nDescription: {medicine['description']}\n\n"
-        for symptom in symptoms:
-            context += f"Symptom: {symptom['name']}\n\n"
-        for indication in indications:
-            context += f"Indication: {indication['name']}\n\n"
+        context = create_context()
         
         result = rag_model(question=query, context=context)
         st.write(result['answer'])
+
+        # Suggest related medicines if the query includes a symptom or indication
+        for symptom in symptoms:
+            if symptom['name'].lower() in query.lower():
+                symptom_id = symptom['id']
+                related_medicines = find_related_entities(symptom_id, 'medicine_symptom', 'symptom_id')
+                st.subheader(f"Medicines related to symptom: {symptom['name']}")
+                for rel in related_medicines:
+                    st.write(medicines_dict[rel['medicine_id']]['name'])
+                break
+
+        for indication in indications:
+            if indication['name'].lower() in query.lower():
+                indication_id = indication['id']
+                related_medicines = find_related_entities(indication_id, 'medicine_indication', 'indication_id')
+                st.subheader(f"Medicines related to indication: {indication['name']}")
+                for rel in related_medicines:
+                    st.write(medicines_dict[rel['medicine_id']]['name'])
+                break
 
 # Run the app
 if __name__ == '__main__':
