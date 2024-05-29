@@ -45,7 +45,7 @@ brand_names_dict = to_dict(brand_names)
 generic_names_dict = to_dict(generic_names)
 manufacturers_dict = to_dict(manufacturers)
 
-# Load question answering model
+# Load question-answering model
 @st.cache(allow_output_mutation=True)
 def load_qa_model():
     return pipeline("question-answering", model="distilbert-base-uncased-distilled-squad")
@@ -53,7 +53,7 @@ def load_qa_model():
 qa_model = load_qa_model()
 
 # Streamlit UI
-st.title('Medicine Knowledge Base with Lightweight NLP')
+st.title('Advanced Medicine Knowledge Base with Lightweight NLP')
 
 # RAG-based Search
 st.subheader('Ask a Question')
