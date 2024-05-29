@@ -1,0 +1,8 @@
+{
+  "symptoms": [
+    { "id": 1, "name": "Headache" },
+    { "id": 2, "name": "Fever" },
+    { "id": 3, "name": "Nausea" },
+    { "id": 4, "name": "Rash" }
+  ]
+}
