@@ -1,11 +1,17 @@
 import streamlit as st
 import json
 
-# Load JSON data
+# Load JSON data with debug information
 @st.cache
 def load_data(file):
-    with open(file) as f:
-        return json.load(f)
+    try:
+        with open(file) as f:
+            data = json.load(f)
+        st.write(f"Successfully loaded {file}")
+        return data
+    except Exception as e:
+        st.error(f"Error loading {file}: {e}")
+        return None
 
 # Load all data
 medicines = load_data('medicines.json')['medicines']
@@ -21,6 +27,18 @@ brand_names = load_data('brand_names.json')['brand_names']
 generic_names = load_data('generic_names.json')['generic_names']
 manufacturers = load_data('manufacturers.json')['manufacturers']
 relationships = load_data('relationships.json')
+
+# Check for 'name' key in medicines and print debug information
+def check_key_presence(data, key, file_name):
+    missing_keys = [item for item in data if key not in item]
+    if missing_keys:
+        st.write(f"Missing '{key}' in the following entries from {file_name}:")
+        st.write(missing_keys)
+        return False
+    return True
+
+if not check_key_presence(medicines, 'name', 'medicines.json'):
+    st.stop()
 
 # Convert to dictionaries for easy lookup
 medicines_dict = {med['id']: med for med in medicines}
