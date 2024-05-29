@@ -1,8 +1,0 @@
-{
-  "interaction_to_medicine": [
-    { "interaction_id": 1, "medicine_id": 1 },
-    { "interaction_id": 2, "medicine_id": 1 },
-    { "interaction_id": 3, "medicine_id": 2 },
-    { "interaction_id": 4, "medicine_id": 2 }
-  ]
-}
