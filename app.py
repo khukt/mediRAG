@@ -38,11 +38,9 @@ rag_model = load_rag_model()
 
 # Function to handle specific queries
 def handle_specific_query(query):
-    # Check for direct medicine queries
     medicine_name_lookup = {med['name'].lower(): med for med in medicines}
-    
+
     if "compare" in query.lower():
-        # Handle comparison queries
         meds = [med.strip().lower() for med in query.lower().replace("compare", "").split("and")]
         if len(meds) == 2 and meds[0] in medicine_name_lookup and meds[1] in medicine_name_lookup:
             med1 = medicine_name_lookup[meds[0]]
@@ -71,14 +69,17 @@ def find_related_entities(entity_id, relationship, entity_key='medicine_id'):
     return [rel for rel in relationships[relationship] if rel[entity_key] == entity_id]
 
 # Function to create a focused context for the query
-def create_context():
+def create_context(query):
     context = ""
-    for medicine in medicines:
-        context += f"Medicine: {medicine['name']}\nDescription: {medicine['description']}\n\n"
-    for symptom in symptoms:
-        context += f"Symptom: {symptom['name']}\n\n"
-    for indication in indications:
-        context += f"Indication: {indication['name']}\n\n"
+    if "medicine" in query.lower() or "medicines" in query.lower() or any(med['name'].lower() in query.lower() for med in medicines):
+        for medicine in medicines:
+            context += f"Medicine: {medicine['name']}\nDescription: {medicine['description']}\n\n"
+    if "symptom" in query.lower() or "symptoms" in query.lower():
+        for symptom in symptoms:
+            context += f"Symptom: {symptom['name']}\n\n"
+    if "indication" in query.lower() or "indications" in query.lower():
+        for indication in indications:
+            context += f"Indication: {indication['name']}\n\n"
     return context
 
 # Streamlit UI
@@ -94,7 +95,7 @@ if query:
         st.write(specific_answer)
     else:
         # Create a focused context for the query
-        context = create_context()
+        context = create_context(query)
         
         if not context.strip():
             st.write("The database is currently empty. Please add some data to proceed.")
