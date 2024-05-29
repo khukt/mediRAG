@@ -49,7 +49,7 @@ def handle_many_to_many(intermediate_table, main_table, related_table):
                 related_df = df_dict[col[:-3]]
                 df = df.merge(related_df, left_on=col, right_on="id", suffixes=('', f'_{col[:-3]}')).drop(columns=[col])
         if main_table in df_dict:
-            df_dict[main_table] = df_dict[main_table].merge(df, how='left', left_on='id', right_on=f'{main_table}_id').drop(columns=[f'{main_table}_id'])
+            df_dict[main_table] = df_dict[main_table].merge(df, how='left', left_on='id', right_on=f'{main_table}_id', suffixes=('', f'_{related_table}')).drop(columns=[f'{main_table}_id'])
 
 # Handle relationships
 relationships = [
@@ -87,22 +87,22 @@ if selected_table:
 
         # Display related data based on the table selected
         if selected_table == "diseases":
-            related_medicines = handle_many_to_many('disease_to_medicine', 'diseases', 'medicines')
-            related_symptoms = handle_many_to_many('symptom_to_medicine', 'diseases', 'symptoms')
+            related_medicines = df_dict['disease_to_medicine'][df_dict['disease_to_medicine']['disease_id'] == result['id']]
+            related_symptoms = df_dict['symptom_to_medicine'][df_dict['symptom_to_medicine']['disease_id'] == result['id']]
             st.write("Related Medicines:", related_medicines)
             st.write("Related Symptoms:", related_symptoms)
         elif selected_table == "symptoms":
-            related_medicines = handle_many_to_many('symptom_to_medicine', 'symptoms', 'medicines')
+            related_medicines = df_dict['symptom_to_medicine'][df_dict['symptom_to_medicine']['symptom_id'] == result['id']]
             st.write("Related Medicines:", related_medicines)
         elif selected_table == "medicines":
-            related_generic_names = handle_many_to_many('generic_name_to_medicine', 'medicines', 'generic_names')
+            related_generic_names = df_dict['generic_name_to_medicine'][df_dict['generic_name_to_medicine']['medicine_id'] == result['id']]
             related_brands = df_dict["brand_names"][df_dict["brand_names"]["id"].isin(result["brand_id"])]
-            related_indications = handle_many_to_many('indication_to_medicine', 'medicines', 'indications')
-            related_contraindications = handle_many_to_many('contraindication_to_medicine', 'medicines', 'contraindications')
-            related_warnings = handle_many_to_many('warning_to_medicine', 'medicines', 'warnings')
-            related_interactions = handle_many_to_many('interaction_to_medicine', 'medicines', 'interactions')
-            related_side_effects = handle_many_to_many('side_effect_to_medicine', 'medicines', 'side_effects')
-            related_mechanisms = handle_many_to_many('mechanism_of_action_to_medicine', 'medicines', 'mechanism_of_action')
+            related_indications = df_dict['indication_to_medicine'][df_dict['indication_to_medicine']['medicine_id'] == result['id']]
+            related_contraindications = df_dict['contraindication_to_medicine'][df_dict['contraindication_to_medicine']['medicine_id'] == result['id']]
+            related_warnings = df_dict['warning_to_medicine'][df_dict['warning_to_medicine']['medicine_id'] == result['id']]
+            related_interactions = df_dict['interaction_to_medicine'][df_dict['interaction_to_medicine']['medicine_id'] == result['id']]
+            related_side_effects = df_dict['side_effect_to_medicine'][df_dict['side_effect_to_medicine']['medicine_id'] == result['id']]
+            related_mechanisms = df_dict['mechanism_of_action_to_medicine'][df_dict['mechanism_of_action_to_medicine']['medicine_id'] == result['id']]
             st.write("Related Generic Names:", related_generic_names)
             st.write("Related Brands:", related_brands)
             st.write("Related Indications:", related_indications)
