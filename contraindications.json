@@ -1,8 +1,0 @@
-{
-  "contraindications": [
-    { "id": 1, "name": "Liver disease", "name_mm": "အသည်းရောဂါ" },
-    { "id": 2, "name": "Alcoholism", "name_mm": "အရက်အလွန်အကျွံသောက်ခြင်း" },
-    { "id": 3, "name": "Asthma", "name_mm": "သက်ရှူကျပ်ရောဂါ" },
-    { "id": 4, "name": "Kidney disease", "name_mm": "ကျောက်ကပ်ရောဂါ" }
-  ]
-}
