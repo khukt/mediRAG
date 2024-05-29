@@ -48,6 +48,16 @@ brand_names_dict = to_dict(brand_names)
 generic_names_dict = to_dict(generic_names)
 manufacturers_dict = to_dict(manufacturers)
 
+# Function to find relationships
+def find_related_entities(entity_id, relationship, entity_key='medicine_id'):
+    related_ids = [rel for rel in relationships[relationship] if rel[entity_key] == entity_id]
+    return related_ids
+
+# Function to display related entities
+def display_related_entities(related_ids, entity_dict, entity_key):
+    for rel in related_ids:
+        st.write(entity_dict[rel[entity_key]]['name'])
+
 # Load language model
 @st.cache(allow_output_mutation=True)
 def load_language_model():
