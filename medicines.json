@@ -1,14 +1,6 @@
 {
-    "medicines": [
-        {
-            "id": 1,
-            "name": "Paracetamol",
-            "description": "Pain reliever and fever reducer"
-        },
-        {
-            "id": 2,
-            "name": "Ibuprofen",
-            "description": "Reduces fever and treats pain"
-        }
-    ]
+  "medicines": [
+    { "id": 1, "name": "Paracetamol", "description": "Pain reliever and fever reducer" },
+    { "id": 2, "name": "Ibuprofen", "description": "Reduces fever and treats pain" }
+  ]
 }
