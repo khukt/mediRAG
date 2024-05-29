@@ -45,11 +45,11 @@ def handle_specific_query(query):
         if len(meds) == 2 and meds[0] in medicine_name_lookup and meds[1] in medicine_name_lookup:
             med1 = medicine_name_lookup[meds[0]]
             med2 = medicine_name_lookup[meds[1]]
-            return f"Comparison between {med1['name']} and {med2['name']}:\n\n{med1['description']}\n\n{med2['description']}"
+            return f"Here's a comparison between {med1['name']} and {med2['name']}:\n\n{med1['description']}\n\n{med2['description']}"
     
     if query.lower() in medicine_name_lookup:
         medicine = medicine_name_lookup[query.lower()]
-        return f"**Name:** {medicine['name']}\n**Description:** {medicine['description']}"
+        return f"Sure, here's some information about {medicine['name']}:\n\n**Name:** {medicine['name']}\n**Description:** {medicine['description']}"
 
     if "generic name of" in query.lower():
         brand = query.lower().replace("generic name of", "").strip()
@@ -60,7 +60,24 @@ def handle_specific_query(query):
                     generic_name = generic_names_dict[generic_id]['name']
                     return f"The generic name of {brand} is {generic_name}."
                 else:
-                    return f"Generic name information is not available for {brand}."
+                    return f"I'm sorry, but I don't have information about the generic name of {brand}."
+    
+    if "alternative of" in query.lower():
+        brand = query.lower().replace("alternative of", "").strip()
+        for med in medicines:
+            if med['name'].lower() == brand:
+                related_symptoms = find_related_entities(med['id'], 'medicine_symptom')
+                alternative_medicines = set()
+                for rel in related_symptoms:
+                    symptom_id = rel['symptom_id']
+                    alt_meds = find_related_entities(symptom_id, 'medicine_symptom', 'symptom_id')
+                    for alt_med in alt_meds:
+                        if alt_med['medicine_id'] != med['id']:
+                            alternative_medicines.add(medicines_dict[alt_med['medicine_id']]['name'])
+                if alternative_medicines:
+                    return f"Here are some alternatives to {brand}:\n" + "\n".join(alternative_medicines)
+                else:
+                    return f"I'm sorry, but I couldn't find any alternatives to {brand}."
     
     return None
 
@@ -69,17 +86,14 @@ def find_related_entities(entity_id, relationship, entity_key='medicine_id'):
     return [rel for rel in relationships[relationship] if rel[entity_key] == entity_id]
 
 # Function to create a focused context for the query
-def create_context(query):
+def create_context():
     context = ""
-    if "medicine" in query.lower() or "medicines" in query.lower() or any(med['name'].lower() in query.lower() for med in medicines):
-        for medicine in medicines:
-            context += f"Medicine: {medicine['name']}\nDescription: {medicine['description']}\n\n"
-    if "symptom" in query.lower() or "symptoms" in query.lower():
-        for symptom in symptoms:
-            context += f"Symptom: {symptom['name']}\n\n"
-    if "indication" in query.lower() or "indications" in query.lower():
-        for indication in indications:
-            context += f"Indication: {indication['name']}\n\n"
+    for medicine in medicines:
+        context += f"Medicine: {medicine['name']}\nDescription: {medicine['description']}\n\n"
+    for symptom in symptoms:
+        context += f"Symptom: {symptom['name']}\n\n"
+    for indication in indications:
+        context += f"Indication: {indication['name']}\n\n"
     return context
 
 # Streamlit UI
@@ -95,7 +109,7 @@ if query:
         st.write(specific_answer)
     else:
         # Create a focused context for the query
-        context = create_context(query)
+        context = create_context()
         
         if not context.strip():
             st.write("The database is currently empty. Please add some data to proceed.")
@@ -104,7 +118,7 @@ if query:
             if result['answer'].strip():
                 st.write(result['answer'])
             else:
-                st.write("No relevant information found in the database.")
+                st.write("I'm sorry, I couldn't find any relevant information in the database.")
 
         # Suggest related medicines if the query includes a symptom or indication
         for symptom in symptoms:
