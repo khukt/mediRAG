@@ -18,6 +18,7 @@ medicines = load_data('medicines.json')['medicines']
 symptoms = load_data('symptoms.json')['symptoms']
 indications = load_data('indications.json')['indications']
 relationships = load_data('relationships.json')
+generic_names = load_data('generic_names.json')['generic_names']
 
 # Convert to dictionaries for easy lookup
 def to_dict(data, key='id'):
@@ -26,6 +27,7 @@ def to_dict(data, key='id'):
 medicines_dict = to_dict(medicines)
 symptoms_dict = to_dict(symptoms)
 indications_dict = to_dict(indications)
+generic_names_dict = to_dict(generic_names)
 
 # Load RAG model
 @st.cache(allow_output_mutation=True)
@@ -34,35 +36,47 @@ def load_rag_model():
 
 rag_model = load_rag_model()
 
+# Function to handle specific queries
+def handle_specific_query(query):
+    # Check for direct medicine queries
+    medicine_name_lookup = {med['name'].lower(): med for med in medicines}
+    
+    if "compare" in query.lower():
+        # Handle comparison queries
+        meds = [med.strip().lower() for med in query.lower().replace("compare", "").split("and")]
+        if len(meds) == 2 and meds[0] in medicine_name_lookup and meds[1] in medicine_name_lookup:
+            med1 = medicine_name_lookup[meds[0]]
+            med2 = medicine_name_lookup[meds[1]]
+            return f"Comparison between {med1['name']} and {med2['name']}:\n\n{med1['description']}\n\n{med2['description']}"
+    
+    if query.lower() in medicine_name_lookup:
+        medicine = medicine_name_lookup[query.lower()]
+        return f"**Name:** {medicine['name']}\n**Description:** {medicine['description']}"
+
+    if "generic name of" in query.lower():
+        brand = query.lower().replace("generic name of", "").strip()
+        for med in medicines:
+            if med['name'].lower() == brand:
+                generic_id = med.get('generic_id')
+                if generic_id:
+                    generic_name = generic_names_dict[generic_id]['name']
+                    return f"The generic name of {brand} is {generic_name}."
+                else:
+                    return f"Generic name information is not available for {brand}."
+    
+    return None
+
 # Streamlit UI
-st.title('Medicine Knowledge Base with RAG-based Search')
+st.title('Medicine Knowledge Base with Advanced Search')
 
 # RAG-based Search
 st.subheader('RAG-based Search')
 query = st.text_input('Enter your query')
 if query:
-    # Direct lookup for specific medicine names
-    medicine_name_lookup = {med['name'].lower(): med for med in medicines}
-    if query.lower() in medicine_name_lookup:
-        medicine = medicine_name_lookup[query.lower()]
-        st.write(f"**Name:** {medicine['name']}")
-        st.write(f"**Description:** {medicine['description']}")
-
-        # Suggest alternative medicines based on symptoms and indications
-        symptom_ids = [rel['symptom_id'] for rel in relationships['medicine_symptom'] if rel['medicine_id'] == medicine['id']]
-        indication_ids = [rel['indication_id'] for rel in relationships['medicine_indication'] if rel['medicine_id'] == medicine['id']]
-
-        alternative_medicines = set()
-        for symptom_id in symptom_ids:
-            alternative_medicines.update(find_medicines_by_symptom(symptom_id))
-        for indication_id in indication_ids:
-            alternative_medicines.update(find_medicines_by_indication(indication_id))
-        alternative_medicines.discard(medicine['id'])  # Remove the current medicine from the alternatives
-
-        st.subheader('Alternative Medicines')
-        for med_id in alternative_medicines:
-            st.write(medicines_dict[med_id]['name'])
-
+    # Check for specific queries first
+    specific_answer = handle_specific_query(query)
+    if specific_answer:
+        st.write(specific_answer)
     else:
         # Create a focused context for the query
         context = ""
@@ -75,31 +89,6 @@ if query:
         
         result = rag_model(question=query, context=context)
         st.write(result['answer'])
-
-        # Suggest alternative medicines based on symptoms and indications in the query
-        for symptom in symptoms:
-            if symptom['name'].lower() in query.lower():
-                symptom_id = symptom['id']
-                alternative_medicines_ids = find_medicines_by_symptom(symptom_id)
-                alternative_medicines = [medicines_dict[med_id]['name'] for med_id in alternative_medicines_ids if med_id in medicines_dict]
-                
-                st.subheader('Alternative Medicines')
-                st.write(f"For symptom: {symptom['name']}")
-                for med in alternative_medicines:
-                    st.write(med)
-                break
-
-        for indication in indications:
-            if indication['name'].lower() in query.lower():
-                indication_id = indication['id']
-                alternative_medicines_ids = find_medicines_by_indication(indication_id)
-                alternative_medicines = [medicines_dict[med_id]['name'] for med_id in alternative_medicines_ids if med_id in medicines_dict]
-                
-                st.subheader('Alternative Medicines')
-                st.write(f"For indication: {indication['name']}")
-                for med in alternative_medicines:
-                    st.write(med)
-                break
 
 # Run the app
 if __name__ == '__main__':
