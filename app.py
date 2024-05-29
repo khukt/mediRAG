@@ -16,9 +16,6 @@ def load_data(folder):
 # Load all data from the 'data' folder
 data = load_data('data')
 
-# Display data structure for debugging
-st.write("Loaded Data:", {key: len(value) for key, value in data.items()})
-
 # Function to convert a list of dictionaries to a DataFrame
 def list_to_dataframe(data, key):
     if key in data:
@@ -28,8 +25,23 @@ def list_to_dataframe(data, key):
 # Convert all data to DataFrames
 df_dict = {key: list_to_dataframe(data, key) for key in data}
 
+# Function to handle one-to-one relationships
+def handle_one_to_one(df, main_key, related_key):
+    if main_key in df_dict and related_key in df_dict:
+        return df_dict[main_key].merge(df_dict[related_key], how='left', left_on='id', right_on=f'{main_key}_id')
+
+# Function to handle many-to-one relationships
+def handle_many_to_one(df, main_key, related_key):
+    if main_key in df_dict and related_key in df_dict:
+        return df_dict[main_key].merge(df_dict[related_key], how='left', left_on=f'{related_key}_id', right_on='id')
+
+# Function to handle one-to-many relationships
+def handle_one_to_many(df, main_key, related_key):
+    if main_key in df_dict and related_key in df_dict:
+        return df_dict[main_key].merge(df_dict[related_key], how='left', left_on='id', right_on=f'{main_key}_id')
+
 # Function to handle many-to-many relationships using intermediate tables
-def handle_many_to_many(df_dict, intermediate_table, main_table, related_table):
+def handle_many_to_many(intermediate_table, main_table, related_table):
     if intermediate_table in df_dict:
         df = df_dict[intermediate_table]
         for col in df.columns:
@@ -39,7 +51,7 @@ def handle_many_to_many(df_dict, intermediate_table, main_table, related_table):
         if main_table in df_dict:
             df_dict[main_table] = df_dict[main_table].merge(df, how='left', left_on='id', right_on=f'{main_table}_id').drop(columns=[f'{main_table}_id'])
 
-# Handle many-to-many relationships
+# Handle relationships
 relationships = [
     ('generic_name_to_medicine', 'medicines', 'generic_names'),
     ('disease_to_medicine', 'diseases', 'medicines'),
@@ -49,61 +61,48 @@ relationships = [
     ('contraindication_to_medicine', 'medicines', 'contraindications'),
     ('warning_to_medicine', 'medicines', 'warnings'),
     ('interaction_to_medicine', 'medicines', 'interactions'),
-    ('side_effect_to_medicine', 'medicines', 'side_effects')
+    ('side_effect_to_medicine', 'medicines', 'side_effects'),
 ]
 
-for intermediate_table, main_table, related_table in relationships:
-    handle_many_to_many(df_dict, intermediate_table, main_table, related_table)
+for rel in relationships:
+    handle_many_to_many(*rel)
 
-# Display normalized and merged data for debugging
-st.write("Normalized and Merged Data:", {key: df.shape for key, df in df_dict.items()})
+# Streamlit interface for displaying data
+st.title("MediRAG Data Viewer")
 
-# Function to retrieve related data
-def get_related_data(main_table, result_ids, related_table, intermediate_table):
-    if intermediate_table in df_dict:
-        related_ids = df_dict[intermediate_table][f'{related_table[:-1]}_id'][df_dict[intermediate_table][f'{main_table[:-1]}_id'].isin(result_ids)].unique()
-        related_data = df_dict[related_table][df_dict[related_table]['id'].isin(related_ids)]
-        return related_data
-    return pd.DataFrame()
-
-# Streamlit app to query data dynamically
-st.title("Enhanced Dynamic Data Retrieval App")
-
-# Select table to query
+# Dropdown to select the main table
 selected_table = st.selectbox("Select Table", list(df_dict.keys()))
 
+# Display the selected table's data
 if selected_table:
-    df = df_dict[selected_table]
-    st.write(f"Columns in {selected_table}:", df.columns.tolist())
+    st.subheader(f"{selected_table.capitalize()} Data")
+    st.write(df_dict[selected_table])
 
-    # Select column to filter
-    selected_column = st.selectbox("Select Column to Filter", df.columns)
-    filter_value = st.text_input(f"Enter value to filter {selected_column}")
+    # Option to select a specific row
+    row_id = st.number_input(f"Select {selected_table} ID", min_value=0, max_value=len(df_dict[selected_table])-1, step=1)
 
-    if st.button("Search"):
-        result = df[df[selected_column].astype(str).str.contains(filter_value, case=False, na=False)]
-        st.write("Search Results:", result)
+    if row_id:
+        result = df_dict[selected_table].iloc[row_id]
+        st.write(result)
 
-        # Display related data
+        # Display related data based on the table selected
         if selected_table == "diseases":
-            related_medicines = get_related_data("diseases", result["id"], "medicines", "disease_to_medicine")
-            related_symptoms = get_related_data("medicines", related_medicines["id"], "symptoms", "symptom_to_medicine")
+            related_medicines = handle_many_to_many('disease_to_medicine', 'diseases', 'medicines')
+            related_symptoms = handle_many_to_many('symptom_to_medicine', 'diseases', 'symptoms')
             st.write("Related Medicines:", related_medicines)
             st.write("Related Symptoms:", related_symptoms)
         elif selected_table == "symptoms":
-            related_medicines = get_related_data("symptoms", result["id"], "medicines", "symptom_to_medicine")
-            related_diseases = get_related_data("medicines", related_medicines["id"], "diseases", "disease_to_medicine")
-            st.write("Related Diseases:", related_diseases)
+            related_medicines = handle_many_to_many('symptom_to_medicine', 'symptoms', 'medicines')
             st.write("Related Medicines:", related_medicines)
         elif selected_table == "medicines":
-            related_generic_names = get_related_data("medicines", result["id"], "generic_names", "generic_name_to_medicine")
+            related_generic_names = handle_many_to_many('generic_name_to_medicine', 'medicines', 'generic_names')
             related_brands = df_dict["brand_names"][df_dict["brand_names"]["id"].isin(result["brand_id"])]
-            related_indications = get_related_data("medicines", result["id"], "indications", "indication_to_medicine")
-            related_contraindications = get_related_data("medicines", result["id"], "contraindications", "contraindication_to_medicine")
-            related_warnings = get_related_data("medicines", result["id"], "warnings", "warning_to_medicine")
-            related_interactions = get_related_data("medicines", result["id"], "interactions", "interaction_to_medicine")
-            related_side_effects = get_related_data("medicines", result["id"], "side_effects", "side_effect_to_medicine")
-            related_mechanisms = get_related_data("medicines", result["id"], "mechanism_of_action", "mechanism_of_action_to_medicine")
+            related_indications = handle_many_to_many('indication_to_medicine', 'medicines', 'indications')
+            related_contraindications = handle_many_to_many('contraindication_to_medicine', 'medicines', 'contraindications')
+            related_warnings = handle_many_to_many('warning_to_medicine', 'medicines', 'warnings')
+            related_interactions = handle_many_to_many('interaction_to_medicine', 'medicines', 'interactions')
+            related_side_effects = handle_many_to_many('side_effect_to_medicine', 'medicines', 'side_effects')
+            related_mechanisms = handle_many_to_many('mechanism_of_action_to_medicine', 'medicines', 'mechanism_of_action')
             st.write("Related Generic Names:", related_generic_names)
             st.write("Related Brands:", related_brands)
             st.write("Related Indications:", related_indications)
