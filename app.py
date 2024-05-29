@@ -17,8 +17,16 @@ def load_data(file):
 medicines = load_data('medicines.json')['medicines']
 symptoms = load_data('symptoms.json')['symptoms']
 indications = load_data('indications.json')['indications']
-relationships = load_data('relationships.json')
+diseases = load_data('diseases.json')['diseases']
+side_effects = load_data('side_effects.json')['side_effects']
+interactions = load_data('interactions.json')['interactions']
+warnings = load_data('warnings.json')['warnings']
+contraindications = load_data('contraindications.json')['contraindications']
+mechanisms_of_action = load_data('mechanisms_of_action.json')['mechanisms_of_action']
+brand_names = load_data('brand_names.json')['brand_names']
 generic_names = load_data('generic_names.json')['generic_names']
+manufacturers = load_data('manufacturers.json')['manufacturers']
+relationships = load_data('relationships.json')
 
 # Convert to dictionaries for easy lookup
 def to_dict(data, key='id'):
@@ -27,7 +35,15 @@ def to_dict(data, key='id'):
 medicines_dict = to_dict(medicines)
 symptoms_dict = to_dict(symptoms)
 indications_dict = to_dict(indications)
+diseases_dict = to_dict(diseases)
+side_effects_dict = to_dict(side_effects)
+interactions_dict = to_dict(interactions)
+warnings_dict = to_dict(warnings)
+contraindications_dict = to_dict(contraindications)
+mechanisms_dict = to_dict(mechanisms_of_action)
+brand_names_dict = to_dict(brand_names)
 generic_names_dict = to_dict(generic_names)
+manufacturers_dict = to_dict(manufacturers)
 
 # Load RAG model
 @st.cache(allow_output_mutation=True)
@@ -36,108 +52,16 @@ def load_rag_model():
 
 rag_model = load_rag_model()
 
-# Function to handle specific queries
-def handle_specific_query(query):
-    medicine_name_lookup = {med['name'].lower(): med for med in medicines}
-
-    if "compare" in query.lower():
-        meds = [med.strip().lower() for med in query.lower().replace("compare", "").split("and")]
-        if len(meds) == 2 and meds[0] in medicine_name_lookup and meds[1] in medicine_name_lookup:
-            med1 = medicine_name_lookup[meds[0]]
-            med2 = medicine_name_lookup[meds[1]]
-            return f"Here's a comparison between {med1['name']} and {med2['name']}:\n\n{med1['description']}\n\n{med2['description']}"
-    
-    if query.lower() in medicine_name_lookup:
-        medicine = medicine_name_lookup[query.lower()]
-        return f"Sure, here's some information about {medicine['name']}:\n\n**Name:** {medicine['name']}\n**Description:** {medicine['description']}"
-
-    if "generic name of" in query.lower():
-        brand = query.lower().replace("generic name of", "").strip()
-        for med in medicines:
-            if med['name'].lower() == brand:
-                generic_id = med.get('generic_id')
-                if generic_id:
-                    generic_name = generic_names_dict[generic_id]['name']
-                    return f"The generic name of {brand} is {generic_name}."
-                else:
-                    return f"I'm sorry, but I don't have information about the generic name of {brand}."
-    
-    if "alternative of" in query.lower():
-        brand = query.lower().replace("alternative of", "").strip()
-        for med in medicines:
-            if med['name'].lower() == brand:
-                related_symptoms = find_related_entities(med['id'], 'medicine_symptom')
-                alternative_medicines = set()
-                for rel in related_symptoms:
-                    symptom_id = rel['symptom_id']
-                    alt_meds = find_related_entities(symptom_id, 'medicine_symptom', 'symptom_id')
-                    for alt_med in alt_meds:
-                        if alt_med['medicine_id'] != med['id']:
-                            alternative_medicines.add(medicines_dict[alt_med['medicine_id']]['name'])
-                if alternative_medicines:
-                    return f"Here are some alternatives to {brand}:\n" + "\n".join(alternative_medicines)
-                else:
-                    return f"I'm sorry, but I couldn't find any alternatives to {brand}."
-    
-    return None
-
-# Function to find related entities
-def find_related_entities(entity_id, relationship, entity_key='medicine_id'):
-    return [rel for rel in relationships[relationship] if rel[entity_key] == entity_id]
-
-# Function to create a focused context for the query
-def create_context():
-    context = ""
-    for medicine in medicines:
-        context += f"Medicine: {medicine['name']}\nDescription: {medicine['description']}\n\n"
-    for symptom in symptoms:
-        context += f"Symptom: {symptom['name']}\n\n"
-    for indication in indications:
-        context += f"Indication: {indication['name']}\n\n"
-    return context
-
 # Streamlit UI
-st.title('Medicine Knowledge Base with Advanced Search')
+st.title('Medicine Knowledge Base with RAG-based Search')
 
 # RAG-based Search
 st.subheader('RAG-based Search')
 query = st.text_input('Enter your query')
 if query:
-    # Check for specific queries first
-    specific_answer = handle_specific_query(query)
-    if specific_answer:
-        st.write(specific_answer)
-    else:
-        # Create a focused context for the query
-        context = create_context()
-        
-        if not context.strip():
-            st.write("The database is currently empty. Please add some data to proceed.")
-        else:
-            result = rag_model(question=query, context=context)
-            if result['answer'].strip():
-                st.write(result['answer'])
-            else:
-                st.write("I'm sorry, I couldn't find any relevant information in the database.")
-
-        # Suggest related medicines if the query includes a symptom or indication
-        for symptom in symptoms:
-            if symptom['name'].lower() in query.lower():
-                symptom_id = symptom['id']
-                related_medicines = find_related_entities(symptom_id, 'medicine_symptom', 'symptom_id')
-                st.subheader(f"Medicines related to symptom: {symptom['name']}")
-                for rel in related_medicines:
-                    st.write(medicines_dict[rel['medicine_id']]['name'])
-                break
-
-        for indication in indications:
-            if indication['name'].lower() in query.lower():
-                indication_id = indication['id']
-                related_medicines = find_related_entities(indication_id, 'medicine_indication', 'indication_id')
-                st.subheader(f"Medicines related to indication: {indication['name']}")
-                for rel in related_medicines:
-                    st.write(medicines_dict[rel['medicine_id']]['name'])
-                break
+    context = " ".join([med['description'] for med in medicines])  # Simplified context
+    result = rag_model(question=query, context=context)
+    st.write(result['answer'])
 
 # Run the app
 if __name__ == '__main__':
