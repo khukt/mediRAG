@@ -1,0 +1,40 @@
+{
+  "medicine_symptom": [
+    { "medicine_id": 1, "symptom_id": 1 },
+    { "medicine_id": 1, "symptom_id": 2 },
+    { "medicine_id": 2, "symptom_id": 3 }
+  ],
+  "medicine_indication": [
+    { "medicine_id": 1, "indication_id": 1 },
+    { "medicine_id": 1, "indication_id": 2 },
+    { "medicine_id": 2, "indication_id": 3 }
+  ],
+  "medicine_disease": [
+    { "medicine_id": 1, "disease_id": 1 },
+    { "medicine_id": 2, "disease_id": 2 }
+  ],
+  "medicine_side_effect": [
+    { "medicine_id": 1, "side_effect_id": 1 },
+    { "medicine_id": 1, "side_effect_id": 2 },
+    { "medicine_id": 2, "side_effect_id": 3 }
+  ],
+  "medicine_interaction": [
+    { "medicine_id": 1, "interaction_id": 1 },
+    { "medicine_id": 1, "interaction_id": 2 },
+    { "medicine_id": 2, "interaction_id": 3 }
+  ],
+  "medicine_warning": [
+    { "medicine_id": 1, "warning_id": 1 },
+    { "medicine_id": 1, "warning_id": 2 },
+    { "medicine_id": 2, "warning_id": 3 }
+  ],
+  "medicine_contraindication": [
+    { "medicine_id": 1, "contraindication_id": 1 },
+    { "medicine_id": 1, "contraindication_id": 2 },
+    { "medicine_id": 2, "contraindication_id": 3 }
+  ],
+  "medicine_mechanism": [
+    { "medicine_id": 1, "mechanism_id": 1 },
+    { "medicine_id": 2, "mechanism_id": 2 }
+  ]
+}
