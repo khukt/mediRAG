@@ -1,7 +1,0 @@
-{
-  "indications": [
-    { "id": 1, "name": "Pain relief", "name_mm": "နာကျင်မှုသက်သာရေး" },
-    { "id": 2, "name": "Fever reduction", "name_mm": "ဖျားခြင်းလျှော့ချပေးခြင်း" },
-    { "id": 3, "name": "Inflammation reduction", "name_mm": "ရောင်ရမ်းခြင်းလျှော့ချပေးခြင်း" }
-  ]
-}
