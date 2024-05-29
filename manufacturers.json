@@ -1,0 +1,12 @@
+{
+    "manufacturers": [
+        {
+            "id": 1,
+            "name": "Manufacturer A"
+        },
+        {
+            "id": 2,
+            "name": "Manufacturer B"
+        }
+    ]
+}

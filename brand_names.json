@@ -1,0 +1,12 @@
+{
+    "brand_names": [
+        {
+            "id": 1,
+            "name": "Tylenol"
+        },
+        {
+            "id": 2,
+            "name": "Advil"
+        }
+    ]
+}

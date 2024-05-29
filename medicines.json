@@ -1,6 +1,14 @@
 {
-  "medicines": [
-    { "id": 1, "generic_id": 1, "brand_id": 1, "manufacturer_id": 1, "description": "Paracetamol is a pain reliever and fever reducer" },
-    { "id": 2, "generic_id": 2, "brand_id": 2, "manufacturer_id": 2, "description": "Ibuprofen reduces fever and treats pain" }
-  ]
+    "medicines": [
+        {
+            "id": 1,
+            "name": "Paracetamol",
+            "description": "Pain reliever and fever reducer"
+        },
+        {
+            "id": 2,
+            "name": "Ibuprofen",
+            "description": "Reduces fever and treats pain"
+        }
+    ]
 }

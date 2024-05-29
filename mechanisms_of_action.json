@@ -1,0 +1,12 @@
+{
+    "mechanisms_of_action": [
+        {
+            "id": 1,
+            "description": "Inhibits the production of prostaglandins"
+        },
+        {
+            "id": 2,
+            "description": "Reduces hormones that cause inflammation"
+        }
+    ]
+}

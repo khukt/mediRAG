@@ -1,0 +1,16 @@
+{
+    "indications": [
+        {
+            "id": 1,
+            "name": "Pain relief"
+        },
+        {
+            "id": 2,
+            "name": "Fever reduction"
+        },
+        {
+            "id": 3,
+            "name": "Inflammation reduction"
+        }
+    ]
+}

@@ -1,0 +1,12 @@
+{
+    "diseases": [
+        {
+            "id": 1,
+            "name": "Influenza"
+        },
+        {
+            "id": 2,
+            "name": "Common Cold"
+        }
+    ]
+}
