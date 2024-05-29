@@ -45,23 +45,23 @@ brand_names_dict = to_dict(brand_names)
 generic_names_dict = to_dict(generic_names)
 manufacturers_dict = to_dict(manufacturers)
 
-# Load RAG model
+# Load language model
 @st.cache(allow_output_mutation=True)
-def load_rag_model():
-    return pipeline("question-answering", model="distilbert-base-uncased-distilled-squad")
+def load_language_model():
+    return pipeline("text-generation", model="distilgpt2")
 
-rag_model = load_rag_model()
+language_model = load_language_model()
 
 # Streamlit UI
-st.title('Medicine Knowledge Base with RAG-based Search')
+st.title('Advanced Medicine Knowledge Base with NLP')
 
 # RAG-based Search
-st.subheader('RAG-based Search')
+st.subheader('Ask a Question')
 query = st.text_input('Enter your query')
 if query:
     context = " ".join([med['description'] for med in medicines])  # Simplified context
-    result = rag_model(question=query, context=context)
-    st.write(result['answer'])
+    response = language_model(f"Context: {context}\nQuestion: {query}\nAnswer:", max_length=150, num_return_sequences=1)
+    st.write(response[0]['generated_text'])
 
 # Run the app
 if __name__ == '__main__':
