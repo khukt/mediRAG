@@ -1,8 +1,0 @@
-{
-  "warnings": [
-    { "id": 1, "name": "Do not exceed the recommended dosage.", "name_mm": "အကြံပြုထားသော အမိန့်ကို မကျော်သင့်ပါ။" },
-    { "id": 2, "name": "May cause liver damage if taken in large amounts.", "name_mm": "အလွန်အကျွံ အရေအတွက် စားသုံးပါက အသည်းထိခိုက်စေနိုင်သည်။" },
-    { "id": 3, "name": "May increase the risk of heart attack or stroke.", "name_mm": "နှလုံးရောဂါ သို့မဟုတ် လေဖြတ်ရောဂါဖြစ်နိုင်ခြေ မြှင့်တင်နိုင်သည်။" },
-    { "id": 4, "name": "Do not take during pregnancy without medical advice.", "name_mm": "ဆရာဝန်၏ အကြံဉာဏ်မရှိဘဲ ကိုယ်ဝန်ဆောင်စဉ် မသောက်သင့်ပါ။" }
-  ]
-}
