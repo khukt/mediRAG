@@ -1,0 +1,6 @@
+{
+  "mechanism_of_action_to_medicine": [
+    { "mechanism_of_action_id": 1, "medicine_id": 1 },
+    { "mechanism_of_action_id": 2, "medicine_id": 2 }
+  ]
+}

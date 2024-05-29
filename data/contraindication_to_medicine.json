@@ -1,0 +1,8 @@
+{
+  "contraindication_to_medicine": [
+    { "contraindication_id": 1, "medicine_id": 1 },
+    { "contraindication_id": 2, "medicine_id": 1 },
+    { "contraindication_id": 3, "medicine_id": 2 },
+    { "contraindication_id": 4, "medicine_id": 2 }
+  ]
+}

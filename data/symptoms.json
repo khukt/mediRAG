@@ -1,14 +1,8 @@
 {
   "symptoms": [
-    {
-      "id": 1,
-      "name": "Headache",
-      "name_mm": "ခေါင်းကိုက်"
-    },
-    {
-      "id": 2,
-      "name": "Fever",
-      "name_mm": "ဖျား"
-    }
+    { "id": 1, "name": "Headache", "name_mm": "ခေါင်းကိုက်" },
+    { "id": 2, "name": "Fever", "name_mm": "အဖျား" },
+    { "id": 3, "name": "Cough", "name_mm": "ချောင်းဆိုး" },
+    { "id": 4, "name": "Sore Throat", "name_mm": "လည်ချောင်းနာ" }
   ]
 }

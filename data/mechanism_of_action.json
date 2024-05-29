@@ -1,0 +1,6 @@
+{
+  "mechanism_of_action": [
+    { "id": 1, "description": "Paracetamol works by inhibiting the production of prostaglandins in the brain.", "description_mm": "ပါရာဆီတမောသည် ဦးနှောက်အတွင်း prostaglandins ထုတ်လုပ်မှုကို တားဆီးခြင်းဖြင့် အလုပ်လုပ်သည်။" },
+    { "id": 2, "description": "Ibuprofen works by reducing hormones that cause inflammation and pain in the body.", "description_mm": "အိုက်ဘူပရိုဖင်သည် ကိုယ်အတွင်း ရောင်ရမ်းခြင်းနှင့် နာကျင်ခြင်းကို ဖြစ်စေသော ဟော်မုန်းများကို လျော့ချခြင်းဖြင့် အလုပ်လုပ်သည်။" }
+  ]
+}

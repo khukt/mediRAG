@@ -2,66 +2,17 @@
   "medicines": [
     {
       "id": 1,
-      "generic_name_ids": [1],
+      "form_id": 1,
+      "brand_id": 1,
       "description": "Paracetamol is a pain reliever and a fever reducer.",
-      "description_mm": "ပါရာစီတမောသည် နာကျင်မှုနှင့် ဖျားခြင်းကို လျှော့ချပေးသော ဆေးတစ်ခု ဖြစ်သည်။",
-      "mechanism_of_action": "Paracetamol works by inhibiting the production of prostaglandins in the brain.",
-      "mechanism_of_action_mm": "ပါရာစီတမောသည် ဦးနှောက်အတွင်း prostaglandins ထုတ်လုပ်မှုကို တားဆီးခြင်းဖြင့် အလုပ်လုပ်သည်။",
-      "indications": ["Pain relief", "Fever reduction"],
-      "indications_mm": ["နာကျင်မှုသက်သာရေး", "ဖျားခြင်းလျှော့ချပေးခြင်း"],
-      "contraindications": ["Liver disease", "Alcoholism"],
-      "contraindications_mm": ["အသည်းရောဂါ", "အရက်အလွန်အကျွံသောက်ခြင်း"],
-      "warnings": ["Do not exceed the recommended dosage.", "May cause liver damage if taken in large amounts."],
-      "warnings_mm": ["အကြံပြုထားသော အမိန့်ကို မကျော်သင့်ပါ။", "အလွန်အကျွံ အရေအတွက် စားသုံးပါက အသည်းထိခိုက်စေနိုင်သည်။"],
-      "interactions": ["Warfarin", "Rifampin"],
-      "interactions_mm": ["Warfarin", "Rifampin"],
-      "side_effects": ["Nausea", "Rash"],
-      "side_effects_mm": ["ဝမ်းနည်းခြင်း", "အဖုအထစ်ထခြင်း"],
-      "brands": [
-        {
-          "brand_id": 1,
-          "dosages": ["500 mg", "1000 mg"],
-          "form_id": 1
-        },
-        {
-          "brand_id": 2,
-          "dosages": ["325 mg"],
-          "form_id": 2
-        }
-      ],
-      "symptom_ids": [1, 2],
-      "disease_ids": [1],
-      "additional_info": "Paracetamol is commonly used in over-the-counter medications.",
-      "additional_info_mm": "ပါရာစီတမောကို အလိုလို ဝယ်ယူနိုင်သော ဆေးဝါးများတွင် ပုံမှန်အားဖြင့် အသုံးပြုပါသည်။"
+      "description_mm": "ပါရာဆီတမောသည် နာကျင်မှုနှင့် ဖျားခြင်းကို လျှော့ချပေးသော ဆေးတစ်ခု ဖြစ်သည်။"
     },
     {
       "id": 2,
-      "generic_name_ids": [2],
-      "description": "Ibuprofen is a nonsteroidal anti-inflammatory drug (NSAID) that reduces inflammation and pain.",
-      "description_mm": "အိုင်ဘူပရိုဖင်သည် နာကျင်မှုနှင့် ရောင်ရမ်းမှုကို လျှော့ချပေးသော ဆေးဝါးတစ်ခုဖြစ်သည်။",
-      "mechanism_of_action": "Ibuprofen works by inhibiting the enzymes COX-1 and COX-2, which are involved in the production of inflammatory chemicals in the body.",
-      "mechanism_of_action_mm": "အိုင်ဘူပရိုဖင်သည် COX-1 နှင့် COX-2 အင်ဇိုင်းများကို တားဆီးခြင်းဖြင့် အလုပ်လုပ်သည်။",
-      "indications": ["Pain relief", "Inflammation reduction", "Fever reduction"],
-      "indications_mm": ["နာကျင်မှုသက်သာရေး", "ရောင်ရမ်းခြင်းလျှော့ချပေးခြင်း", "ဖျားခြင်းလျှော့ချပေးခြင်း"],
-      "contraindications": ["Stomach ulcers", "Kidney disease"],
-      "contraindications_mm": ["အစာအိမ်အနာ", "ကျောက်ကပ်ရောဂါ"],
-      "warnings": ["May cause stomach bleeding.", "Do not use if you have a history of stomach ulcers."],
-      "warnings_mm": ["အစာအိမ်သွေးယိုစေနိုင်သည်။", "အစာအိမ်အနာ ရှိဖူးသူများ မသုံးသင့်ပါ။"],
-      "interactions": ["Aspirin", "Methotrexate"],
-      "interactions_mm": ["Aspirin", "Methotrexate"],
-      "side_effects": ["Stomach pain", "Dizziness"],
-      "side_effects_mm": ["အစာအိမ်နာခြင်း", "ခေါင်းမူးခြင်း"],
-      "brands": [
-        {
-          "brand_id": 3,
-          "dosages": ["200 mg", "400 mg"],
-          "form_id": 1
-        }
-      ],
-      "symptom_ids": [1],
-      "disease_ids": [2],
-      "additional_info": "Ibuprofen is commonly available in over-the-counter medications.",
-      "additional_info_mm": "အိုင်ဘူပရိုဖင်ကို အလိုလို ဝယ်ယူနိုင်သော ဆေးဝါးများတွင် ပုံမှန်အားဖြင့် အသုံးပြုပါသည်။"
+      "form_id": 2,
+      "brand_id": 2,
+      "description": "Ibuprofen is used to reduce fever and treat pain or inflammation.",
+      "description_mm": "အိုက်ဘူပရိုဖင်ကို အဖျားကျစေရန်နှင့် နာကျင်မှု သက်သာစေရန် အသုံးပြုသည်။"
     }
   ]
 }
