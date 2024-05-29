@@ -1,8 +1,0 @@
-{
-  "side_effects": [
-    { "id": 1, "name": "Nausea", "name_mm": "ဝမ်းနည်းခြင်း" },
-    { "id": 2, "name": "Rash", "name_mm": "အဖုအထစ်ထခြင်း" },
-    { "id": 3, "name": "Stomach pain", "name_mm": "ဗိုက်နာခြင်း" },
-    { "id": 4, "name": "Heartburn", "name_mm": "အာသီးလောင်ခြင်း" }
-  ]
-}
