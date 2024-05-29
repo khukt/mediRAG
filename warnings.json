@@ -1,0 +1,20 @@
+{
+    "warnings": [
+        {
+            "id": 1,
+            "name": "Do not exceed the recommended dosage."
+        },
+        {
+            "id": 2,
+            "name": "May cause liver damage if taken in large amounts."
+        },
+        {
+            "id": 3,
+            "name": "May increase the risk of heart attack or stroke."
+        },
+        {
+            "id": 4,
+            "name": "Do not take during pregnancy without medical advice."
+        }
+    ]
+}
