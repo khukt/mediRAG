@@ -167,7 +167,7 @@ elif search_type == 'Disease':
 # Footer
 st.sidebar.markdown("""
 ---
-*Developed by [GENI Technology](https://geni.asia)*
+*Developed by [Your Name](https://your-website.com)*
 """)
 
 # Run the app
