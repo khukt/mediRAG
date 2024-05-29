@@ -1,4 +1,4 @@
-import streamlit as st
+NI import streamlit as st
 import json
 from transformers import pipeline
 
@@ -167,7 +167,7 @@ elif search_type == 'Disease':
 # Footer
 st.sidebar.markdown("""
 ---
-*Developed by [Your Name](https://your-website.com)*
+*Developed by [GENI Technology](https://geni.asia)*
 """)
 
 # Run the app
