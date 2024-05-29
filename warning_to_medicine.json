@@ -1,8 +1,0 @@
-{
-  "warning_to_medicine": [
-    { "warning_id": 1, "medicine_id": 1 },
-    { "warning_id": 2, "medicine_id": 1 },
-    { "warning_id": 3, "medicine_id": 2 },
-    { "warning_id": 4, "medicine_id": 2 }
-  ]
-}
