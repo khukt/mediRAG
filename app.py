@@ -1,5 +1,6 @@
 import streamlit as st
 import json
+from transformers import pipeline
 
 # Load JSON data with debug information
 @st.cache
@@ -7,7 +8,6 @@ def load_data(file):
     try:
         with open(file) as f:
             data = json.load(f)
-        st.write(f"Successfully loaded {file}")
         return data
     except Exception as e:
         st.error(f"Error loading {file}: {e}")
@@ -54,6 +54,13 @@ def find_related_entities(entity_id, relationship, entity_key='medicine_id'):
 def display_related_entities(related_ids, entity_dict, entity_key):
     for rel in related_ids:
         st.write(entity_dict[rel[entity_key]]['name'])
+
+# Load RAG model
+@st.cache(allow_output_mutation=True)
+def load_rag_model():
+    return pipeline("question-answering", model="distilbert-base-uncased-distilled-squad")
+
+rag_model = load_rag_model()
 
 # Streamlit UI
 st.title('Medicine Knowledge Base')
@@ -148,6 +155,14 @@ elif search_type == 'Disease':
         st.subheader('Related Medicines')
         related_medicines = find_related_entities(disease_id, 'medicine_disease', 'disease_id')
         display_related_entities(related_medicines, medicines_dict, 'medicine_id')
+
+# RAG-based Search
+st.subheader('RAG-based Search')
+query = st.text_input('Enter your query')
+if query:
+    context = " ".join([med['description'] for med in medicines])  # Simplified context
+    result = rag_model(question=query, context=context)
+    st.write(result['answer'])
 
 # Run the app
 if __name__ == '__main__':
