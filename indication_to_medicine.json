@@ -1,8 +1,0 @@
-{
-  "indication_to_medicine": [
-    { "indication_id": 1, "medicine_id": 1 },
-    { "indication_id": 2, "medicine_id": 1 },
-    { "indication_id": 1, "medicine_id": 2 },
-    { "indication_id": 3, "medicine_id": 2 }
-  ]
-}
