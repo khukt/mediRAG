@@ -2,6 +2,9 @@ import streamlit as st
 import json
 from transformers import pipeline
 
+# Set page configuration
+st.set_page_config(page_title="Advanced Medicine Knowledge Base", page_icon="💊")
+
 # Load JSON data
 @st.cache
 def load_data(file):
@@ -53,9 +56,6 @@ def load_language_model():
 language_model = load_language_model()
 
 # Streamlit UI
-st.set_page_config(page_title="Advanced Medicine Knowledge Base", page_icon="💊")
-
-# Title and Description
 st.title('💊 Advanced Medicine Knowledge Base')
 st.write("""
 Welcome to the Advanced Medicine Knowledge Base! Use the search functionality below to ask questions and get human-like answers based on our comprehensive database.
