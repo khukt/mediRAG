@@ -45,7 +45,12 @@ def find_related_entities(medicine_id, relationship):
 st.title('Medicine Knowledge Base')
 
 # Medicine Selection
-medicine_options = {med['name']: med['id'] for med in medicines}
+try:
+    medicine_options = {med['name']: med['id'] for med in medicines}
+except KeyError as e:
+    st.error(f"KeyError: {e}. Please make sure your JSON files have the correct structure.")
+    st.stop()
+
 selected_medicine = st.selectbox('Select a Medicine', list(medicine_options.keys()))
 
 if selected_medicine:
