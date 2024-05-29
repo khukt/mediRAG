@@ -27,24 +27,6 @@ medicines_dict = to_dict(medicines)
 symptoms_dict = to_dict(symptoms)
 indications_dict = to_dict(indications)
 
-# Function to find related medicines by symptom
-def find_medicines_by_symptom(symptom_id):
-    return [rel['medicine_id'] for rel in relationships['medicine_symptom'] if rel['symptom_id'] == symptom_id]
-
-# Function to find related medicines by indication
-def find_medicines_by_indication(indication_id):
-    return [rel['medicine_id'] for rel in relationships['medicine_indication'] if rel['indication_id'] == indication_id]
-
-# Function to find related entities
-def find_related_entities(entity_id, relationship, entity_key='medicine_id'):
-    related_ids = [rel for rel in relationships[relationship] if rel[entity_key] == entity_id]
-    return related_ids
-
-# Function to display related entities
-def display_related_entities(related_ids, entity_dict, entity_key):
-    for rel in related_ids:
-        st.write(entity_dict[rel[entity_key]]['name'])
-
 # Load RAG model
 @st.cache(allow_output_mutation=True)
 def load_rag_model():
@@ -59,43 +41,65 @@ st.title('Medicine Knowledge Base with RAG-based Search')
 st.subheader('RAG-based Search')
 query = st.text_input('Enter your query')
 if query:
-    # Create a focused context for the query
-    context = ""
-    for medicine in medicines:
-        context += f"Medicine: {medicine['name']}\nDescription: {medicine['description']}\n\n"
-    for symptom in symptoms:
-        context += f"Symptom: {symptom['name']}\n\n"
-    for indication in indications:
-        context += f"Indication: {indication['name']}\n\n"
-    
-    result = rag_model(question=query, context=context)
-    st.write(result['answer'])
+    # Direct lookup for specific medicine names
+    medicine_name_lookup = {med['name'].lower(): med for med in medicines}
+    if query.lower() in medicine_name_lookup:
+        medicine = medicine_name_lookup[query.lower()]
+        st.write(f"**Name:** {medicine['name']}")
+        st.write(f"**Description:** {medicine['description']}")
 
-    # If the query includes a symptom, suggest alternative medicines
-    for symptom in symptoms:
-        if symptom['name'].lower() in query.lower():
-            symptom_id = symptom['id']
-            alternative_medicines_ids = find_medicines_by_symptom(symptom_id)
-            alternative_medicines = [medicines_dict[med_id]['name'] for med_id in alternative_medicines_ids if med_id in medicines_dict]
-            
-            st.subheader('Alternative Medicines')
-            st.write(f"For symptom: {symptom['name']}")
-            for med in alternative_medicines:
-                st.write(med)
-            break
+        # Suggest alternative medicines based on symptoms and indications
+        symptom_ids = [rel['symptom_id'] for rel in relationships['medicine_symptom'] if rel['medicine_id'] == medicine['id']]
+        indication_ids = [rel['indication_id'] for rel in relationships['medicine_indication'] if rel['medicine_id'] == medicine['id']]
 
-    # If the query includes an indication, suggest alternative medicines
-    for indication in indications:
-        if indication['name'].lower() in query.lower():
-            indication_id = indication['id']
-            alternative_medicines_ids = find_medicines_by_indication(indication_id)
-            alternative_medicines = [medicines_dict[med_id]['name'] for med_id in alternative_medicines_ids if med_id in medicines_dict]
-            
-            st.subheader('Alternative Medicines')
-            st.write(f"For indication: {indication['name']}")
-            for med in alternative_medicines:
-                st.write(med)
-            break
+        alternative_medicines = set()
+        for symptom_id in symptom_ids:
+            alternative_medicines.update(find_medicines_by_symptom(symptom_id))
+        for indication_id in indication_ids:
+            alternative_medicines.update(find_medicines_by_indication(indication_id))
+        alternative_medicines.discard(medicine['id'])  # Remove the current medicine from the alternatives
+
+        st.subheader('Alternative Medicines')
+        for med_id in alternative_medicines:
+            st.write(medicines_dict[med_id]['name'])
+
+    else:
+        # Create a focused context for the query
+        context = ""
+        for medicine in medicines:
+            context += f"Medicine: {medicine['name']}\nDescription: {medicine['description']}\n\n"
+        for symptom in symptoms:
+            context += f"Symptom: {symptom['name']}\n\n"
+        for indication in indications:
+            context += f"Indication: {indication['name']}\n\n"
+        
+        result = rag_model(question=query, context=context)
+        st.write(result['answer'])
+
+        # Suggest alternative medicines based on symptoms and indications in the query
+        for symptom in symptoms:
+            if symptom['name'].lower() in query.lower():
+                symptom_id = symptom['id']
+                alternative_medicines_ids = find_medicines_by_symptom(symptom_id)
+                alternative_medicines = [medicines_dict[med_id]['name'] for med_id in alternative_medicines_ids if med_id in medicines_dict]
+                
+                st.subheader('Alternative Medicines')
+                st.write(f"For symptom: {symptom['name']}")
+                for med in alternative_medicines:
+                    st.write(med)
+                break
+
+        for indication in indications:
+            if indication['name'].lower() in query.lower():
+                indication_id = indication['id']
+                alternative_medicines_ids = find_medicines_by_indication(indication_id)
+                alternative_medicines = [medicines_dict[med_id]['name'] for med_id in alternative_medicines_ids if med_id in medicines_dict]
+                
+                st.subheader('Alternative Medicines')
+                st.write(f"For indication: {indication['name']}")
+                for med in alternative_medicines:
+                    st.write(med)
+                break
 
 # Run the app
 if __name__ == '__main__':
