@@ -17,15 +17,6 @@ def load_data(file):
 medicines = load_data('medicines.json')['medicines']
 symptoms = load_data('symptoms.json')['symptoms']
 indications = load_data('indications.json')['indications']
-diseases = load_data('diseases.json')['diseases']
-side_effects = load_data('side_effects.json')['side_effects']
-interactions = load_data('interactions.json')['interactions']
-warnings = load_data('warnings.json')['warnings']
-contraindications = load_data('contraindications.json')['contraindications']
-mechanisms_of_action = load_data('mechanisms_of_action.json')['mechanisms_of_action']
-brand_names = load_data('brand_names.json')['brand_names']
-generic_names = load_data('generic_names.json')['generic_names']
-manufacturers = load_data('manufacturers.json')['manufacturers']
 relationships = load_data('relationships.json')
 
 # Convert to dictionaries for easy lookup
@@ -35,15 +26,24 @@ def to_dict(data, key='id'):
 medicines_dict = to_dict(medicines)
 symptoms_dict = to_dict(symptoms)
 indications_dict = to_dict(indications)
-diseases_dict = to_dict(diseases)
-side_effects_dict = to_dict(side_effects)
-interactions_dict = to_dict(interactions)
-warnings_dict = to_dict(warnings)
-contraindications_dict = to_dict(contraindications)
-mechanisms_dict = to_dict(mechanisms_of_action)
-brand_names_dict = to_dict(brand_names)
-generic_names_dict = to_dict(generic_names)
-manufacturers_dict = to_dict(manufacturers)
+
+# Function to find related medicines by symptom
+def find_medicines_by_symptom(symptom_id):
+    return [rel['medicine_id'] for rel in relationships['medicine_symptom'] if rel['symptom_id'] == symptom_id]
+
+# Function to find related medicines by indication
+def find_medicines_by_indication(indication_id):
+    return [rel['medicine_id'] for rel in relationships['medicine_indication'] if rel['indication_id'] == indication_id]
+
+# Function to find related entities
+def find_related_entities(entity_id, relationship, entity_key='medicine_id'):
+    related_ids = [rel for rel in relationships[relationship] if rel[entity_key] == entity_id]
+    return related_ids
+
+# Function to display related entities
+def display_related_entities(related_ids, entity_dict, entity_key):
+    for rel in related_ids:
+        st.write(entity_dict[rel[entity_key]]['name'])
 
 # Load RAG model
 @st.cache(allow_output_mutation=True)
@@ -70,6 +70,32 @@ if query:
     
     result = rag_model(question=query, context=context)
     st.write(result['answer'])
+
+    # If the query includes a symptom, suggest alternative medicines
+    for symptom in symptoms:
+        if symptom['name'].lower() in query.lower():
+            symptom_id = symptom['id']
+            alternative_medicines_ids = find_medicines_by_symptom(symptom_id)
+            alternative_medicines = [medicines_dict[med_id]['name'] for med_id in alternative_medicines_ids if med_id in medicines_dict]
+            
+            st.subheader('Alternative Medicines')
+            st.write(f"For symptom: {symptom['name']}")
+            for med in alternative_medicines:
+                st.write(med)
+            break
+
+    # If the query includes an indication, suggest alternative medicines
+    for indication in indications:
+        if indication['name'].lower() in query.lower():
+            indication_id = indication['id']
+            alternative_medicines_ids = find_medicines_by_indication(indication_id)
+            alternative_medicines = [medicines_dict[med_id]['name'] for med_id in alternative_medicines_ids if med_id in medicines_dict]
+            
+            st.subheader('Alternative Medicines')
+            st.write(f"For indication: {indication['name']}")
+            for med in alternative_medicines:
+                st.write(med)
+            break
 
 # Run the app
 if __name__ == '__main__':
