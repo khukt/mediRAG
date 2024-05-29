@@ -59,12 +59,14 @@ st.title('Medicine Knowledge Base with RAG-based Search')
 st.subheader('RAG-based Search')
 query = st.text_input('Enter your query')
 if query:
-    # Create a comprehensive context including descriptions from all relevant entities
-    context = " ".join([med['description'] for med in medicines] +
-                       [sym['name'] + ": " + sym['name'] for sym in symptoms] +
-                       [ind['name'] + ": " + ind['name'] for ind in indications] +
-                       [dis['name'] + ": " + dis['name'] for dis in diseases] +
-                       [se['name'] + ": " + se['name'] for se in side_effects])
+    # Create a focused context for the query
+    context = ""
+    for medicine in medicines:
+        context += f"Medicine: {medicine['name']}\nDescription: {medicine['description']}\n\n"
+    for symptom in symptoms:
+        context += f"Symptom: {symptom['name']}\n\n"
+    for indication in indications:
+        context += f"Indication: {indication['name']}\n\n"
     
     result = rag_model(question=query, context=context)
     st.write(result['answer'])
