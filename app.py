@@ -85,7 +85,8 @@ if search_type == 'Ask a Question':
         with st.spinner('Generating response...'):
             response = language_model(f"Context: {context}\nQuestion: {query}\nAnswer:", max_length=150, num_return_sequences=1)
         st.success("Answer:")
-        st.write(response[0]['generated_text'])
+        st.write(f"**Question:** {query}")
+        st.write(f"**Answer:** {response[0]['generated_text'].replace('Question:', '').strip()}")
 
 elif search_type == 'Medicine':
     st.header('Search by Medicine')
@@ -167,8 +168,7 @@ elif search_type == 'Disease':
 # Footer
 st.sidebar.markdown("""
 ---
-*DEMO*
-*Developed by [GENI Technology](https://geni.asia)*
+*Developed by [Your Name](https://your-website.com)*
 """)
 
 # Run the app
