@@ -7,7 +7,7 @@ with open('medicines.json', 'r') as f:
     medicines = json.load(f)
 
 # Load a specialized medical QA model
-model_name = "deepset/biobert-base-cased-v1.1-squad2"
+model_name = "dmis-lab/biobert-v1.1"
 model = AutoModelForQuestionAnswering.from_pretrained(model_name)
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 qa_pipeline = pipeline('question-answering', model=model, tokenizer=tokenizer)
