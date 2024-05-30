@@ -20,14 +20,17 @@ def build_context(medicines):
         context += f"Generic Name: {drug['generic_name']}\n"
         context += f"Brand Names: {', '.join(drug['brand_names'])}\n"
         context += f"Description: {drug['description']}\n"
-        context += f"Dosage Forms: {', '.join([f'{d['form']} ({", ".join(d["strengths"])})' for d in drug['dosage_forms']])}\n"
+        dosage_forms = ", ".join([f"{d['form']} ({', '.join(d['strengths'])})" for d in drug['dosage_forms']])
+        context += f"Dosage Forms: {dosage_forms}\n"
         context += f"Indications: {', '.join(drug['indications'])}\n"
         context += f"Contraindications: {', '.join(drug['contraindications'])}\n"
         context += "Side Effects: Common: " + ", ".join(drug['side_effects']['common']) + "; Serious: " + ", ".join(drug['side_effects']['serious']) + "\n"
-        context += f"Interactions: " + "; ".join([f"{i['drug']}: {i['description']}" for i in drug['interactions']]) + "\n"
+        interactions = "; ".join([f"{i['drug']}: {i['description']}" for i in drug['interactions']])
+        context += f"Interactions: {interactions}\n"
         context += f"Warnings: {', '.join(drug['warnings'])}\n"
         context += f"Mechanism of Action: {drug['mechanism_of_action']}\n"
-        context += f"Pharmacokinetics: Absorption: {drug['pharmacokinetics']['absorption']}; Metabolism: {drug['pharmacokinetics']['metabolism']}; Half-life: {drug['pharmacokinetics']['half_life']}; Excretion: {drug['pharmacokinetics']['excretion']}\n"
+        pharmacokinetics = f"Absorption: {drug['pharmacokinetics']['absorption']}; Metabolism: {drug['pharmacokinetics']['metabolism']}; Half-life: {drug['pharmacokinetics']['half_life']}; Excretion: {drug['pharmacokinetics']['excretion']}"
+        context += f"Pharmacokinetics: {pharmacokinetics}\n"
         context += f"Patient Information: {', '.join(drug['patient_information'])}\n"
     return context
 
