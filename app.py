@@ -1,65 +1,166 @@
-import sqlite3
-import json
-
-# Connect to SQLite database (or create it)
-conn = sqlite3.connect('medicines.db')
-c = conn.cursor()
-
-# Create tables
-c.execute('''CREATE TABLE IF NOT EXISTS medicines (
-    id INTEGER PRIMARY KEY,
-    generic_name TEXT,
-    brand_names TEXT,
-    description TEXT,
-    indications TEXT,
-    contraindications TEXT,
-    common_side_effects TEXT,
-    serious_side_effects TEXT,
-    interactions TEXT,
-    warnings TEXT,
-    mechanism_of_action TEXT,
-    pharmacokinetics TEXT,
-    patient_information TEXT
-)''')
-
-# Load data from JSON file
-with open('medicines.json', 'r') as f:
-    medicines = json.load(f)
-
-# Insert data into the database
-for med in medicines:
-    c.execute('''INSERT INTO medicines (generic_name, brand_names, description, indications, contraindications, common_side_effects, serious_side_effects, interactions, warnings, mechanism_of_action, pharmacokinetics, patient_information)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', (
-        med['generic_name'],
-        json.dumps(med['brand_names']),
-        med['description'],
-        json.dumps(med['indications']),
-        json.dumps(med['contraindications']),
-        json.dumps(med['side_effects']['common']),
-        json.dumps(med['side_effects']['serious']),
-        json.dumps(med['interactions']),
-        json.dumps(med['warnings']),
-        med['mechanism_of_action'],
-        json.dumps(med['pharmacokinetics']),
-        json.dumps(med['patient_information'])
-    ))
-
-# Commit changes and close the connection
-conn.commit()
-conn.close()
-
-
 import streamlit as st
 from transformers import pipeline
 import sqlite3
 import json
 
+# Create and populate SQLite database
+def create_and_populate_db():
+    conn = sqlite3.connect(':memory:')  # Use in-memory database for simplicity
+    c = conn.cursor()
+
+    # Create table
+    c.execute('''CREATE TABLE IF NOT EXISTS medicines (
+        generic_name TEXT,
+        brand_names TEXT,
+        description TEXT,
+        indications TEXT,
+        contraindications TEXT,
+        common_side_effects TEXT,
+        serious_side_effects TEXT,
+        interactions TEXT,
+        warnings TEXT,
+        mechanism_of_action TEXT,
+        pharmacokinetics TEXT,
+        patient_information TEXT
+    )''')
+
+    # Sample data
+    medicines_data = [
+        {
+            "generic_name": "Paracetamol",
+            "brand_names": ["Tylenol", "Panadol", "Acetaminophen"],
+            "description": "Paracetamol is a medication used to treat pain and fever. It is commonly used for headaches, muscle aches, arthritis, backaches, toothaches, colds, and fevers.",
+            "dosage_forms": [
+                {
+                    "form": "tablet",
+                    "strengths": ["500mg", "650mg"]
+                },
+                {
+                    "form": "syrup",
+                    "strengths": ["120mg/5ml"]
+                }
+            ],
+            "indications": [
+                "Headache",
+                "Muscle ache",
+                "Fever",
+                "Arthritis"
+            ],
+            "contraindications": [
+                "Severe liver disease",
+                "Allergic reaction to paracetamol"
+            ],
+            "side_effects": {
+                "common": ["Nausea", "Vomiting"],
+                "serious": ["Liver damage", "Severe allergic reaction"]
+            },
+            "interactions": [
+                {
+                    "drug": "Warfarin",
+                    "description": "Paracetamol can increase the blood-thinning effect of Warfarin, increasing the risk of bleeding."
+                },
+                {
+                    "drug": "Alcohol",
+                    "description": "Concurrent use can increase the risk of liver damage."
+                }
+            ],
+            "warnings": [
+                "Do not exceed the recommended dose.",
+                "Use with caution in patients with liver disease."
+            ],
+            "mechanism_of_action": "Paracetamol works by inhibiting the synthesis of prostaglandins, which help transmit pain and induce fever.",
+            "pharmacokinetics": {
+                "absorption": "Rapidly absorbed from the gastrointestinal tract.",
+                "metabolism": "Metabolized in the liver.",
+                "half_life": "1-4 hours",
+                "excretion": "Excreted by the kidneys."
+            },
+            "patient_information": [
+                "Take paracetamol with or without food.",
+                "Do not take more than 4 grams (4000 mg) in 24 hours."
+            ]
+        },
+        {
+            "generic_name": "Ibuprofen",
+            "brand_names": ["Advil", "Motrin", "Nurofen"],
+            "description": "Ibuprofen is a nonsteroidal anti-inflammatory drug (NSAID) used to reduce fever and treat pain or inflammation caused by many conditions such as headache, toothache, arthritis, menstrual cramps, or minor injury.",
+            "dosage_forms": [
+                {
+                    "form": "tablet",
+                    "strengths": ["200mg", "400mg", "600mg", "800mg"]
+                },
+                {
+                    "form": "suspension",
+                    "strengths": ["100mg/5ml"]
+                }
+            ],
+            "indications": [
+                "Pain",
+                "Fever",
+                "Inflammation"
+            ],
+            "contraindications": [
+                "History of asthma or allergic reaction to aspirin or other NSAIDs",
+                "Active gastrointestinal bleeding"
+            ],
+            "side_effects": {
+                "common": ["Nausea", "Heartburn", "Dizziness"],
+                "serious": ["Gastrointestinal bleeding", "Kidney damage"]
+            },
+            "interactions": [
+                {
+                    "drug": "Aspirin",
+                    "description": "Concurrent use can increase the risk of gastrointestinal bleeding."
+                },
+                {
+                    "drug": "Warfarin",
+                    "description": "Ibuprofen can enhance the anticoagulant effect of Warfarin."
+                }
+            ],
+            "warnings": [
+                "Do not take more than the recommended dose.",
+                "Use with caution in patients with a history of heart disease or gastrointestinal issues."
+            ],
+            "mechanism_of_action": "Ibuprofen works by inhibiting the enzymes COX-1 and COX-2, which are involved in the synthesis of prostaglandins that mediate inflammation, pain, and fever.",
+            "pharmacokinetics": {
+                "absorption": "Well absorbed from the gastrointestinal tract.",
+                "metabolism": "Metabolized in the liver.",
+                "half_life": "2-4 hours",
+                "excretion": "Excreted by the kidneys."
+            },
+            "patient_information": [
+                "Take ibuprofen with food or milk to reduce stomach upset.",
+                "Avoid alcohol while taking this medication."
+            ]
+        }
+    ]
+
+    # Insert data into the database
+    for med in medicines_data:
+        c.execute('''INSERT INTO medicines (generic_name, brand_names, description, indications, contraindications, common_side_effects, serious_side_effects, interactions, warnings, mechanism_of_action, pharmacokinetics, patient_information)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', (
+            med['generic_name'],
+            json.dumps(med['brand_names']),
+            med['description'],
+            json.dumps(med['indications']),
+            json.dumps(med['contraindications']),
+            json.dumps(med['side_effects']['common']),
+            json.dumps(med['side_effects']['serious']),
+            json.dumps(med['interactions']),
+            json.dumps(med['warnings']),
+            med['mechanism_of_action'],
+            json.dumps(med['pharmacokinetics']),
+            json.dumps(med['patient_information'])
+        ))
+
+    conn.commit()
+    return conn
+
+conn = create_and_populate_db()
+c = conn.cursor()
+
 # Load the QA model
 qa_pipeline = pipeline('question-answering', model='distilbert-base-uncased-distilled-squad')
-
-# Connect to SQLite database
-conn = sqlite3.connect('medicines.db')
-c = conn.cursor()
 
 st.title("Medicines Information System")
 
@@ -68,37 +169,50 @@ question = st.text_input("Ask a question about any medicine:")
 
 def fetch_medicine_data(generic_name):
     c.execute('SELECT * FROM medicines WHERE generic_name = ?', (generic_name,))
-    return c.fetchone()
+    row = c.fetchone()
+    if row:
+        return {
+            "generic_name": row[0],
+            "brand_names": json.loads(row[1]),
+            "description": row[2],
+            "indications": json.loads(row[3]),
+            "contraindications": json.loads(row[4]),
+            "common_side_effects": json.loads(row[5]),
+            "serious_side_effects": json.loads(row[6]),
+            "interactions": json.loads(row[7]),
+            "warnings": json.loads(row[8]),
+            "mechanism_of_action": row[9],
+            "pharmacokinetics": json.loads(row[10]),
+            "patient_information": json.loads(row[11])
+        }
+    return None
 
 def build_relevant_context(question, medicines):
     context = ""
-    keywords = question.lower().split()
     for med in medicines:
-        if any(kw in med['generic_name'].lower() for kw in keywords) or any(kw.lower() in med['brand_names'].lower() for kw in keywords):
+        if med:
             context += f"Generic Name: {med['generic_name']}\n"
-            context += f"Brand Names: {', '.join(json.loads(med['brand_names']))}\n"
+            context += f"Brand Names: {', '.join(med['brand_names'])}\n"
             context += f"Description: {med['description']}\n"
-            context += f"Indications: {', '.join(json.loads(med['indications']))}\n"
-            context += f"Contraindications: {', '.join(json.loads(med['contraindications']))}\n"
-            context += f"Common Side Effects: {', '.join(json.loads(med['common_side_effects']))}\n"
-            context += f"Serious Side Effects: {', '.join(json.loads(med['serious_side_effects']))}\n"
-            context += f"Interactions: {', '.join([i['drug'] + ': ' + i['description'] for i in json.loads(med['interactions'])])}\n"
-            context += f"Warnings: {', '.join(json.loads(med['warnings']))}\n"
+            context += f"Indications: {', '.join(med['indications'])}\n"
+            context += f"Contraindications: {', '.join(med['contraindications'])}\n"
+            context += f"Common Side Effects: {', '.join(med['common_side_effects'])}\n"
+            context += f"Serious Side Effects: {', '.join(med['serious_side_effects'])}\n"
+            context += f"Interactions: {', '.join([i['drug'] + ': ' + i['description'] for i in med['interactions']])}\n"
+            context += f"Warnings: {', '.join(med['warnings'])}\n"
             context += f"Mechanism of Action: {med['mechanism_of_action']}\n"
-            pk = json.loads(med['pharmacokinetics'])
+            pk = med['pharmacokinetics']
             context += f"Pharmacokinetics: Absorption: {pk['absorption']}; Metabolism: {pk['metabolism']}; Half-life: {pk['half_life']}; Excretion: {pk['excretion']}\n"
-            context += f"Patient Information: {', '.join(json.loads(med['patient_information']))}\n"
+            context += f"Patient Information: {', '.join(med['patient_information'])}\n"
     return context
 
 if question:
     # Extract the relevant generic name from the question
     keywords = question.lower().split()
-    generic_names = [med['generic_name'] for med in medicines if any(kw in med['generic_name'].lower() for kw in keywords)]
+    relevant_meds = [fetch_medicine_data(kw) for kw in keywords if fetch_medicine_data(kw)]
     
-    if generic_names:
-        generic_name = generic_names[0]  # Assuming the first match is the correct one
-        med_data = fetch_medicine_data(generic_name)
-        context = build_relevant_context(question, [med_data])
+    if relevant_meds:
+        context = build_relevant_context(question, relevant_meds)
         
         if context:
             # Get the answer from the QA model
@@ -122,9 +236,8 @@ test_questions = [
 st.subheader("Test Questions and Expected Answers")
 
 for test in test_questions:
-    generic_name = test["question"].split()[2].lower()  # Extract the generic name from the question
-    med_data = fetch_medicine_data(generic_name)
-    context = build_relevant_context(test["question"], [med_data])
+    relevant_meds = [fetch_medicine_data(test["question"].split()[2].lower())]
+    context = build_relevant_context(test["question"], relevant_meds)
     
     if context:
         answer = qa_pipeline(question=test["question"], context=context)
