@@ -62,9 +62,9 @@ def search_medicines(query, node_texts, embeddings, tokenizer, model):
     query_embedding = get_embeddings(query_encoding, model)
     
     similarities = cosine_similarity(query_embedding, embeddings)[0]
-    top_indices = np.argsort(similarities)[::-1]  # Sort indices by similarity in descending order
+    top_index = np.argmax(similarities)  # Get the index of the highest similarity
     
-    return top_indices, similarities
+    return top_index, similarities[top_index]
 
 # Generate a formal explanatory paragraph using DistilGPT2
 def generate_explanation(text, tokenizer, model):
@@ -86,30 +86,28 @@ if uploaded_file is not None:
     query = st.text_input('Enter your question:')
     
     if query:
-        top_indices, similarities = search_medicines(query, node_texts, embeddings, distilbert_tokenizer, distilbert_model)
+        top_index, similarity = search_medicines(query, node_texts, embeddings, distilbert_tokenizer, distilbert_model)
         
-        st.header('Search Results')
+        st.header('Search Result')
         
-        for rank, index in enumerate(top_indices[:2], start=1):  # Display top 2 results with ranking
-            text = (
-                f"Generic Name: {nodes[index]['generic_name']}. "
-                f"Commercial Name: {nodes[index]['commercial_name']}. "
-                f"Description: {nodes[index]['description']}. "
-                f"Warnings: {nodes[index]['warnings']}. "
-                f"Dosage: {nodes[index]['dosage']}. "
-                f"How to use: {nodes[index]['how_to_use']}."
-            )
-            st.subheader(f"Result {rank}")
-            st.write(f"**Generic Name:** {nodes[index]['generic_name']}")
-            st.write(f"**Commercial Name:** {nodes[index]['commercial_name']}")
-            st.write(f"**Description:** {nodes[index]['description']}")
-            st.write(f"**Warnings:** {nodes[index]['warnings']}")
-            st.write(f"**Dosage:** {nodes[index]['dosage']}")
-            st.write(f"**How to use:** {nodes[index]['how_to_use']}")
-            st.write(f"**Similarity Score:** {similarities[index]:.4f}")
-            
-            # Generate formal explanation
-            explanation = generate_explanation(text, gpt2_tokenizer, gpt2_model)
-            st.write("**Explanation:**")
-            st.write(explanation)
-            st.write("---")
+        text = (
+            f"Generic Name: {nodes[top_index]['generic_name']}. "
+            f"Commercial Name: {nodes[top_index]['commercial_name']}. "
+            f"Description: {nodes[top_index]['description']}. "
+            f"Warnings: {nodes[top_index]['warnings']}. "
+            f"Dosage: {nodes[top_index]['dosage']}. "
+            f"How to use: {nodes[top_index]['how_to_use']}."
+        )
+        st.write(f"**Generic Name:** {nodes[top_index]['generic_name']}")
+        st.write(f"**Commercial Name:** {nodes[top_index]['commercial_name']}")
+        st.write(f"**Description:** {nodes[top_index]['description']}")
+        st.write(f"**Warnings:** {nodes[top_index]['warnings']}")
+        st.write(f"**Dosage:** {nodes[top_index]['dosage']}")
+        st.write(f"**How to use:** {nodes[top_index]['how_to_use']}")
+        st.write(f"**Similarity Score:** {similarity:.4f}")
+        
+        # Generate formal explanation
+        explanation = generate_explanation(text, gpt2_tokenizer, gpt2_model)
+        st.write("**Explanation:**")
+        st.write(explanation)
+        st.write("---")
