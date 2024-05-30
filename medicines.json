@@ -1,109 +1,42 @@
-[
-  {
-    "generic_name": "Paracetamol",
-    "brand_names": ["Tylenol", "Panadol", "Acetaminophen"],
-    "description": "Paracetamol is a medication used to treat pain and fever. It is commonly used for headaches, muscle aches, arthritis, backaches, toothaches, colds, and fevers.",
-    "dosage_forms": [
-      {
-        "form": "tablet",
-        "strengths": ["500mg", "650mg"]
-      },
-      {
-        "form": "syrup",
-        "strengths": ["120mg/5ml"]
-      }
-    ],
-    "indications": [
-      "Headache",
-      "Muscle ache",
-      "Fever",
-      "Arthritis"
-    ],
-    "contraindications": [
-      "Severe liver disease",
-      "Allergic reaction to paracetamol"
-    ],
-    "side_effects": {
-      "common": ["Nausea", "Vomiting"],
-      "serious": ["Liver damage", "Severe allergic reaction"]
-    },
-    "interactions": [
-      {
-        "drug": "Warfarin",
-        "description": "Paracetamol can increase the blood-thinning effect of Warfarin, increasing the risk of bleeding."
-      },
-      {
-        "drug": "Alcohol",
-        "description": "Concurrent use can increase the risk of liver damage."
-      }
-    ],
-    "warnings": [
-      "Do not exceed the recommended dose.",
-      "Use with caution in patients with liver disease."
-    ],
-    "mechanism_of_action": "Paracetamol works by inhibiting the synthesis of prostaglandins, which help transmit pain and induce fever.",
-    "pharmacokinetics": {
-      "absorption": "Rapidly absorbed from the gastrointestinal tract.",
-      "metabolism": "Metabolized in the liver.",
-      "half_life": "1-4 hours",
-      "excretion": "Excreted by the kidneys."
-    },
-    "patient_information": [
-      "Take paracetamol with or without food.",
-      "Do not take more than 4 grams (4000 mg) in 24 hours."
-    ]
-  },
-  {
-    "generic_name": "Ibuprofen",
-    "brand_names": ["Advil", "Motrin", "Nurofen"],
-    "description": "Ibuprofen is a nonsteroidal anti-inflammatory drug (NSAID) used to reduce fever and treat pain or inflammation caused by many conditions such as headache, toothache, arthritis, menstrual cramps, or minor injury.",
-    "dosage_forms": [
-      {
-        "form": "tablet",
-        "strengths": ["200mg", "400mg", "600mg", "800mg"]
-      },
-      {
-        "form": "suspension",
-        "strengths": ["100mg/5ml"]
-      }
-    ],
-    "indications": [
-      "Pain",
-      "Fever",
-      "Inflammation"
-    ],
-    "contraindications": [
-      "History of asthma or allergic reaction to aspirin or other NSAIDs",
-      "Active gastrointestinal bleeding"
-    ],
-    "side_effects": {
-      "common": ["Nausea", "Heartburn", "Dizziness"],
-      "serious": ["Gastrointestinal bleeding", "Kidney damage"]
-    },
-    "interactions": [
-      {
-        "drug": "Aspirin",
-        "description": "Concurrent use can increase the risk of gastrointestinal bleeding."
-      },
-      {
-        "drug": "Warfarin",
-        "description": "Ibuprofen can enhance the anticoagulant effect of Warfarin."
-      }
-    ],
-    "warnings": [
-      "Do not take more than the recommended dose.",
-      "Use with caution in patients with a history of heart disease or gastrointestinal issues."
-    ],
-    "mechanism_of_action": "Ibuprofen works by inhibiting the enzymes COX-1 and COX-2, which are involved in the synthesis of prostaglandins that mediate inflammation, pain, and fever.",
-    "pharmacokinetics": {
-      "absorption": "Well absorbed from the gastrointestinal tract.",
-      "metabolism": "Metabolized in the liver.",
-      "half_life": "2-4 hours",
-      "excretion": "Excreted by the kidneys."
-    },
-    "patient_information": [
-      "Take ibuprofen with food or milk to reduce stomach upset.",
-      "Avoid alcohol while taking this medication."
-    ]
-  }
-]
+import streamlit as st
+from transformers import pipeline
+import json
+
+# Load the medicines data from the JSON file
+with open('medicines.json', 'r') as f:
+    medicines = json.load(f)
+
+# Load a lightweight transformer model for question answering
+qa_pipeline = pipeline('question-answering', model='distilbert-base-uncased-distilled-squad')
+
+st.title("Medicines Information System")
+
+# User input
+question = st.text_input("Ask a question about any medicine:")
+
+def build_context(drug):
+    context = ""
+    for key, value in drug.items():
+        if isinstance(value, list):
+            for item in value:
+                if isinstance(item, dict):
+                    for sub_key, sub_value in item.items():
+                        context += str(sub_value) + " "
+                else:
+                    context += str(item) + " "
+        elif isinstance(value, dict):
+            for sub_key, sub_value in value.items():
+                context += str(sub_value) + " "
+        else:
+            context += str(value) + " "
+    return context
+
+if question:
+    # Search for relevant drug information
+    context = ""
+    for drug in medicines:
+        context += build_context(drug)
+
+    # Get the answer from the QA model
+    answer = qa_pipeline(question=question, context=context)
+    st.write("Answer:", answer['answer'])
