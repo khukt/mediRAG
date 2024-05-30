@@ -19,7 +19,7 @@ def build_relevant_context(question, medicines):
     keywords = question.lower().split()
     for drug in medicines:
         drug_info = []
-        if "paracetamol" in keywords or "ibuprofen" in keywords or any(kw in drug['generic_name'].lower() for kw in keywords):
+        if any(kw in drug['generic_name'].lower() for kw in keywords) or any(kw in drug['brand_names'] for kw in keywords):
             drug_info.append(f"Generic Name: {drug['generic_name']}\n")
             drug_info.append(f"Brand Names: {', '.join(drug['brand_names'])}\n")
             drug_info.append(f"Description: {drug['description']}\n")
@@ -41,10 +41,12 @@ def build_relevant_context(question, medicines):
 if question:
     # Build the context relevant to the question
     context = build_relevant_context(question, medicines)
-
-    # Get the answer from the QA model
-    answer = qa_pipeline(question=question, context=context)
-    st.write("Answer:", answer['answer'])
+    if context:
+        # Get the answer from the QA model
+        answer = qa_pipeline(question=question, context=context)
+        st.write("Answer:", answer['answer'])
+    else:
+        st.write("No relevant context found for the question.")
 
 # Predefined test questions and expected answers
 test_questions = [
@@ -60,8 +62,13 @@ st.subheader("Test Questions and Expected Answers")
 
 for test in test_questions:
     context = build_relevant_context(test["question"], medicines)
-    answer = qa_pipeline(question=test["question"], context=context)
-    st.write(f"**Question:** {test['question']}")
-    st.write(f"**Expected Answer:** {test['expected']}")
-    st.write(f"**Model's Answer:** {answer['answer']}")
+    if context:
+        answer = qa_pipeline(question=test["question"], context=context)
+        st.write(f"**Question:** {test['question']}")
+        st.write(f"**Expected Answer:** {test['expected']}")
+        st.write(f"**Model's Answer:** {answer['answer']}")
+    else:
+        st.write(f"**Question:** {test['question']}")
+        st.write(f"**Expected Answer:** {test['expected']}")
+        st.write("**Model's Answer:** No relevant context found for the question.")
     st.write("---")
