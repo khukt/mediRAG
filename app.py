@@ -61,15 +61,15 @@ def search_medicines(query, node_texts, embeddings, tokenizer, model):
     return top_indices, similarities
 
 # Streamlit UI
-st.title('Medicine Data Embedding and Search using DistilBERT')
+st.title('Medicine Data Retrieval using NLP and DistilBERT')
 
 uploaded_file = st.file_uploader("Choose a JSON file", type="json")
 
 if uploaded_file is not None:
     embeddings, node_texts, nodes = retrieve_graph_data(uploaded_file)
     
-    st.header('Search for Medicines')
-    query = st.text_input('Enter search query:')
+    st.header('Ask a question about the medicines')
+    query = st.text_input('Enter your question:')
     
     if query:
         tokenizer = DistilBertTokenizer.from_pretrained('distilbert-base-uncased')
@@ -78,7 +78,7 @@ if uploaded_file is not None:
         top_indices, similarities = search_medicines(query, node_texts, embeddings, tokenizer, model)
         
         st.header('Search Results')
-        for index in top_indices:
+        for index in top_indices[:5]:  # Display top 5 results
             st.write(f"**Generic Name:** {nodes[index]['generic_name']}")
             st.write(f"**Commercial Name:** {nodes[index]['commercial_name']}")
             st.write(f"**Description:** {nodes[index]['description']}")
