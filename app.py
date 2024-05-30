@@ -1,106 +1,32 @@
 import streamlit as st
+from transformers import pipeline
 import json
-from transformers import DistilBertTokenizer, DistilBertModel
-import torch
-from sklearn.metrics.pairwise import cosine_similarity
-import numpy as np
 
-# Load models and tokenizers once and cache them
-@st.cache_resource
-def load_tokenizer_and_model():
-    distilbert_tokenizer = DistilBertTokenizer.from_pretrained('distilbert-base-uncased')
-    distilbert_model = DistilBertModel.from_pretrained('distilbert-base-uncased')
-    return distilbert_tokenizer, distilbert_model
+# Load the medicines data from the JSON file
+with open('medicines.json', 'r') as f:
+    medicines = json.load(f)
 
-# Load the JSON data
-def load_graph_data(json_file):
-    data = json.load(json_file)
-    return data
+# Load a lightweight transformer model for question answering
+qa_pipeline = pipeline('question-answering', model='distilbert-base-uncased-distilled-squad')
 
-# Function to extract and format graph data for transformer processing
-def extract_node_data(graph_data):
-    node_texts = []
-    for node in graph_data['nodes']:
-        combined_text = (
-            f"Generic Name: {node['generic_name']}. "
-            f"Commercial Name: {node['commercial_name']}. "
-            f"Description: {node['description']}. "
-            f"Warnings: {node['warnings']}. "
-            f"Dosage: {node['dosage']}. "
-            f"How to use: {node['how_to_use']}."
-        )
-        node_texts.append(combined_text)
-    return node_texts
+st.title("Medicines Information System")
 
-# Tokenize and encode the node texts
-def tokenize_texts(texts, tokenizer):
-    encoding = tokenizer(texts, return_tensors='pt', padding=True, truncation=True)
-    return encoding
+# User input
+question = st.text_input("Ask a question about any medicine:")
 
-# Get the embeddings from the transformer model
-def get_embeddings(encoding, model):
-    with torch.no_grad():
-        outputs = model(**encoding)
-    embeddings = outputs.last_hidden_state.mean(dim=1)  # Use mean pooling to get fixed-size embeddings
-    return embeddings
+if question:
+    # Search for relevant drug information
+    context = ""
+    for drug in medicines:
+        for key, value in drug.items():
+            if isinstance(value, list):
+                context += " ".join(value) + " "
+            elif isinstance(value, dict):
+                for sub_key, sub_value in value.items():
+                    context += " ".join(sub_value) + " " if isinstance(sub_value, list) else sub_value + " "
+            else:
+                context += value + " "
 
-# Main function to retrieve data
-def retrieve_graph_data(json_file, tokenizer, model):
-    graph_data = load_graph_data(json_file)
-    node_texts = extract_node_data(graph_data)
-    
-    encoding = tokenize_texts(node_texts, tokenizer)
-    embeddings = get_embeddings(encoding, model)
-    
-    return embeddings, node_texts, graph_data['nodes']
-
-# Function to search for medicines based on query
-def search_medicines(query, node_texts, embeddings, tokenizer, model):
-    query_encoding = tokenize_texts([query], tokenizer)
-    query_embedding = get_embeddings(query_encoding, model)
-    
-    similarities = cosine_similarity(query_embedding, embeddings)[0]
-    top_index = np.argmax(similarities)  # Get the index of the highest similarity
-    
-    return top_index, similarities[top_index]
-
-# Generate a formal explanatory paragraph using retrieved data
-def generate_explanation(node):
-    explanation = (
-        f"{node['commercial_name']} (generic name: {node['generic_name']}) is used to treat {node['description'].lower()}. "
-        f"The recommended dosage is {node['dosage']}. Important to note: {node['warnings']} "
-        f"To use this medication, {node['how_to_use'].lower()}."
-    )
-    return explanation
-
-# Streamlit UI
-st.title('Medicine Data Retrieval and Explanation using NLP and DistilBERT')
-
-uploaded_file = st.file_uploader("Choose a JSON file", type="json")
-
-if uploaded_file is not None:
-    distilbert_tokenizer, distilbert_model = load_tokenizer_and_model()
-    embeddings, node_texts, nodes = retrieve_graph_data(uploaded_file, distilbert_tokenizer, distilbert_model)
-    
-    st.header('Ask a question about the medicines')
-    query = st.text_input('Enter your question:')
-    
-    if query:
-        top_index, similarity = search_medicines(query, node_texts, embeddings, distilbert_tokenizer, distilbert_model)
-        
-        st.header('Search Result')
-        
-        node = nodes[top_index]
-        st.write(f"**Generic Name:** {node['generic_name']}")
-        st.write(f"**Commercial Name:** {node['commercial_name']}")
-        st.write(f"**Description:** {node['description']}")
-        st.write(f"**Warnings:** {node['warnings']}")
-        st.write(f"**Dosage:** {node['dosage']}")
-        st.write(f"**How to use:** {node['how_to_use']}")
-        st.write(f"**Similarity Score:** {similarity:.4f}")
-        
-        # Generate formal explanation
-        explanation = generate_explanation(node)
-        st.write("**Explanation:**")
-        st.write(explanation)
-        st.write("---")
+    # Get the answer from the QA model
+    answer = qa_pipeline(question=question, context=context)
+    st.write("Answer:", answer['answer'])
