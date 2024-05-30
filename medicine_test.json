@@ -1,0 +1,49 @@
+{
+    "nodes": [
+        {
+            "id": 1,
+            "generic_name": "Paracetamol",
+            "commercial_name": "Tylenol",
+            "description": "Paracetamol is used to treat mild to moderate pain and to reduce fever.",
+            "warnings": "Do not exceed 4,000 milligrams of paracetamol per day.",
+            "dosage": "500mg every 4-6 hours as needed.",
+            "how_to_use": "Take this product by mouth as directed. Follow all directions on the product package."
+        },
+        {
+            "id": 2,
+            "generic_name": "Ibuprofen",
+            "commercial_name": "Advil",
+            "description": "Ibuprofen is used to reduce fever and treat pain or inflammation.",
+            "warnings": "Long-term use can increase the risk of heart attack or stroke.",
+            "dosage": "200-400mg every 4-6 hours as needed.",
+            "how_to_use": "Take with a full glass of water. Do not lie down for at least 10 minutes after taking this medication."
+        },
+        {
+            "id": 3,
+            "generic_name": "Lisinopril",
+            "commercial_name": "Prinivil",
+            "description": "Lisinopril is used to treat high blood pressure and heart failure.",
+            "warnings": "Do not use if you are pregnant. It can cause injury or death to the unborn baby.",
+            "dosage": "10-40mg once daily.",
+            "how_to_use": "Take at the same time each day. Can be taken with or without food."
+        },
+        {
+            "id": 4,
+            "generic_name": "Paracetamol",
+            "commercial_name": "Panadol",
+            "description": "Paracetamol is used to relieve mild to moderate pain and reduce fever.",
+            "warnings": "Avoid using more than the recommended dose to prevent liver damage.",
+            "dosage": "500mg every 4-6 hours as needed, not to exceed 4g per day.",
+            "how_to_use": "Take orally with water, following the dosage instructions on the package."
+        },
+        {
+            "id": 5,
+            "generic_name": "Amoxicillin",
+            "commercial_name": "Amoxil",
+            "description": "Amoxicillin is used to treat a wide variety of bacterial infections.",
+            "warnings": "Do not use if allergic to penicillin antibiotics.",
+            "dosage": "500mg every 8 hours, or as directed by your doctor.",
+            "how_to_use": "Take by mouth with or without food. Continue to take it even if you feel well."
+        }
+    ]
+}
