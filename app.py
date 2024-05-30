@@ -1,6 +1,6 @@
 import streamlit as st
 import json
-from transformers import DistilBertTokenizer, DistilBertModel, GPT2Tokenizer, GPT2LMHeadModel
+from transformers import DistilBertTokenizer, DistilBertModel
 import torch
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
@@ -10,9 +10,7 @@ import numpy as np
 def load_tokenizer_and_model():
     distilbert_tokenizer = DistilBertTokenizer.from_pretrained('distilbert-base-uncased')
     distilbert_model = DistilBertModel.from_pretrained('distilbert-base-uncased')
-    gpt2_tokenizer = GPT2Tokenizer.from_pretrained('distilgpt2')
-    gpt2_model = GPT2LMHeadModel.from_pretrained('distilgpt2')
-    return distilbert_tokenizer, distilbert_model, gpt2_tokenizer, gpt2_model
+    return distilbert_tokenizer, distilbert_model
 
 # Load the JSON data
 def load_graph_data(json_file):
@@ -67,29 +65,21 @@ def search_medicines(query, node_texts, embeddings, tokenizer, model):
     return top_index, similarities[top_index]
 
 # Generate a formal explanatory paragraph using retrieved data
-def generate_explanation(query, node, tokenizer, model):
-    prompt = (
-        f"Answer the question: '{query}' based on the following information.\n\n"
-        f"Generic Name: {node['generic_name']}\n"
-        f"Commercial Name: {node['commercial_name']}\n"
-        f"Description: {node['description']}\n"
-        f"Warnings: {node['warnings']}\n"
-        f"Dosage: {node['dosage']}\n"
-        f"How to use: {node['how_to_use']}\n\n"
-        f"Explanation:"
+def generate_explanation(node):
+    explanation = (
+        f"{node['commercial_name']} (generic name: {node['generic_name']}) is used to treat {node['description'].lower()}. "
+        f"The recommended dosage is {node['dosage']}. Important to note: {node['warnings']} "
+        f"To use this medication, {node['how_to_use'].lower()}."
     )
-    inputs = tokenizer.encode(prompt, return_tensors='pt')
-    outputs = model.generate(inputs, max_length=250, num_return_sequences=1, no_repeat_ngram_size=2)
-    explanation = tokenizer.decode(outputs[0], skip_special_tokens=True)
     return explanation
 
 # Streamlit UI
-st.title('Medicine Data Retrieval and Dynamic Explanation using NLP and DistilBERT')
+st.title('Medicine Data Retrieval and Explanation using NLP and DistilBERT')
 
 uploaded_file = st.file_uploader("Choose a JSON file", type="json")
 
 if uploaded_file is not None:
-    distilbert_tokenizer, distilbert_model, gpt2_tokenizer, gpt2_model = load_tokenizer_and_model()
+    distilbert_tokenizer, distilbert_model = load_tokenizer_and_model()
     embeddings, node_texts, nodes = retrieve_graph_data(uploaded_file, distilbert_tokenizer, distilbert_model)
     
     st.header('Ask a question about the medicines')
@@ -110,7 +100,7 @@ if uploaded_file is not None:
         st.write(f"**Similarity Score:** {similarity:.4f}")
         
         # Generate formal explanation
-        explanation = generate_explanation(query, node, gpt2_tokenizer, gpt2_model)
+        explanation = generate_explanation(node)
         st.write("**Explanation:**")
         st.write(explanation)
         st.write("---")
