@@ -50,13 +50,26 @@ manufacturers_dict = to_dict(manufacturers)
 
 # Function to find relationships
 def find_related_entities(entity_id, relationship, entity_key='medicine_id'):
-    related_ids = [rel for rel in relationships[relationship] if rel[entity_key] == entity_id]
-    return related_ids
+    return [rel for rel in relationships[relationship] if rel[entity_key] == entity_id]
 
-# Function to display related entities
-def display_related_entities(related_ids, entity_dict, entity_key):
-    for rel in related_ids:
-        st.write(entity_dict[rel[entity_key]]['name'])
+# Function to create context from the data
+def create_context():
+    context = []
+    for med in medicines:
+        med_info = f"Medicine: {med['name']}\nDescription: {med['description']}\n"
+        med_info += "Indications: " + ", ".join([indications_dict[ind['indication_id']]['name'] for ind in find_related_entities(med['id'], 'medicine_indication')]) + "\n"
+        med_info += "Symptoms: " + ", ".join([symptoms_dict[sym['symptom_id']]['name'] for sym in find_related_entities(med['id'], 'medicine_symptom')]) + "\n"
+        med_info += "Diseases: " + ", ".join([diseases_dict[dis['disease_id']]['name'] for dis in find_related_entities(med['id'], 'medicine_disease')]) + "\n"
+        med_info += "Side Effects: " + ", ".join([side_effects_dict[se['side_effect_id']]['name'] for se in find_related_entities(med['id'], 'medicine_side_effect')]) + "\n"
+        med_info += "Interactions: " + ", ".join([interactions_dict[intc['interaction_id']]['name'] for intc in find_related_entities(med['id'], 'medicine_interaction')]) + "\n"
+        med_info += "Warnings: " + ", ".join([warnings_dict[warn['warning_id']]['name'] for warn in find_related_entities(med['id'], 'medicine_warning')]) + "\n"
+        med_info += "Contraindications: " + ", ".join([contraindications_dict[con['contraindication_id']]['name'] for con in find_related_entities(med['id'], 'medicine_contraindication')]) + "\n"
+        med_info += "Mechanisms of Action: " + ", ".join([mechanisms_dict[moa['mechanism_id']]['description'] for moa in find_related_entities(med['id'], 'medicine_mechanism')]) + "\n"
+        med_info += "Brand Names: " + ", ".join([brand_names_dict[bn['id']]['name'] for bn in brand_names if bn['id'] == med.get('brand_name_id', '')]) + "\n"
+        med_info += "Generic Names: " + ", ".join([generic_names_dict[gn['id']]['name'] for gn in generic_names if gn['id'] == med.get('generic_name_id', '')]) + "\n"
+        med_info += "Manufacturers: " + ", ".join([manufacturers_dict[mf['id']]['name'] for mf in manufacturers if mf['id'] == med.get('manufacturer_id', '')]) + "\n"
+        context.append(med_info)
+    return " ".join(context)
 
 # Load language model
 @st.cache(allow_output_mutation=True)
@@ -81,7 +94,7 @@ if search_type == 'Ask a Question':
     st.write("Enter your question below and get a detailed answer based on the medicine database.")
     query = st.text_input('Enter your query')
     if query:
-        context = " ".join([med['description'] for med in medicines])  # Simplified context
+        context = create_context()  # Create the context based on the pre-processed data
         with st.spinner('Generating response...'):
             response = language_model(f"Context: {context}\nQuestion: {query}\nAnswer:", max_length=150, num_return_sequences=1)
         st.success("Answer:")
@@ -131,72 +144,4 @@ elif search_type == 'Medicine':
 
 elif search_type == 'Symptom':
     st.header('Search by Symptom')
-    symptom_options = {sym['name']: sym['id'] for sym in symptoms}
-    selected_symptom = st.selectbox('Select a Symptom', list(symptom_options.keys()))
-
-    if selected_symptom:
-        symptom_id = symptom_options[selected_symptom]
-        
-        with st.expander("Related Medicines"):
-            related_medicines = find_related_entities(symptom_id, 'medicine_symptom', 'symptom_id')
-            display_related_entities(related_medicines, medicines_dict, 'medicine_id')
-
-elif search_type == 'Indication':
-    st.header('Search by Indication')
-    indication_options = {ind['name']: ind['id'] for ind in indications}
-    selected_indication = st.selectbox('Select an Indication', list(indication_options.keys()))
-
-    if selected_indication:
-        indication_id = indication_options[selected_indication]
-
-        with st.expander("Related Medicines"):
-            related_medicines = find_related_entities(indication_id, 'medicine_indication', 'indication_id')
-            display_related_entities(related_medicines, medicines_dict, 'medicine_id')
-
-elif search_type == 'Disease':
-    st.header('Search by Disease')
-    disease_options = {dis['name']: dis['id'] for dis in diseases}
-    selected_disease = st.selectbox('Select a Disease', list(disease_options.keys()))
-
-    if selected_disease:
-        disease_id = disease_options[selected_disease]
-
-        with st.expander("Related Medicines"):
-            related_medicines = find_related_entities(disease_id, 'medicine_disease', 'disease_id')
-            display_related_entities(related_medicines, medicines_dict, 'medicine_id')
-
-elif search_type == 'Brand Name':
-    st.header('Search by Brand Name')
-    brand_name_options = {bn['name']: bn['id'] for bn in brand_names}
-    selected_brand_name = st.selectbox('Select a Brand Name', list(brand_name_options.keys()))
-
-    if selected_brand_name:
-        brand_name_id = brand_name_options[selected_brand_name]
-        
-        with st.expander("Related Medicines"):
-            related_medicines = [med for med in medicines if med['brand_name_id'] == brand_name_id]
-            for med in related_medicines:
-                st.write(med['name'])
-
-elif search_type == 'Generic Name':
-    st.header('Search by Generic Name')
-    generic_name_options = {gn['name']: gn['id'] for gn in generic_names}
-    selected_generic_name = st.selectbox('Select a Generic Name', list(generic_name_options.keys()))
-
-    if selected_generic_name:
-        generic_name_id = generic_name_options[selected_generic_name]
-        
-        with st.expander("Related Medicines"):
-            related_medicines = [med for med in medicines if med['generic_name_id'] == generic_name_id]
-            for med in related_medicines:
-                st.write(med['name'])
-
-# Footer
-st.sidebar.markdown("""
----
-*Developed by [Your Name](https://your-website.com)*
-""")
-
-# Run the app
-if __name__ == '__main__':
-    st.write("Welcome to the Medicine Knowledge Base")
+   
