@@ -1,6 +1,6 @@
 import streamlit as st
 import json
-from transformers import DistilBertTokenizer, DistilBertModel, DistilGPT2Tokenizer, DistilGPT2LMHeadModel
+from transformers import DistilBertTokenizer, DistilBertModel, GPT2Tokenizer, GPT2LMHeadModel
 import torch
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
@@ -10,9 +10,9 @@ import numpy as np
 def load_tokenizer_and_model():
     distilbert_tokenizer = DistilBertTokenizer.from_pretrained('distilbert-base-uncased')
     distilbert_model = DistilBertModel.from_pretrained('distilbert-base-uncased')
-    distilgpt2_tokenizer = DistilGPT2Tokenizer.from_pretrained('distilgpt2')
-    distilgpt2_model = DistilGPT2LMHeadModel.from_pretrained('distilgpt2')
-    return distilbert_tokenizer, distilbert_model, distilgpt2_tokenizer, distilgpt2_model
+    gpt2_tokenizer = GPT2Tokenizer.from_pretrained('distilgpt2')
+    gpt2_model = GPT2LMHeadModel.from_pretrained('distilgpt2')
+    return distilbert_tokenizer, distilbert_model, gpt2_tokenizer, gpt2_model
 
 # Load the JSON data
 def load_graph_data(json_file):
@@ -79,7 +79,7 @@ st.title('Medicine Data Retrieval and Summarization using NLP and DistilBERT')
 uploaded_file = st.file_uploader("Choose a JSON file", type="json")
 
 if uploaded_file is not None:
-    distilbert_tokenizer, distilbert_model, distilgpt2_tokenizer, distilgpt2_model = load_tokenizer_and_model()
+    distilbert_tokenizer, distilbert_model, gpt2_tokenizer, gpt2_model = load_tokenizer_and_model()
     embeddings, node_texts, nodes = retrieve_graph_data(uploaded_file, distilbert_tokenizer, distilbert_model)
     
     st.header('Ask a question about the medicines')
@@ -108,7 +108,7 @@ if uploaded_file is not None:
             st.write(f"**Similarity Score:** {similarities[index]:.4f}")
             
             # Generate summary
-            summary = generate_summary(text, distilgpt2_tokenizer, distilgpt2_model)
+            summary = generate_summary(text, gpt2_tokenizer, gpt2_model)
             st.write("**Summary:**")
             st.write(summary)
             st.write("---")
