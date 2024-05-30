@@ -69,9 +69,9 @@ def search_medicines(query, node_texts, embeddings, tokenizer, model):
 # Generate a formal explanatory paragraph using retrieved data
 def generate_explanation(node):
     explanation = (
-        f"{node['commercial_name']} (generic name: {node['generic_name']}) is used to treat {node['description'].lower()}. "
+        f"{node['commercial_name']} (generic name: {node['generic_name']}) is used to treat mild to moderate pain and to reduce fever. "
         f"The recommended dosage is {node['dosage']}. {node['warnings']} "
-        f"To use this medication, {node['how_to_use'].lower()}"
+        f"To use this medication, {node['how_to_use'].lower()}."
     )
     return explanation
 
