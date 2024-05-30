@@ -66,15 +66,17 @@ def search_medicines(query, node_texts, embeddings, tokenizer, model):
     
     return top_index, similarities[top_index]
 
-# Generate a formal explanatory paragraph using DistilGPT2
-def generate_explanation(text, tokenizer, model):
-    inputs = tokenizer.encode(text, return_tensors='pt')
-    outputs = model.generate(inputs, max_length=250, num_return_sequences=1, no_repeat_ngram_size=2)
-    explanation = tokenizer.decode(outputs[0], skip_special_tokens=True)
+# Generate a formal explanatory paragraph using retrieved data
+def generate_explanation(node):
+    explanation = (
+        f"{node['commercial_name']} (generic name: {node['generic_name']}) is used to treat {node['description'].lower()}. "
+        f"The recommended dosage is {node['dosage']}. {node['warnings']} "
+        f"To use this medication, {node['how_to_use'].lower()}"
+    )
     return explanation
 
 # Streamlit UI
-st.title('Medicine Data Retrieval and Summarization using NLP and DistilBERT')
+st.title('Medicine Data Retrieval and Explanation using NLP and DistilBERT')
 
 uploaded_file = st.file_uploader("Choose a JSON file", type="json")
 
@@ -90,24 +92,25 @@ if uploaded_file is not None:
         
         st.header('Search Result')
         
+        node = nodes[top_index]
         text = (
-            f"Generic Name: {nodes[top_index]['generic_name']}. "
-            f"Commercial Name: {nodes[top_index]['commercial_name']}. "
-            f"Description: {nodes[top_index]['description']}. "
-            f"Warnings: {nodes[top_index]['warnings']}. "
-            f"Dosage: {nodes[top_index]['dosage']}. "
-            f"How to use: {nodes[top_index]['how_to_use']}."
+            f"Generic Name: {node['generic_name']}. "
+            f"Commercial Name: {node['commercial_name']}. "
+            f"Description: {node['description']}. "
+            f"Warnings: {node['warnings']}. "
+            f"Dosage: {node['dosage']}. "
+            f"How to use: {node['how_to_use']}."
         )
-        st.write(f"**Generic Name:** {nodes[top_index]['generic_name']}")
-        st.write(f"**Commercial Name:** {nodes[top_index]['commercial_name']}")
-        st.write(f"**Description:** {nodes[top_index]['description']}")
-        st.write(f"**Warnings:** {nodes[top_index]['warnings']}")
-        st.write(f"**Dosage:** {nodes[top_index]['dosage']}")
-        st.write(f"**How to use:** {nodes[top_index]['how_to_use']}")
+        st.write(f"**Generic Name:** {node['generic_name']}")
+        st.write(f"**Commercial Name:** {node['commercial_name']}")
+        st.write(f"**Description:** {node['description']}")
+        st.write(f"**Warnings:** {node['warnings']}")
+        st.write(f"**Dosage:** {node['dosage']}")
+        st.write(f"**How to use:** {node['how_to_use']}")
         st.write(f"**Similarity Score:** {similarity:.4f}")
         
         # Generate formal explanation
-        explanation = generate_explanation(text, gpt2_tokenizer, gpt2_model)
+        explanation = generate_explanation(node)
         st.write("**Explanation:**")
         st.write(explanation)
         st.write("---")
