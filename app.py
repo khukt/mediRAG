@@ -19,7 +19,7 @@ def build_relevant_context(question, medicines):
     keywords = question.lower().split()
     for drug in medicines:
         drug_info = []
-        if any(kw in drug['generic_name'].lower() for kw in keywords) or any(kw in drug['brand_names'] for kw in keywords):
+        if any(kw in drug['generic_name'].lower() for kw in keywords) or any(kw.lower() in [bn.lower() for bn in drug['brand_names']] for kw in keywords):
             drug_info.append(f"Generic Name: {drug['generic_name']}\n")
             drug_info.append(f"Brand Names: {', '.join(drug['brand_names'])}\n")
             drug_info.append(f"Description: {drug['description']}\n")
