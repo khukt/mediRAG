@@ -14,46 +14,29 @@ st.title("Medicines Information System")
 # User input
 question = st.text_input("Ask a question about any medicine:")
 
-def extract_relevant_info(drug, info_type):
-    if info_type == "usage":
-        return drug.get("description", "")
-    elif info_type == "brand_names":
-        return ", ".join(drug.get("brand_names", []))
-    elif info_type == "side_effects":
-        common = ", ".join(drug.get("side_effects", {}).get("common", []))
-        serious = ", ".join(drug.get("side_effects", {}).get("serious", []))
-        return f"Common: {common}; Serious: {serious}"
-    elif info_type == "contraindications":
-        return ", ".join(drug.get("contraindications", []))
-    elif info_type == "mechanism_of_action":
-        return drug.get("mechanism_of_action", "")
-    elif info_type == "dosage":
-        return ", ".join(drug.get("patient_information", []))
-    return ""
-
 def build_relevant_context(question, medicines):
     context = ""
     keywords = question.lower().split()
-    info_type = ""
-    
-    if "used for" in question or "usage" in question:
-        info_type = "usage"
-    elif "brand names" in question:
-        info_type = "brand_names"
-    elif "side effects" in question:
-        info_type = "side_effects"
-    elif "contraindications" in question:
-        info_type = "contraindications"
-    elif "mechanism of action" in question:
-        info_type = "mechanism_of_action"
-    elif "how should i take" in question or "dosage" in question:
-        info_type = "dosage"
-    
     for drug in medicines:
+        drug_info = []
         if any(kw in drug['generic_name'].lower() for kw in keywords) or any(kw.lower() in [bn.lower() for bn in drug['brand_names']] for kw in keywords):
-            context += extract_relevant_info(drug, info_type) + " "
-    
-    return context.strip()
+            drug_info.append(f"Generic Name: {drug['generic_name']}\n")
+            drug_info.append(f"Brand Names: {', '.join(drug['brand_names'])}\n")
+            drug_info.append(f"Description: {drug['description']}\n")
+            dosage_forms = ", ".join([f"{d['form']} ({', '.join(d['strengths'])})" for d in drug['dosage_forms']])
+            drug_info.append(f"Dosage Forms: {dosage_forms}\n")
+            drug_info.append(f"Indications: {', '.join(drug['indications'])}\n")
+            drug_info.append(f"Contraindications: {', '.join(drug['contraindications'])}\n")
+            drug_info.append("Side Effects: Common: " + ", ".join(drug['side_effects']['common']) + "; Serious: " + ", ".join(drug['side_effects']['serious']) + "\n")
+            interactions = "; ".join([f"{i['drug']}: {i['description']}" for i in drug['interactions']])
+            drug_info.append(f"Interactions: {interactions}\n")
+            drug_info.append(f"Warnings: {', '.join(drug['warnings'])}\n")
+            drug_info.append(f"Mechanism of Action: {drug['mechanism_of_action']}\n")
+            pharmacokinetics = f"Absorption: {drug['pharmacokinetics']['absorption']}; Metabolism: {drug['pharmacokinetics']['metabolism']}; Half-life: {drug['pharmacokinetics']['half_life']}; Excretion: {drug['pharmacokinetics']['excretion']}"
+            drug_info.append(f"Pharmacokinetics: {pharmacokinetics}\n")
+            drug_info.append(f"Patient Information: {', '.join(drug['patient_information'])}\n")
+            context += " ".join(drug_info)
+    return context
 
 if question:
     # Build the context relevant to the question
