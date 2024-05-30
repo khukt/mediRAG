@@ -1,22 +1,21 @@
+from transformers import AutoTokenizer, AutoModelForQuestionAnswering, pipeline
 import streamlit as st
-from transformers import AlbertTokenizer, AlbertForQuestionAnswering, pipeline
 import json
 
 # Load the medicines data from the JSON file
 with open('medicines.json', 'r') as f:
     medicines = json.load(f)
 
-
-
-tokenizer = AlbertTokenizer.from_pretrained('ahotrod/albert_xxlargev1_squad2_512')
-model = AlbertForQuestionAnswering.from_pretrained('ahotrod/albert_xxlargev1_squad2_512')
+# Load the ELECTRA model and tokenizer
+tokenizer = AutoTokenizer.from_pretrained("valhalla/electra-base-discriminator-finetuned-squadv1")
+model = AutoModelForQuestionAnswering.from_pretrained("valhalla/electra-base-discriminator-finetuned-squadv1")
 qa_pipeline = pipeline("question-answering", model=model, tokenizer=tokenizer)
-
 
 st.title("Medicines Information System")
 
 # User input
 question = st.text_input("Ask a question about any medicine:")
+
 
 def build_relevant_context(question, medicines):
     context = ""
@@ -46,14 +45,12 @@ if question:
     # Build the context relevant to the question
     context = build_relevant_context(question, medicines)
     if context:
-        # Summarize the context
-        summarized_context = summarization_pipeline(context, max_length=150, min_length=50, do_sample=False)[0]['summary_text']
-        
-        # Get the answer from the QA model using the summarized context
-        answer = qa_pipeline(question=question, context=summarized_context)
+        # Get the answer from the QA model
+        answer = qa_pipeline(question=question, context=context)
         st.write("Answer:", answer['answer'])
     else:
         st.write("No relevant context found for the question.")
+
 
 # Predefined test questions and expected answers
 test_questions = [
@@ -70,8 +67,7 @@ st.subheader("Test Questions and Expected Answers")
 for test in test_questions:
     context = build_relevant_context(test["question"], medicines)
     if context:
-        summarized_context = summarization_pipeline(context, max_length=150, min_length=50, do_sample=False)[0]['summary_text']
-        answer = qa_pipeline(question=test["question"], context=summarized_context)
+        answer = qa_pipeline(question=test["question"], context=context)
         st.write(f"**Question:** {test['question']}")
         st.write(f"**Expected Answer:** {test['expected']}")
         st.write(f"**Model's Answer:** {answer['answer']}")
