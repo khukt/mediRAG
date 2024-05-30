@@ -167,11 +167,11 @@ st.title("Medicines Information System")
 # User input
 question = st.text_input("Ask a question about any medicine:")
 
-def fetch_medicine_data(generic_name):
-    c.execute('SELECT * FROM medicines WHERE generic_name = ?', (generic_name,))
-    row = c.fetchone()
-    if row:
-        return {
+def fetch_medicine_data(keyword):
+    c.execute('SELECT * FROM medicines WHERE generic_name LIKE ? OR brand_names LIKE ?', (f'%{keyword}%', f'%{keyword}%'))
+    rows = c.fetchall()
+    if rows:
+        return [{
             "generic_name": row[0],
             "brand_names": json.loads(row[1]),
             "description": row[2],
@@ -184,35 +184,37 @@ def fetch_medicine_data(generic_name):
             "mechanism_of_action": row[9],
             "pharmacokinetics": json.loads(row[10]),
             "patient_information": json.loads(row[11])
-        }
+        } for row in rows]
     return None
 
-def build_relevant_context(question, medicines):
+def build_relevant_context(medicines):
     context = ""
     for med in medicines:
-        if med:
-            context += f"Generic Name: {med['generic_name']}\n"
-            context += f"Brand Names: {', '.join(med['brand_names'])}\n"
-            context += f"Description: {med['description']}\n"
-            context += f"Indications: {', '.join(med['indications'])}\n"
-            context += f"Contraindications: {', '.join(med['contraindications'])}\n"
-            context += f"Common Side Effects: {', '.join(med['common_side_effects'])}\n"
-            context += f"Serious Side Effects: {', '.join(med['serious_side_effects'])}\n"
-            context += f"Interactions: {', '.join([i['drug'] + ': ' + i['description'] for i in med['interactions']])}\n"
-            context += f"Warnings: {', '.join(med['warnings'])}\n"
-            context += f"Mechanism of Action: {med['mechanism_of_action']}\n"
-            pk = med['pharmacokinetics']
-            context += f"Pharmacokinetics: Absorption: {pk['absorption']}; Metabolism: {pk['metabolism']}; Half-life: {pk['half_life']}; Excretion: {pk['excretion']}\n"
-            context += f"Patient Information: {', '.join(med['patient_information'])}\n"
+        context += f"Generic Name: {med['generic_name']}\n"
+        context += f"Brand Names: {', '.join(med['brand_names'])}\n"
+        context += f"Description: {med['description']}\n"
+        context += f"Indications: {', '.join(med['indications'])}\n"
+        context += f"Contraindications: {', '.join(med['contraindications'])}\n"
+        context += f"Common Side Effects: {', '.join(med['common_side_effects'])}\n"
+        context += f"Serious Side Effects: {', '.join(med['serious_side_effects'])}\n"
+        context += f"Interactions: {', '.join([i['drug'] + ': ' + i['description'] for i in med['interactions']])}\n"
+        context += f"Warnings: {', '.join(med['warnings'])}\n"
+        context += f"Mechanism of Action: {med['mechanism_of_action']}\n"
+        pk = med['pharmacokinetics']
+        context += f"Pharmacokinetics: Absorption: {pk['absorption']}; Metabolism: {pk['metabolism']}; Half-life: {pk['half_life']}; Excretion: {pk['excretion']}\n"
+        context += f"Patient Information: {', '.join(med['patient_information'])}\n"
     return context
 
 if question:
-    # Extract the relevant generic name from the question
     keywords = question.lower().split()
-    relevant_meds = [fetch_medicine_data(kw) for kw in keywords if fetch_medicine_data(kw)]
+    relevant_meds = []
+    for keyword in keywords:
+        meds = fetch_medicine_data(keyword)
+        if meds:
+            relevant_meds.extend(meds)
     
     if relevant_meds:
-        context = build_relevant_context(question, relevant_meds)
+        context = build_relevant_context(relevant_meds)
         
         if context:
             # Get the answer from the QA model
@@ -236,14 +238,25 @@ test_questions = [
 st.subheader("Test Questions and Expected Answers")
 
 for test in test_questions:
-    relevant_meds = [fetch_medicine_data(test["question"].split()[2].lower())]
-    context = build_relevant_context(test["question"], relevant_meds)
+    keywords = test["question"].lower().split()
+    relevant_meds = []
+    for keyword in keywords:
+        meds = fetch_medicine_data(keyword)
+        if meds:
+            relevant_meds.extend(meds)
     
-    if context:
-        answer = qa_pipeline(question=test["question"], context=context)
-        st.write(f"**Question:** {test['question']}")
-        st.write(f"**Expected Answer:** {test['expected']}")
-        st.write(f"**Model's Answer:** {answer['answer']}")
+    if relevant_meds:
+        context = build_relevant_context(relevant_meds)
+        
+        if context:
+            answer = qa_pipeline(question=test["question"], context=context)
+            st.write(f"**Question:** {test['question']}")
+            st.write(f"**Expected Answer:** {test['expected']}")
+            st.write(f"**Model's Answer:** {answer['answer']}")
+        else:
+            st.write(f"**Question:** {test['question']}")
+            st.write(f"**Expected Answer:** {test['expected']}")
+            st.write("**Model's Answer:** No relevant context found for the question.")
     else:
         st.write(f"**Question:** {test['question']}")
         st.write(f"**Expected Answer:** {test['expected']}")
