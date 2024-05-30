@@ -1,51 +1,113 @@
-import streamlit as st
-from transformers import pipeline, AutoModelForQuestionAnswering, AutoTokenizer
+import sqlite3
 import json
 
-# Load the medicines data from the JSON file
+# Connect to SQLite database (or create it)
+conn = sqlite3.connect('medicines.db')
+c = conn.cursor()
+
+# Create tables
+c.execute('''CREATE TABLE IF NOT EXISTS medicines (
+    id INTEGER PRIMARY KEY,
+    generic_name TEXT,
+    brand_names TEXT,
+    description TEXT,
+    indications TEXT,
+    contraindications TEXT,
+    common_side_effects TEXT,
+    serious_side_effects TEXT,
+    interactions TEXT,
+    warnings TEXT,
+    mechanism_of_action TEXT,
+    pharmacokinetics TEXT,
+    patient_information TEXT
+)''')
+
+# Load data from JSON file
 with open('medicines.json', 'r') as f:
     medicines = json.load(f)
 
-# Load a specialized medical QA model
-model_name = "dmis-lab/biobert-v1.1"
-model = AutoModelForQuestionAnswering.from_pretrained(model_name)
-tokenizer = AutoTokenizer.from_pretrained(model_name)
-qa_pipeline = pipeline('question-answering', model=model, tokenizer=tokenizer)
+# Insert data into the database
+for med in medicines:
+    c.execute('''INSERT INTO medicines (generic_name, brand_names, description, indications, contraindications, common_side_effects, serious_side_effects, interactions, warnings, mechanism_of_action, pharmacokinetics, patient_information)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', (
+        med['generic_name'],
+        json.dumps(med['brand_names']),
+        med['description'],
+        json.dumps(med['indications']),
+        json.dumps(med['contraindications']),
+        json.dumps(med['side_effects']['common']),
+        json.dumps(med['side_effects']['serious']),
+        json.dumps(med['interactions']),
+        json.dumps(med['warnings']),
+        med['mechanism_of_action'],
+        json.dumps(med['pharmacokinetics']),
+        json.dumps(med['patient_information'])
+    ))
+
+# Commit changes and close the connection
+conn.commit()
+conn.close()
+
+
+import streamlit as st
+from transformers import pipeline
+import sqlite3
+import json
+
+# Load the QA model
+qa_pipeline = pipeline('question-answering', model='distilbert-base-uncased-distilled-squad')
+
+# Connect to SQLite database
+conn = sqlite3.connect('medicines.db')
+c = conn.cursor()
 
 st.title("Medicines Information System")
 
 # User input
 question = st.text_input("Ask a question about any medicine:")
 
-# Function to build relevant context based on question type
+def fetch_medicine_data(generic_name):
+    c.execute('SELECT * FROM medicines WHERE generic_name = ?', (generic_name,))
+    return c.fetchone()
+
 def build_relevant_context(question, medicines):
     context = ""
     keywords = question.lower().split()
-    for drug in medicines:
-        if any(kw in drug['generic_name'].lower() for kw in keywords) or any(kw.lower() in [bn.lower() for bn in drug['brand_names']] for kw in keywords):
-            if "used for" in question or "indications" in question:
-                context += f"Indications: {', '.join(drug['indications'])}\n"
-            elif "brand names" in question:
-                context += f"Brand Names: {', '.join(drug['brand_names'])}\n"
-            elif "side effects" in question:
-                context += f"Side Effects: Common: {', '.join(drug['side_effects']['common'])}; Serious: {', '.join(drug['side_effects']['serious'])}\n"
-            elif "contraindications" in question:
-                context += f"Contraindications: {', '.join(drug['contraindications'])}\n"
-            elif "mechanism of action" in question:
-                context += f"Mechanism of Action: {drug['mechanism_of_action']}\n"
-            elif "how should i take" in question:
-                context += f"Patient Information: {', '.join(drug['patient_information'])}\n"
+    for med in medicines:
+        if any(kw in med['generic_name'].lower() for kw in keywords) or any(kw.lower() in med['brand_names'].lower() for kw in keywords):
+            context += f"Generic Name: {med['generic_name']}\n"
+            context += f"Brand Names: {', '.join(json.loads(med['brand_names']))}\n"
+            context += f"Description: {med['description']}\n"
+            context += f"Indications: {', '.join(json.loads(med['indications']))}\n"
+            context += f"Contraindications: {', '.join(json.loads(med['contraindications']))}\n"
+            context += f"Common Side Effects: {', '.join(json.loads(med['common_side_effects']))}\n"
+            context += f"Serious Side Effects: {', '.join(json.loads(med['serious_side_effects']))}\n"
+            context += f"Interactions: {', '.join([i['drug'] + ': ' + i['description'] for i in json.loads(med['interactions'])])}\n"
+            context += f"Warnings: {', '.join(json.loads(med['warnings']))}\n"
+            context += f"Mechanism of Action: {med['mechanism_of_action']}\n"
+            pk = json.loads(med['pharmacokinetics'])
+            context += f"Pharmacokinetics: Absorption: {pk['absorption']}; Metabolism: {pk['metabolism']}; Half-life: {pk['half_life']}; Excretion: {pk['excretion']}\n"
+            context += f"Patient Information: {', '.join(json.loads(med['patient_information']))}\n"
     return context
 
 if question:
-    # Build the context relevant to the question
-    context = build_relevant_context(question, medicines)
-    if context:
-        # Get the answer from the QA model
-        answer = qa_pipeline(question=question, context=context)
-        st.write("Answer:", answer['answer'])
+    # Extract the relevant generic name from the question
+    keywords = question.lower().split()
+    generic_names = [med['generic_name'] for med in medicines if any(kw in med['generic_name'].lower() for kw in keywords)]
+    
+    if generic_names:
+        generic_name = generic_names[0]  # Assuming the first match is the correct one
+        med_data = fetch_medicine_data(generic_name)
+        context = build_relevant_context(question, [med_data])
+        
+        if context:
+            # Get the answer from the QA model
+            answer = qa_pipeline(question=question, context=context)
+            st.write("Answer:", answer['answer'])
+        else:
+            st.write("No relevant context found for the question.")
     else:
-        st.write("No relevant context found for the question.")
+        st.write("No relevant medicine found for the question.")
 
 # Predefined test questions and expected answers
 test_questions = [
@@ -60,7 +122,10 @@ test_questions = [
 st.subheader("Test Questions and Expected Answers")
 
 for test in test_questions:
-    context = build_relevant_context(test["question"], medicines)
+    generic_name = test["question"].split()[2].lower()  # Extract the generic name from the question
+    med_data = fetch_medicine_data(generic_name)
+    context = build_relevant_context(test["question"], [med_data])
+    
     if context:
         answer = qa_pipeline(question=test["question"], context=context)
         st.write(f"**Question:** {test['question']}")
