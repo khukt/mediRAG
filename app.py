@@ -1,14 +1,17 @@
 import streamlit as st
-from transformers import pipeline
+from transformers import AlbertTokenizer, AlbertForQuestionAnswering, pipeline
 import json
 
 # Load the medicines data from the JSON file
 with open('medicines.json', 'r') as f:
     medicines = json.load(f)
 
-# Load the transformer models for summarization and question answering
-summarization_pipeline = pipeline('summarization', model='sshleifer/distilbart-cnn-12-6')
-qa_pipeline = pipeline('question-answering', model='distilbert-base-uncased-distilled-squad')
+
+
+tokenizer = AlbertTokenizer.from_pretrained('ahotrod/albert_xxlargev1_squad2_512')
+model = AlbertForQuestionAnswering.from_pretrained('ahotrod/albert_xxlargev1_squad2_512')
+qa_pipeline = pipeline("question-answering", model=model, tokenizer=tokenizer)
+
 
 st.title("Medicines Information System")
 
