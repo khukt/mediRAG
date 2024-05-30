@@ -90,7 +90,7 @@ if uploaded_file is not None:
         
         st.header('Search Results')
         
-        for index in top_indices[:3]:  # Display top 3 results and generate summaries
+        for rank, index in enumerate(top_indices[:2], start=1):  # Display top 2 results with ranking
             text = (
                 f"Generic Name: {nodes[index]['generic_name']}. "
                 f"Commercial Name: {nodes[index]['commercial_name']}. "
@@ -99,6 +99,7 @@ if uploaded_file is not None:
                 f"Dosage: {nodes[index]['dosage']}. "
                 f"How to use: {nodes[index]['how_to_use']}."
             )
+            st.subheader(f"Result {rank}")
             st.write(f"**Generic Name:** {nodes[index]['generic_name']}")
             st.write(f"**Commercial Name:** {nodes[index]['commercial_name']}")
             st.write(f"**Description:** {nodes[index]['description']}")
@@ -112,4 +113,3 @@ if uploaded_file is not None:
             st.write("**Summary:**")
             st.write(summary)
             st.write("---")
-
