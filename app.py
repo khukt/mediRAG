@@ -1,6 +1,6 @@
 import streamlit as st
 import json
-from transformers import DistilBertTokenizer, DistilBertModel, GPT2Tokenizer, GPT2LMHeadModel
+from transformers import DistilBertTokenizer, DistilBertModel
 import torch
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
@@ -10,9 +10,7 @@ import numpy as np
 def load_tokenizer_and_model():
     distilbert_tokenizer = DistilBertTokenizer.from_pretrained('distilbert-base-uncased')
     distilbert_model = DistilBertModel.from_pretrained('distilbert-base-uncased')
-    gpt2_tokenizer = GPT2Tokenizer.from_pretrained('distilgpt2')
-    gpt2_model = GPT2LMHeadModel.from_pretrained('distilgpt2')
-    return distilbert_tokenizer, distilbert_model, gpt2_tokenizer, gpt2_model
+    return distilbert_tokenizer, distilbert_model
 
 # Load the JSON data
 def load_graph_data(json_file):
@@ -66,11 +64,16 @@ def search_medicines(query, node_texts, embeddings, tokenizer, model):
     
     return top_indices, similarities
 
-# Generate a summary or explanation using DistilGPT2
-def generate_summary(text, tokenizer, model):
-    inputs = tokenizer.encode("Summarize: " + text, return_tensors='pt')
-    outputs = model.generate(inputs, max_length=150, num_return_sequences=1, no_repeat_ngram_size=2)
-    summary = tokenizer.decode(outputs[0], skip_special_tokens=True)
+# Generate a formal summary based on retrieved information
+def generate_formal_summary(node):
+    summary = (
+        f"Generic Name: {node['generic_name']}\n"
+        f"Commercial Name: {node['commercial_name']}\n"
+        f"Description: {node['description']}\n"
+        f"Warnings: {node['warnings']}\n"
+        f"Dosage: {node['dosage']}\n"
+        f"How to Use: {node['how_to_use']}"
+    )
     return summary
 
 # Streamlit UI
@@ -79,7 +82,7 @@ st.title('Medicine Data Retrieval and Summarization using NLP and DistilBERT')
 uploaded_file = st.file_uploader("Choose a JSON file", type="json")
 
 if uploaded_file is not None:
-    distilbert_tokenizer, distilbert_model, gpt2_tokenizer, gpt2_model = load_tokenizer_and_model()
+    distilbert_tokenizer, distilbert_model = load_tokenizer_and_model()
     embeddings, node_texts, nodes = retrieve_graph_data(uploaded_file, distilbert_tokenizer, distilbert_model)
     
     st.header('Ask a question about the medicines')
@@ -91,25 +94,26 @@ if uploaded_file is not None:
         st.header('Search Results')
         
         for rank, index in enumerate(top_indices[:2], start=1):  # Display top 2 results with ranking
+            node = nodes[index]
             text = (
-                f"Generic Name: {nodes[index]['generic_name']}. "
-                f"Commercial Name: {nodes[index]['commercial_name']}. "
-                f"Description: {nodes[index]['description']}. "
-                f"Warnings: {nodes[index]['warnings']}. "
-                f"Dosage: {nodes[index]['dosage']}. "
-                f"How to use: {nodes[index]['how_to_use']}."
+                f"Generic Name: {node['generic_name']}. "
+                f"Commercial Name: {node['commercial_name']}. "
+                f"Description: {node['description']}. "
+                f"Warnings: {node['warnings']}. "
+                f"Dosage: {node['dosage']}. "
+                f"How to use: {node['how_to_use']}."
             )
             st.subheader(f"Result {rank}")
-            st.write(f"**Generic Name:** {nodes[index]['generic_name']}")
-            st.write(f"**Commercial Name:** {nodes[index]['commercial_name']}")
-            st.write(f"**Description:** {nodes[index]['description']}")
-            st.write(f"**Warnings:** {nodes[index]['warnings']}")
-            st.write(f"**Dosage:** {nodes[index]['dosage']}")
-            st.write(f"**How to use:** {nodes[index]['how_to_use']}")
+            st.write(f"**Generic Name:** {node['generic_name']}")
+            st.write(f"**Commercial Name:** {node['commercial_name']}")
+            st.write(f"**Description:** {node['description']}")
+            st.write(f"**Warnings:** {node['warnings']}")
+            st.write(f"**Dosage:** {node['dosage']}")
+            st.write(f"**How to use:** {node['how_to_use']}")
             st.write(f"**Similarity Score:** {similarities[index]:.4f}")
             
-            # Generate summary
-            summary = generate_summary(text, gpt2_tokenizer, gpt2_model)
+            # Generate formal summary
+            summary = generate_formal_summary(node)
             st.write("**Summary:**")
             st.write(summary)
             st.write("---")
