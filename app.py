@@ -73,7 +73,7 @@ Welcome to the Advanced Medicine Knowledge Base! Use the search functionality be
 
 # Sidebar for navigation
 st.sidebar.title("Navigation")
-search_type = st.sidebar.selectbox('Search by', ['Ask a Question', 'Medicine', 'Symptom', 'Indication', 'Disease'])
+search_type = st.sidebar.selectbox('Search by', ['Ask a Question', 'Medicine', 'Symptom', 'Indication', 'Disease', 'Brand Name', 'Generic Name'])
 
 # Main Content Area
 if search_type == 'Ask a Question':
@@ -164,6 +164,32 @@ elif search_type == 'Disease':
         with st.expander("Related Medicines"):
             related_medicines = find_related_entities(disease_id, 'medicine_disease', 'disease_id')
             display_related_entities(related_medicines, medicines_dict, 'medicine_id')
+
+elif search_type == 'Brand Name':
+    st.header('Search by Brand Name')
+    brand_name_options = {bn['name']: bn['id'] for bn in brand_names}
+    selected_brand_name = st.selectbox('Select a Brand Name', list(brand_name_options.keys()))
+
+    if selected_brand_name:
+        brand_name_id = brand_name_options[selected_brand_name]
+        
+        with st.expander("Related Medicines"):
+            related_medicines = [med for med in medicines if med['brand_name_id'] == brand_name_id]
+            for med in related_medicines:
+                st.write(med['name'])
+
+elif search_type == 'Generic Name':
+    st.header('Search by Generic Name')
+    generic_name_options = {gn['name']: gn['id'] for gn in generic_names}
+    selected_generic_name = st.selectbox('Select a Generic Name', list(generic_name_options.keys()))
+
+    if selected_generic_name:
+        generic_name_id = generic_name_options[selected_generic_name]
+        
+        with st.expander("Related Medicines"):
+            related_medicines = [med for med in medicines if med['generic_name_id'] == generic_name_id]
+            for med in related_medicines:
+                st.write(med['name'])
 
 # Footer
 st.sidebar.markdown("""
