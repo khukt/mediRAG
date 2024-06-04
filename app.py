@@ -180,9 +180,9 @@ def generate_shap_explanation(model, tokenizer, question, context):
     # Define a function that uses the model for SHAP
     def f(texts):
         # Tokenize and get model output
-        inputs = tokenizer(texts, truncation=True, padding=True, return_tensors="pt")
+        inputs = tokenizer(texts, padding=True, truncation=True, return_tensors="pt")
         outputs = model(**inputs)
-        return outputs.logits.detach().numpy()
+        return outputs.logits
 
     explainer = shap.Explainer(f, tokenizer)
     shap_values = explainer(texts)
@@ -215,7 +215,7 @@ if question:
             context = build_relevant_context(relevant_medicine)
             shap_values = generate_shap_explanation(model, tokenizer, question, context)
             fig, ax = plt.subplots()
-            shap.plots.text(shap_values, ax=ax)
+            shap.plots.text(shap_values[0], ax=ax)
             st.pyplot(fig)
         else:
             # Build the context relevant to the question using semantic search
@@ -236,7 +236,7 @@ if question:
                 st.write("### SHAP Explanation:")
                 shap_values = generate_shap_explanation(model, tokenizer, question, context)
                 fig, ax = plt.subplots()
-                shap.plots.text(shap_values, ax=ax)
+                shap.plots.text(shap_values[0], ax=ax)
                 st.pyplot(fig)
 
                 # Option to view detailed answer
@@ -253,6 +253,7 @@ if question:
                 st.error(f"An error occurred: {e}")
     else:
         st.write("No relevant context found for the question.")
+
 
 
 
