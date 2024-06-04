@@ -1,4 +1,4 @@
-from transformers import AutoTokenizer, AutoModelForQuestionAnswering, pipeline
+from transformers import DistilBertTokenizer, DistilBertForQuestionAnswering, pipeline
 import streamlit as st
 import json
 
@@ -6,16 +6,15 @@ import json
 with open('medicines.json', 'r') as f:
     medicines = json.load(f)
 
-# Load the ELECTRA model and tokenizer
-tokenizer = AutoTokenizer.from_pretrained("google/electra-small-discriminator")
-model = AutoModelForQuestionAnswering.from_pretrained("ahotrod/electra_small_discriminator_squad2_512")
+# Load the DistilBERT model and tokenizer
+tokenizer = DistilBertTokenizer.from_pretrained('distilbert-base-uncased-distilled-squad')
+model = DistilBertForQuestionAnswering.from_pretrained('distilbert-base-uncased-distilled-squad')
 qa_pipeline = pipeline("question-answering", model=model, tokenizer=tokenizer)
 
 st.title("Medicines Information System")
 
 # User input
 question = st.text_input("Ask a question about any medicine:")
-
 
 def build_relevant_context(question, medicines):
     context = ""
@@ -51,7 +50,6 @@ if question:
     else:
         st.write("No relevant context found for the question.")
 
-
 # Predefined test questions and expected answers
 test_questions = [
     {"question": "What is Paracetamol used for?", "expected": "Paracetamol is a medication used to treat pain and fever. It is commonly used for headaches, muscle aches, arthritis, backaches, toothaches, colds, and fevers."},
@@ -76,4 +74,3 @@ for test in test_questions:
         st.write(f"**Expected Answer:** {test['expected']}")
         st.write("**Model's Answer:** No relevant context found for the question.")
     st.write("---")
-
