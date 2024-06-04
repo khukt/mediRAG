@@ -57,7 +57,7 @@ def build_relevant_context(medicine):
     return context
 
 def get_specific_answer(question, medicine):
-    if 'used for' in question.lower() or 'uses' in question.lower() or 'ဘာလဲ' in question.lower() or 'အသုံးပြုသည်' in question.lower():
+    if 'used for' in question.lower() or 'uses' in question.lower() or 'ဘာအတွက်' in question.lower() or 'အသုံးပြု' in question.lower():
         return medicine['uses']
     if 'side effects' in question.lower() or 'ဘေးထွက်ဆိုးကျိုး' in question.lower():
         return f"Common side effects include {', '.join(medicine['side_effects']['common'])}. Serious side effects include {', '.join(medicine['side_effects']['serious'])}."
