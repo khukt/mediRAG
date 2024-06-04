@@ -38,80 +38,33 @@ language = st.radio("Select Language:", ('English', 'Burmese'))
 # Text input for asking a question
 question = st.text_input("Ask a question about any medicine:")
 
-def build_relevant_context(question, medicines):
+def build_relevant_context(medicines):
     context = ""
-    keywords = question.lower().split()
     for drug in medicines:
-        if any(kw in drug['generic_name'].lower() for kw in keywords) or any(kw.lower() in [bn.lower() for bn in drug['brand_names']] for kw in keywords):
-            context += f"Generic Name: {drug['generic_name']}\n"
-            context += f"Brand Names: {', '.join(drug['brand_names'])}\n"
-            context += f"Description: {drug['description']}\n"
-            context += f"Uses: {drug['uses']}\n"
-            context += f"Indications: {', '.join(drug['indications'])}\n"
-            context += f"Contraindications: {', '.join(drug['contraindications'])}\n"
-            context += "Side Effects: Common: " + ", ".join(drug['side_effects']['common']) + "; Serious: " + ", ".join(drug['side_effects']['serious']) + "\n"
-            interactions = "; ".join([f"{i['drug']}: {i['description']}" for i in drug['interactions']])
-            context += f"Interactions: {interactions}\n"
-            context += f"Warnings: {', '.join(drug['warnings'])}\n"
-            context += f"Mechanism of Action: {drug['mechanism_of_action']}\n"
-            pharmacokinetics = f"Pharmacokinetics: Absorption: {drug['pharmacokinetics']['absorption']}; Metabolism: {drug['pharmacokinetics']['metabolism']}; Half-life: {drug['pharmacokinetics']['half_life']}; Excretion: {drug['pharmacokinetics']['excretion']}"
-            context += f"{pharmacokinetics}\n"
-            context += f"Patient Information: {', '.join(drug['patient_information'])}\n"
+        context += f"Generic Name: {drug['generic_name']}\n"
+        context += f"Brand Names: {', '.join(drug['brand_names'])}\n"
+        context += f"Description: {drug['description']}\n"
+        context += f"Uses: {drug['uses']}\n"
+        context += f"Indications: {', '.join(drug['indications'])}\n"
+        context += f"Contraindications: {', '.join(drug['contraindications'])}\n"
+        context += "Side Effects: Common: " + ", ".join(drug['side_effects']['common']) + "; Serious: " + ", ".join(drug['side_effects']['serious']) + "\n"
+        interactions = "; ".join([f"{i['drug']}: {i['description']}" for i in drug['interactions']])
+        context += f"Interactions: {interactions}\n"
+        context += f"Warnings: {', '.join(drug['warnings'])}\n"
+        context += f"Mechanism of Action: {drug['mechanism_of_action']}\n"
+        pharmacokinetics = f"Pharmacokinetics: Absorption: {drug['pharmacokinetics']['absorption']}; Metabolism: {drug['pharmacokinetics']['metabolism']}; Half-life: {drug['pharmacokinetics']['half_life']}; Excretion: {drug['pharmacokinetics']['excretion']}"
+        context += f"{pharmacokinetics}\n"
+        context += f"Patient Information: {', '.join(drug['patient_information'])}\n"
     return context
 
-def semantic_search(question, medicines, model):
-    # Translate the question to English for semantic search if necessary
-    if language == 'Burmese':
-        question = translator.translate(question, src='my', dest='en').text
-    
-    # Embed the question using the sentence transformer model
-    question_embedding = model.encode(question, convert_to_tensor=True)
-    
-    # Embed each medicine entry and compute similarity scores
-    contexts = []
-    for drug in medicines:
-        context = build_relevant_context(drug['generic_name'], [drug])
-        context_embedding = model.encode(context, convert_to_tensor=True)
-        similarity = util.pytorch_cos_sim(question_embedding, context_embedding).item()
-        contexts.append((context, similarity))
-    
-    # Sort contexts by similarity
-    contexts = sorted(contexts, key=lambda x: x[1], reverse=True)
-    return [context[0] for context in contexts[:3]] if contexts else []
-
-def generate_answers(question, contexts, language):
-    if language == 'Burmese':
-        question_translated = translator.translate(question, src='my', dest='en').text
-    else:
-        question_translated = question
-
-    answers = []
-    for context in contexts:
-        short_answer = qa_pipeline(question=question_translated, context=context)
-        start = short_answer['start']
-        end = short_answer['end']
-        full_sentence = context[max(0, start-50):min(len(context), end+50)]
-        if question.lower() in full_sentence.lower():
-            short_answer_text = full_sentence
-        else:
-            short_answer_text = short_answer['answer']
-        
-        if language == 'Burmese':
-            short_answer_text = translator.translate(short_answer_text, src='en', dest='my').text
-            context = translator.translate(context, src='en', dest='my').text
-        
-        answers.append(short_answer_text)
-    
-    return answers
-
-def generate_direct_answer(question, medicines):
+def get_specific_answer(question, medicines):
     keywords = question.lower().split()
     for drug in medicines:
-        if 'paracetamol' in keywords or any(kw in drug['generic_name'].lower() for kw in keywords):
+        if 'paracetamol' in question.lower() or any(kw in drug['generic_name'].lower() for kw in keywords):
             if 'used for' in question.lower() or 'uses' in question.lower():
                 return drug['uses']
             if 'side effects' in question.lower():
-                return f"Common: {', '.join(drug['side_effects']['common'])}. Serious: {', '.join(drug['side_effects']['serious'])}."
+                return f"Common side effects include {', '.join(drug['side_effects']['common'])}. Serious side effects include {', '.join(drug['side_effects']['serious'])}."
             if 'brand names' in question.lower():
                 return ", ".join(drug['brand_names'])
             if 'contraindications' in question.lower():
@@ -122,24 +75,38 @@ def generate_direct_answer(question, medicines):
                 return " ".join(drug['patient_information'])
     return ""
 
+def semantic_search(question, medicines, model):
+    # Translate the question to English for semantic search if necessary
+    if language == 'Burmese':
+        question = translator.translate(question, src='my', dest='en').text
+    
+    # Embed the question using the sentence transformer model
+    question_embedding = model.encode(question, convert_to_tensor=True)
+    
+    # Embed each medicine entry and compute similarity scores
+    context = build_relevant_context(medicines)
+    context_embedding = model.encode(context, convert_to_tensor=True)
+    similarity = util.pytorch_cos_sim(question_embedding, context_embedding).item()
+    
+    return context if similarity > 0.5 else ""
+
 if question:
     # Directly handle some common questions
-    direct_answer = generate_direct_answer(question, medicines)
-    if direct_answer:
-        st.write("Short Answer:", direct_answer)
+    specific_answer = get_specific_answer(question, medicines)
+    if specific_answer:
+        st.write("Short Answer:", specific_answer)
     else:
         # Build the context relevant to the question using semantic search
-        contexts = semantic_search(question, medicines, sentence_model)
-        if contexts:
+        context = semantic_search(question, medicines, sentence_model)
+        if context:
             try:
                 # Get the short and long answers
-                answers = generate_answers(question, contexts, language)
-                st.write("Short Answer:", answers[0])
+                short_answer = qa_pipeline(question=question, context=context)
+                st.write("Short Answer:", short_answer['answer'])
 
                 # Option to view detailed answer
                 if st.button("Show Detailed Answer"):
-                    detailed_answers = "\n\n".join(context for context in contexts)
-                    st.write("Detailed Answer:", detailed_answers)
+                    st.write("Detailed Answer:", context)
             except Exception as e:
                 st.error(f"An error occurred: {e}")
         else:
@@ -158,28 +125,26 @@ test_questions = [
 st.subheader("Test Questions and Expected Answers")
 
 for test in test_questions:
-    direct_answer = generate_direct_answer(test["question"], medicines)
-    if direct_answer:
+    specific_answer = get_specific_answer(test["question"], medicines)
+    if specific_answer:
         st.write(f"**Question:** {test['question']}")
         st.write(f"**Expected Answer:** {test['expected']}")
-        st.write(f"**Model's Short Answer:** {direct_answer}")
+        st.write(f"**Model's Short Answer:** {specific_answer}")
         
         if st.button(f"Show Detailed Answer for '{test['question']}'"):
-            contexts = semantic_search(test["question"], medicines, sentence_model)
-            detailed_answers = "\n\n".join(context for context in contexts)
-            st.write(f"**Model's Detailed Answer:** {detailed_answers}")
+            context = build_relevant_context(medicines)
+            st.write(f"**Model's Detailed Answer:** {context}")
     else:
-        contexts = semantic_search(test["question"], medicines, sentence_model)
-        if contexts:
+        context = semantic_search(test["question"], medicines, sentence_model)
+        if context:
             try:
-                answers = generate_answers(test["question"], contexts, language)
+                short_answer = qa_pipeline(question=test["question"], context=context)
                 st.write(f"**Question:** {test['question']}")
                 st.write(f"**Expected Answer:** {test['expected']}")
-                st.write(f"**Model's Short Answer:** {answers[0]}")
+                st.write(f"**Model's Short Answer:** {short_answer['answer']}")
                 
                 if st.button(f"Show Detailed Answer for '{test['question']}'"):
-                    detailed_answers = "\n\n".join(context for context in contexts)
-                    st.write(f"**Model's Detailed Answer:** {detailed_answers}")
+                    st.write(f"**Model's Detailed Answer:** {context}")
             except Exception as e:
                 st.write(f"**Question:** {test['question']}")
                 st.write(f"**Expected Answer:** {test['expected']}")
