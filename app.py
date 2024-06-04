@@ -3,6 +3,7 @@ import streamlit as st
 import json
 from sentence_transformers import SentenceTransformer, util
 import torch
+from googletrans import Translator
 
 # Load the medicines data from the JSON file
 @st.cache_resource
