@@ -14,8 +14,8 @@ def load_medicines():
 # Load the multilingual BERT model and tokenizer for QA
 @st.cache_resource
 def load_qa_model():
-    tokenizer = AutoTokenizer.from_pretrained('bert-base-multilingual-cased')
-    model = AutoModelForQuestionAnswering.from_pretrained('bert-base-multilingual-cased')
+    tokenizer = AutoTokenizer.from_pretrained('ahotrod/bert-base-multilingual-cased-squad2')
+    model = AutoModelForQuestionAnswering.from_pretrained('ahotrod/bert-base-multilingual-cased-squad2')
     qa_pipeline = pipeline("question-answering", model=model, tokenizer=tokenizer)
     return qa_pipeline
 
@@ -79,7 +79,7 @@ def semantic_search(question, medicines, model):
     contexts = sorted(contexts, key=lambda x: x[1], reverse=True)
     return contexts[0][0] if contexts else ""
 
-def generate_answers(question, context):
+def generate_answers(question, context, language):
     if language == 'Burmese':
         question_translated = translator.translate(question, src='my', dest='en').text
     else:
@@ -106,7 +106,7 @@ if question:
     if context:
         try:
             # Get the short and long answers
-            short_answer, long_answer_context = generate_answers(question, context)
+            short_answer, long_answer_context = generate_answers(question, context, language)
             st.write("Short Answer:", short_answer)
 
             # Option to view detailed answer
@@ -119,12 +119,12 @@ if question:
 
 # Predefined test questions and expected answers
 test_questions = [
-    {"question": "What is Paracetamol used for?", "expected": "Paracetamol is a medication used to treat pain and fever. It is commonly used for headaches, muscle aches, arthritis, backaches, toothaches, colds, and fevers."},
-    {"question": "What are the brand names for Ibuprofen?", "expected": "Advil, Motrin, Nurofen"},
-    {"question": "What are the side effects of Paracetamol?", "expected": "Common side effects include nausea and vomiting. Serious side effects include liver damage and severe allergic reactions."},
-    {"question": "What are the contraindications for Ibuprofen?", "expected": "History of asthma or allergic reaction to aspirin or other NSAIDs, active gastrointestinal bleeding."},
-    {"question": "What is the mechanism of action of Ibuprofen?", "expected": "Ibuprofen works by inhibiting the enzymes COX-1 and COX-2, which are involved in the synthesis of prostaglandins that mediate inflammation, pain, and fever."},
-    {"question": "How should I take Paracetamol?", "expected": "Take paracetamol with or without food. Do not take more than 4 grams (4000 mg) in 24 hours."}
+    {"question": "Paracetamol ဆိုတာဘာလဲ", "expected": "Paracetamol သည်နာကျင်မှုနှင့်အဖျားကိုကုသရန်အသုံးပြုသောဆေးဖြစ်သည်။ ၎င်းသည်ခေါင်းကိုက်ခြင်း၊ ကြွက်သားနာကျင်ခြင်း၊ အဆစ်နာခြင်း၊ လက်နာခြင်း၊ သွားနာခြင်း၊ အအေးမိခြင်းနှင့်အဖျားများအတွက် အထူးသဖြင့် အသုံးပြုသည်။"},
+    {"question": "Ibuprofen ၏ အမှတ်တံဆိပ်အမည်များကဘာလဲ?", "expected": "Advil, Motrin, Nurofen"},
+    {"question": "Paracetamol ၏ ဘေးထွက်ဆိုးကျိုးများကဘာလဲ?", "expected": "ဘုံဘေးထွက်ဆိုးကျိုးများတွင် ပျို့ခြင်းနှင့် အန်ခြင်းတို့ ပါဝင်သည်။ ပြင်းထန်သောဘေးထွက်ဆိုးကျိုးများတွင် အသည်းပျက်စီးခြင်းနှင့် ပြင်းထန်သော မတည့်မှုတုံ့ပြန်မှုတို့ ပါဝင်သည်။"},
+    {"question": "Ibuprofen ၏ ဆေးခံ့ကန့်ချက်များကဘာလဲ?", "expected": "aspirin သို့မဟုတ် အခြားသော NSAIDs များကိုမတည့်သောအစားအသောက်သမားများ၊ လက်ရှိအစာအိမ်နှင့်အူလမ်းကြောင်းသွေးထွက်ခြင်း။"},
+    {"question": "Ibuprofen ၏ လုပ်ဆောင်ချက်ယန္တရားကဘာလဲ?", "expected": "Ibuprofen သည် COX-1 နှင့် COX-2 အင်ဇိုင်းများကိုတားဆီးခြင်းဖြင့် အရောင်အကျိမ်း၊ နာကျင်ခြင်းနှင့်အဖျားတို့ကိုဖြစ်စေသည့် prostaglandins များ၏ စွန့်ထုတ်မှုကိုတားဆီးသည်။"},
+    {"question": "Paracetamol ကိုဘယ်လိုသောက်သင့်လဲ?", "expected": "paracetamol ကို အစားအသောက်ပါစေမပါစေ သောက်သင့်သည်။ ၂၄ နာရီအတွင်း ၄ ဂရမ် (၄၀၀၀ မီလီဂရမ်) ထက်မပိုသောက်ရ။"}
 ]
 
 st.subheader("Test Questions and Expected Answers")
@@ -133,7 +133,7 @@ for test in test_questions:
     context = semantic_search(test["question"], medicines, sentence_model)
     if context:
         try:
-            short_answer, _ = generate_answers(test["question"], context)
+            short_answer, _ = generate_answers(test["question"], context, language)
             st.write(f"**Question:** {test['question']}")
             st.write(f"**Expected Answer:** {test['expected']}")
             st.write(f"**Model's Short Answer:** {short_answer}")
