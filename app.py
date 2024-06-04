@@ -76,7 +76,7 @@ def semantic_search(question, medicines, model):
     
     # Sort contexts by similarity
     contexts = sorted(contexts, key=lambda x: x[1], reverse=True)
-    return contexts[:3] if contexts else []
+    return [context[0] for context in contexts[:3]] if contexts else []
 
 def generate_answers(question, contexts, language):
     if language == 'Burmese':
@@ -86,10 +86,10 @@ def generate_answers(question, contexts, language):
 
     answers = []
     for context in contexts:
-        short_answer = qa_pipeline(question=question_translated, context=context[0])
+        short_answer = qa_pipeline(question=question_translated, context=context)
         start = short_answer['start']
         end = short_answer['end']
-        full_sentence = context[0][max(0, start-50):min(len(context[0]), end+50)]
+        full_sentence = context[max(0, start-50):min(len(context), end+50)]
         if question.lower() in full_sentence.lower():
             short_answer_text = full_sentence
         else:
@@ -97,7 +97,7 @@ def generate_answers(question, contexts, language):
         
         if language == 'Burmese':
             short_answer_text = translator.translate(short_answer_text, src='en', dest='my').text
-            context[0] = translator.translate(context[0], src='en', dest='my').text
+            context = translator.translate(context, src='en', dest='my').text
         
         answers.append(short_answer_text)
     
@@ -114,7 +114,7 @@ if question:
 
             # Option to view detailed answer
             if st.button("Show Detailed Answer"):
-                detailed_answers = "\n\n".join(context[0] for context in contexts)
+                detailed_answers = "\n\n".join(context for context in contexts)
                 st.write("Detailed Answer:", detailed_answers)
         except Exception as e:
             st.error(f"An error occurred: {e}")
@@ -123,12 +123,12 @@ if question:
 
 # Predefined test questions and expected answers
 test_questions = [
-    {"question": "Paracetamol ဆိုတာဘာလဲ", "expected": "Paracetamol သည်နာကျင်မှုနှင့်အဖျားကိုကုသရန်အသုံးပြုသောဆေးဖြစ်သည်။ ၎င်းသည်ခေါင်းကိုက်ခြင်း၊ ကြွက်သားနာကျင်ခြင်း၊ အဆစ်နာခြင်း၊ လက်နာခြင်း၊ သွားနာခြင်း၊ အအေးမိခြင်းနှင့်အဖျားများအတွက် အထူးသဖြင့် အသုံးပြုသည်။"},
-    {"question": "Ibuprofen ၏ အမှတ်တံဆိပ်အမည်များကဘာလဲ?", "expected": "Advil, Motrin, Nurofen"},
-    {"question": "Paracetamol ၏ ဘေးထွက်ဆိုးကျိုးများကဘာလဲ?", "expected": "ဘုံဘေးထွက်ဆိုးကျိုးများတွင် ပျို့ခြင်းနှင့် အန်ခြင်းတို့ ပါဝင်သည်။ ပြင်းထန်သောဘေးထွက်ဆိုးကျိုးများတွင် အသည်းပျက်စီးခြင်းနှင့် ပြင်းထန်သော မတည့်မှုတုံ့ပြန်မှုတို့ ပါဝင်သည်။"},
-    {"question": "Ibuprofen ၏ ဆေးခံ့ကန့်ချက်များကဘာလဲ?", "expected": "aspirin သို့မဟုတ် အခြားသော NSAIDs များကိုမတည့်သောအစားအသောက်သမားများ၊ လက်ရှိအစာအိမ်နှင့်အူလမ်းကြောင်းသွေးထွက်ခြင်း။"},
-    {"question": "Ibuprofen ၏ လုပ်ဆောင်ချက်ယန္တရားကဘာလဲ?", "expected": "Ibuprofen သည် COX-1 နှင့် COX-2 အင်ဇိုင်းများကိုတားဆီးခြင်းဖြင့် အရောင်အကျိမ်း၊ နာကျင်ခြင်းနှင့်အဖျားတို့ကိုဖြစ်စေသည့် prostaglandins များ၏ စွန့်ထုတ်မှုကိုတားဆီးသည်။"},
-    {"question": "Paracetamol ကိုဘယ်လိုသောက်သင့်လဲ?", "expected": "paracetamol ကို အစားအသောက်ပါစေမပါစေ သောက်သင့်သည်။ ၂၄ နာရီအတွင်း ၄ ဂရမ် (၄၀၀၀ မီလီဂရမ်) ထက်မပိုသောက်ရ။"}
+    {"question": "What is Paracetamol used for?", "expected": "Paracetamol is a medication used to treat pain and fever. It is commonly used for headaches, muscle aches, arthritis, backaches, toothaches, colds, and fevers."},
+    {"question": "What are the brand names for Ibuprofen?", "expected": "Advil, Motrin, Nurofen"},
+    {"question": "What are the side effects of Paracetamol?", "expected": "Common side effects include nausea and vomiting. Serious side effects include liver damage and severe allergic reactions."},
+    {"question": "What are the contraindications for Ibuprofen?", "expected": "History of asthma or allergic reaction to aspirin or other NSAIDs, active gastrointestinal bleeding."},
+    {"question": "What is the mechanism of action of Ibuprofen?", "expected": "Ibuprofen works by inhibiting the enzymes COX-1 and COX-2, which are involved in the synthesis of prostaglandins that mediate inflammation, pain, and fever."},
+    {"question": "How should I take Paracetamol?", "expected": "Take paracetamol with or without food. Do not take more than 4 grams (4000 mg) in 24 hours."}
 ]
 
 st.subheader("Test Questions and Expected Answers")
@@ -143,7 +143,7 @@ for test in test_questions:
             st.write(f"**Model's Short Answer:** {answers[0]}")
             
             if st.button(f"Show Detailed Answer for '{test['question']}'"):
-                detailed_answers = "\n\n".join(context[0] for context in contexts)
+                detailed_answers = "\n\n".join(context for context in contexts)
                 st.write(f"**Model's Detailed Answer:** {detailed_answers}")
         except Exception as e:
             st.write(f"**Question:** {test['question']}")
