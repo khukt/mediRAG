@@ -77,9 +77,10 @@ if question:
             short_answer = qa_pipeline(question=question, context=context)
             st.write("Short Answer:", short_answer['answer'])
 
-            # Option to view detailed answer
-            if st.button("Show Detailed Answer"):
-                st.write("Detailed Answer:", context)
+            # Extract a long answer (detailed context)
+            st.write("Detailed Answer:")
+            for line in context.split("\n"):
+                st.write(line)
         except Exception as e:
             st.error(f"An error occurred: {e}")
     else:
@@ -105,9 +106,9 @@ for test in test_questions:
             st.write(f"**Question:** {test['question']}")
             st.write(f"**Expected Answer:** {test['expected']}")
             st.write(f"**Model's Short Answer:** {answer['answer']}")
-            
-            if st.button(f"Show Detailed Answer for '{test['question']}'"):
-                st.write(f"**Model's Detailed Answer:** {context}")
+            st.write(f"**Model's Detailed Answer:**")
+            for line in context.split("\n"):
+                st.write(line)
         except Exception as e:
             st.write(f"**Question:** {test['question']}")
             st.write(f"**Expected Answer:** {test['expected']}")
