@@ -76,41 +76,45 @@ def semantic_search(question, medicines, model):
     
     # Sort contexts by similarity
     contexts = sorted(contexts, key=lambda x: x[1], reverse=True)
-    return contexts[0][0] if contexts else ""
+    return contexts[:3] if contexts else []
 
-def generate_answers(question, context, language):
+def generate_answers(question, contexts, language):
     if language == 'Burmese':
         question_translated = translator.translate(question, src='my', dest='en').text
     else:
         question_translated = question
 
-    short_answer = qa_pipeline(question=question_translated, context=context)
-    start = short_answer['start']
-    end = short_answer['end']
-    full_sentence = context[max(0, start-50):min(len(context), end+50)]
-    if question.lower() in full_sentence.lower():
-        short_answer_text = full_sentence
-    else:
-        short_answer_text = short_answer['answer']
+    answers = []
+    for context in contexts:
+        short_answer = qa_pipeline(question=question_translated, context=context[0])
+        start = short_answer['start']
+        end = short_answer['end']
+        full_sentence = context[0][max(0, start-50):min(len(context[0]), end+50)]
+        if question.lower() in full_sentence.lower():
+            short_answer_text = full_sentence
+        else:
+            short_answer_text = short_answer['answer']
+        
+        if language == 'Burmese':
+            short_answer_text = translator.translate(short_answer_text, src='en', dest='my').text
+            context[0] = translator.translate(context[0], src='en', dest='my').text
+        
+        answers.append(short_answer_text)
     
-    if language == 'Burmese':
-        short_answer_text = translator.translate(short_answer_text, src='en', dest='my').text
-        context = translator.translate(context, src='en', dest='my').text
-    
-    return short_answer_text, context
+    return answers
 
 if question:
     # Build the context relevant to the question using semantic search
-    context = semantic_search(question, medicines, sentence_model)
-    if context:
+    contexts = semantic_search(question, medicines, sentence_model)
+    if contexts:
         try:
             # Get the short and long answers
-            short_answer, long_answer_context = generate_answers(question, context, language)
-            st.write("Short Answer:", short_answer)
+            answers = generate_answers(question, contexts, language)
+            st.write("Short Answer:", answers[0])
 
             # Option to view detailed answer
             if st.button("Show Detailed Answer"):
-                st.write("Detailed Answer:", long_answer_context)
+                st.write("Detailed Answer:", "\n\n".join(context[0] for context in contexts))
         except Exception as e:
             st.error(f"An error occurred: {e}")
     else:
@@ -129,16 +133,16 @@ test_questions = [
 st.subheader("Test Questions and Expected Answers")
 
 for test in test_questions:
-    context = semantic_search(test["question"], medicines, sentence_model)
-    if context:
+    contexts = semantic_search(test["question"], medicines, sentence_model)
+    if contexts:
         try:
-            short_answer, _ = generate_answers(test["question"], context, language)
+            answers = generate_answers(test["question"], contexts, language)
             st.write(f"**Question:** {test['question']}")
             st.write(f"**Expected Answer:** {test['expected']}")
-            st.write(f"**Model's Short Answer:** {short_answer}")
+            st.write(f"**Model's Short Answer:** {answers[0]}")
             
             if st.button(f"Show Detailed Answer for '{test['question']}'"):
-                st.write(f"**Model's Detailed Answer:** {context}")
+                st.write(f"**Model's Detailed Answer:** {'\n\n'.join(context[0] for context in contexts)}")
         except Exception as e:
             st.write(f"**Question:** {test['question']}")
             st.write(f"**Expected Answer:** {test['expected']}")
