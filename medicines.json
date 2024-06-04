@@ -51,6 +51,14 @@
     "patient_information": [
       "Take paracetamol with or without food.",
       "Do not take more than 4 grams (4000 mg) in 24 hours."
+    ],
+    "brand_image_urls": [
+      "https://example.com/images/tylenol.jpg",
+      "https://example.com/images/panadol.jpg"
+    ],
+    "manufacturers": [
+      "Johnson & Johnson",
+      "GSK"
     ]
   },
   {
@@ -104,6 +112,14 @@
     "patient_information": [
       "Take ibuprofen with food or milk to reduce stomach upset.",
       "Avoid alcohol while taking this medication."
+    ],
+    "brand_image_urls": [
+      "https://example.com/images/advil.jpg",
+      "https://example.com/images/motrin.jpg"
+    ],
+    "manufacturers": [
+      "Pfizer",
+      "Reckitt Benckiser"
     ]
   }
 ]
