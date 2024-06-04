@@ -1,4 +1,4 @@
-from transformers import GPT2Tokenizer, GPT2LMHeadModel, pipeline
+from transformers import AlbertTokenizer, AlbertForQuestionAnswering, pipeline
 import streamlit as st
 import json
 
@@ -6,15 +6,16 @@ import json
 with open('medicines.json', 'r') as f:
     medicines = json.load(f)
 
-# Load the DistilGPT-2 model and tokenizer
-tokenizer = GPT2Tokenizer.from_pretrained('distilgpt2')
-model = GPT2LMHeadModel.from_pretrained('distilgpt2')
-qa_pipeline = pipeline("text-generation", model=model, tokenizer=tokenizer)
+# Load the ALBERT model and tokenizer
+tokenizer = AlbertTokenizer.from_pretrained('twmkn9/albert-base-v2-squad2')
+model = AlbertForQuestionAnswering.from_pretrained('twmkn9/albert-base-v2-squad2')
+qa_pipeline = pipeline("question-answering", model=model, tokenizer=tokenizer)
 
 st.title("Medicines Information System")
 
 # User input
 question = st.text_input("Ask a question about any medicine:")
+
 
 def build_relevant_context(question, medicines):
     context = ""
@@ -40,12 +41,12 @@ if question:
     # Build the context relevant to the question
     context = build_relevant_context(question, medicines)
     if context:
-        input_text = f"Question: {question}\nContext: {context}\nAnswer:"
-        # Generate the answer from the GPT-2 model with truncation and padding settings
-        answer = qa_pipeline(input_text, max_length=300, num_return_sequences=1, truncation=True, pad_token_id=tokenizer.eos_token_id)
-        st.write("Answer:", answer[0]['generated_text'].split('Answer:')[1].strip())
+        # Get the answer from the QA model
+        answer = qa_pipeline(question=question, context=context)
+        st.write("Answer:", answer['answer'])
     else:
         st.write("No relevant context found for the question.")
+
 
 # Predefined test questions and expected answers
 test_questions = [
@@ -62,13 +63,15 @@ st.subheader("Test Questions and Expected Answers")
 for test in test_questions:
     context = build_relevant_context(test["question"], medicines)
     if context:
-        input_text = f"Question: {test['question']}\nContext: {context}\nAnswer:"
-        answer = qa_pipeline(input_text, max_length=300, num_return_sequences=1, truncation=True, pad_token_id=tokenizer.eos_token_id)
+        answer = qa_pipeline(question=test["question"], context=context)
         st.write(f"**Question:** {test['question']}")
         st.write(f"**Expected Answer:** {test['expected']}")
-        st.write(f"**Model's Answer:** {answer[0]['generated_text'].split('Answer:')[1].strip()}")
+        st.write(f"**Model's Answer:** {answer['answer']}")
     else:
         st.write(f"**Question:** {test['question']}")
         st.write(f"**Expected Answer:** {test['expected']}")
         st.write("**Model's Answer:** No relevant context found for the question.")
     st.write("---")
+
+       
+
