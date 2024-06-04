@@ -81,4 +81,77 @@ def semantic_search(question, medicines, model):
 
 def generate_answers(question, contexts, language):
     if language == 'Burmese':
-        question_trans
+        question_translated = translator.translate(question, src='my', dest='en').text
+    else:
+        question_translated = question
+
+    answers = []
+    for context in contexts:
+        short_answer = qa_pipeline(question=question_translated, context=context)
+        start = short_answer['start']
+        end = short_answer['end']
+        full_sentence = context[max(0, start-50):min(len(context), end+50)]
+        if question.lower() in full_sentence.lower():
+            short_answer_text = full_sentence
+        else:
+            short_answer_text = short_answer['answer']
+        
+        if language == 'Burmese':
+            short_answer_text = translator.translate(short_answer_text, src='en', dest='my').text
+            context = translator.translate(context, src='en', dest='my').text
+        
+        answers.append(short_answer_text)
+    
+    return answers
+
+if question:
+    # Build the context relevant to the question using semantic search
+    contexts = semantic_search(question, medicines, sentence_model)
+    if contexts:
+        try:
+            # Get the short and long answers
+            answers = generate_answers(question, contexts, language)
+            st.write("Short Answer:", answers[0])
+
+            # Option to view detailed answer
+            if st.button("Show Detailed Answer"):
+                detailed_answers = "\n\n".join(context for context in contexts)
+                st.write("Detailed Answer:", detailed_answers)
+        except Exception as e:
+            st.error(f"An error occurred: {e}")
+    else:
+        st.write("No relevant context found for the question.")
+
+# Predefined test questions and expected answers
+test_questions = [
+    {"question": "What is Paracetamol used for?", "expected": "Paracetamol is a medication used to treat pain and fever. It is commonly used for headaches, muscle aches, arthritis, backaches, toothaches, colds, and fevers."},
+    {"question": "What are the brand names for Ibuprofen?", "expected": "Advil, Motrin, Nurofen"},
+    {"question": "What are the side effects of Paracetamol?", "expected": "Common side effects include nausea and vomiting. Serious side effects include liver damage and severe allergic reactions."},
+    {"question": "What are the contraindications for Ibuprofen?", "expected": "History of asthma or allergic reaction to aspirin or other NSAIDs, active gastrointestinal bleeding."},
+    {"question": "What is the mechanism of action of Ibuprofen?", "expected": "Ibuprofen works by inhibiting the enzymes COX-1 and COX-2, which are involved in the synthesis of prostaglandins that mediate inflammation, pain, and fever."},
+    {"question": "How should I take Paracetamol?", "expected": "Take paracetamol with or without food. Do not take more than 4 grams (4000 mg) in 24 hours."}
+]
+
+st.subheader("Test Questions and Expected Answers")
+
+for test in test_questions:
+    contexts = semantic_search(test["question"], medicines, sentence_model)
+    if contexts:
+        try:
+            answers = generate_answers(test["question"], contexts, language)
+            st.write(f"**Question:** {test['question']}")
+            st.write(f"**Expected Answer:** {test['expected']}")
+            st.write(f"**Model's Short Answer:** {answers[0]}")
+            
+            if st.button(f"Show Detailed Answer for '{test['question']}'"):
+                detailed_answers = "\n\n".join(context for context in contexts)
+                st.write(f"**Model's Detailed Answer:** {detailed_answers}")
+        except Exception as e:
+            st.write(f"**Question:** {test['question']}")
+            st.write(f"**Expected Answer:** {test['expected']}")
+            st.write(f"**Model's Short Answer:** An error occurred: {e}")
+    else:
+        st.write(f"**Question:** {test['question']}")
+        st.write(f"**Expected Answer:** {test['expected']}")
+        st.write("**Model's Short Answer:** No relevant context found for the question.")
+    st.write("---")
