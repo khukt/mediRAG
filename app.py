@@ -6,7 +6,7 @@ import json
 with open('medicines.json', 'r') as f:
     medicines = json.load(f)
 
-# Load the GPT-2 model and tokenizer
+# Load the DistilGPT-2 model and tokenizer
 tokenizer = GPT2Tokenizer.from_pretrained('distilgpt2')
 model = GPT2LMHeadModel.from_pretrained('distilgpt2')
 qa_pipeline = pipeline("text-generation", model=model, tokenizer=tokenizer)
@@ -15,7 +15,6 @@ st.title("Medicines Information System")
 
 # User input
 question = st.text_input("Ask a question about any medicine:")
-
 
 def build_relevant_context(question, medicines):
     context = ""
@@ -28,7 +27,8 @@ def build_relevant_context(question, medicines):
             context += f"Indications: {', '.join(drug['indications'])}\n"
             context += f"Contraindications: {', '.join(drug['contraindications'])}\n"
             context += "Side Effects: Common: " + ", ".join(drug['side_effects']['common']) + "; Serious: " + ", ".join(drug['side_effects']['serious']) + "\n"
-            context += "; ".join([f"Interactions: {i['drug']}: {i['description']}" for i in drug['interactions']]) + "\n"
+            interactions = "; ".join([f"Interactions: {i['drug']}: {i['description']}" for i in drug['interactions']])
+            context += f"{interactions}\n"
             context += f"Warnings: {', '.join(drug['warnings'])}\n"
             context += f"Mechanism of Action: {drug['mechanism_of_action']}\n"
             pharmacokinetics = f"Pharmacokinetics: Absorption: {drug['pharmacokinetics']['absorption']}; Metabolism: {drug['pharmacokinetics']['metabolism']}; Half-life: {drug['pharmacokinetics']['half_life']}; Excretion: {drug['pharmacokinetics']['excretion']}"
@@ -41,12 +41,11 @@ if question:
     context = build_relevant_context(question, medicines)
     if context:
         input_text = f"Question: {question}\nContext: {context}\nAnswer:"
-        # Generate the answer from the GPT-2 model
-        answer = qa_pipeline(input_text, max_length=500, num_return_sequences=1)
+        # Generate the answer from the GPT-2 model with truncation and padding settings
+        answer = qa_pipeline(input_text, max_length=300, num_return_sequences=1, truncation=True, pad_token_id=tokenizer.eos_token_id)
         st.write("Answer:", answer[0]['generated_text'].split('Answer:')[1].strip())
     else:
         st.write("No relevant context found for the question.")
-
 
 # Predefined test questions and expected answers
 test_questions = [
@@ -64,7 +63,7 @@ for test in test_questions:
     context = build_relevant_context(test["question"], medicines)
     if context:
         input_text = f"Question: {test['question']}\nContext: {context}\nAnswer:"
-        answer = qa_pipeline(input_text, max_length=500, num_return_sequences=1)
+        answer = qa_pipeline(input_text, max_length=300, num_return_sequences=1, truncation=True, pad_token_id=tokenizer.eos_token_id)
         st.write(f"**Question:** {test['question']}")
         st.write(f"**Expected Answer:** {test['expected']}")
         st.write(f"**Model's Answer:** {answer[0]['generated_text'].split('Answer:')[1].strip()}")
