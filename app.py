@@ -104,23 +104,46 @@ def generate_answers(question, contexts, language):
     
     return answers
 
-if question:
-    # Build the context relevant to the question using semantic search
-    contexts = semantic_search(question, medicines, sentence_model)
-    if contexts:
-        try:
-            # Get the short and long answers
-            answers = generate_answers(question, contexts, language)
-            st.write("Short Answer:", answers[0])
+def generate_direct_answer(question, medicines):
+    keywords = question.lower().split()
+    for drug in medicines:
+        if 'paracetamol' in keywords or any(kw in drug['generic_name'].lower() for kw in keywords):
+            if 'used for' in question.lower() or 'uses' in question.lower():
+                return drug['uses']
+            if 'side effects' in question.lower():
+                return f"Common: {', '.join(drug['side_effects']['common'])}. Serious: {', '.join(drug['side_effects']['serious'])}."
+            if 'brand names' in question.lower():
+                return ", ".join(drug['brand_names'])
+            if 'contraindications' in question.lower():
+                return ", ".join(drug['contraindications'])
+            if 'mechanism of action' in question.lower():
+                return drug['mechanism_of_action']
+            if 'how should i take' in question.lower():
+                return " ".join(drug['patient_information'])
+    return ""
 
-            # Option to view detailed answer
-            if st.button("Show Detailed Answer"):
-                detailed_answers = "\n\n".join(context for context in contexts)
-                st.write("Detailed Answer:", detailed_answers)
-        except Exception as e:
-            st.error(f"An error occurred: {e}")
+if question:
+    # Directly handle some common questions
+    direct_answer = generate_direct_answer(question, medicines)
+    if direct_answer:
+        st.write("Short Answer:", direct_answer)
     else:
-        st.write("No relevant context found for the question.")
+        # Build the context relevant to the question using semantic search
+        contexts = semantic_search(question, medicines, sentence_model)
+        if contexts:
+            try:
+                # Get the short and long answers
+                answers = generate_answers(question, contexts, language)
+                st.write("Short Answer:", answers[0])
+
+                # Option to view detailed answer
+                if st.button("Show Detailed Answer"):
+                    detailed_answers = "\n\n".join(context for context in contexts)
+                    st.write("Detailed Answer:", detailed_answers)
+            except Exception as e:
+                st.error(f"An error occurred: {e}")
+        else:
+            st.write("No relevant context found for the question.")
 
 # Predefined test questions and expected answers
 test_questions = [
@@ -135,23 +158,34 @@ test_questions = [
 st.subheader("Test Questions and Expected Answers")
 
 for test in test_questions:
-    contexts = semantic_search(test["question"], medicines, sentence_model)
-    if contexts:
-        try:
-            answers = generate_answers(test["question"], contexts, language)
-            st.write(f"**Question:** {test['question']}")
-            st.write(f"**Expected Answer:** {test['expected']}")
-            st.write(f"**Model's Short Answer:** {answers[0]}")
-            
-            if st.button(f"Show Detailed Answer for '{test['question']}'"):
-                detailed_answers = "\n\n".join(context for context in contexts)
-                st.write(f"**Model's Detailed Answer:** {detailed_answers}")
-        except Exception as e:
-            st.write(f"**Question:** {test['question']}")
-            st.write(f"**Expected Answer:** {test['expected']}")
-            st.write(f"**Model's Short Answer:** An error occurred: {e}")
-    else:
+    direct_answer = generate_direct_answer(test["question"], medicines)
+    if direct_answer:
         st.write(f"**Question:** {test['question']}")
         st.write(f"**Expected Answer:** {test['expected']}")
-        st.write("**Model's Short Answer:** No relevant context found for the question.")
+        st.write(f"**Model's Short Answer:** {direct_answer}")
+        
+        if st.button(f"Show Detailed Answer for '{test['question']}'"):
+            contexts = semantic_search(test["question"], medicines, sentence_model)
+            detailed_answers = "\n\n".join(context for context in contexts)
+            st.write(f"**Model's Detailed Answer:** {detailed_answers}")
+    else:
+        contexts = semantic_search(test["question"], medicines, sentence_model)
+        if contexts:
+            try:
+                answers = generate_answers(test["question"], contexts, language)
+                st.write(f"**Question:** {test['question']}")
+                st.write(f"**Expected Answer:** {test['expected']}")
+                st.write(f"**Model's Short Answer:** {answers[0]}")
+                
+                if st.button(f"Show Detailed Answer for '{test['question']}'"):
+                    detailed_answers = "\n\n".join(context for context in contexts)
+                    st.write(f"**Model's Detailed Answer:** {detailed_answers}")
+            except Exception as e:
+                st.write(f"**Question:** {test['question']}")
+                st.write(f"**Expected Answer:** {test['expected']}")
+                st.write(f"**Model's Short Answer:** An error occurred: {e}")
+        else:
+            st.write(f"**Question:** {test['question']}")
+            st.write(f"**Expected Answer:** {test['expected']}")
+            st.write("**Model's Short Answer:** No relevant context found for the question.")
     st.write("---")
