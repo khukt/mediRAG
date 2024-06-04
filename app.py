@@ -3,6 +3,8 @@ import streamlit as st
 import json
 from sentence_transformers import SentenceTransformer, util
 from googletrans import Translator
+import shap
+import matplotlib.pyplot as plt
 
 # Load the medicines data from the JSON file
 @st.cache_resource
@@ -170,6 +172,12 @@ def explain_detailed_process(original_question, translated_question, relevant_me
     """
     return explanation
 
+def generate_shap_explanation(model, context, question):
+    """Generates a SHAP explanation for the model's prediction."""
+    explainer = shap.Explainer(model, context)
+    shap_values = explainer([question])
+    return shap_values
+
 if question:
     # Translate question to English if in Burmese
     if language == 'Burmese':
@@ -191,6 +199,14 @@ if question:
             # Explainable AI
             explanation = explain_answer_process(original_question, question, relevant_medicine, specific_answer, "", "")
             st.write(explanation)
+            
+            # Generate SHAP explanation
+            st.write("### SHAP Explanation:")
+            context = build_relevant_context(relevant_medicine)
+            shap_values = generate_shap_explanation(qa_pipeline, context, question)
+            fig, ax = plt.subplots()
+            shap.plots.text(shap_values, ax=ax)
+            st.pyplot(fig)
         else:
             # Build the context relevant to the question using semantic search
             context = build_relevant_context(relevant_medicine)
@@ -205,6 +221,13 @@ if question:
                 # Explainable AI
                 explanation = explain_answer_process(original_question, question, relevant_medicine, "", context, short_answer)
                 st.write(explanation)
+
+                # Generate SHAP explanation
+                st.write("### SHAP Explanation:")
+                shap_values = generate_shap_explanation(qa_pipeline, context, question)
+                fig, ax = plt.subplots()
+                shap.plots.text(shap_values, ax=ax)
+                st.pyplot(fig)
 
                 # Option to view detailed answer
                 if st.button("Show Detailed Answer"):
@@ -229,6 +252,7 @@ This AI system leverages advanced natural language processing (NLP) models to pr
 - **Multilingual XLM-RoBERTa Model:** This model is capable of understanding and processing questions in multiple languages, including English and Burmese.
 - **Google Translator:** This tool is used to translate questions and answers between English and Burmese, ensuring that the system can respond in both languages.
 - **Sentence Transformers:** These models are used for semantic search, allowing the system to find the most relevant information from the database based on the user's question.
+- **SHAP (SHapley Additive exPlanations):** This library provides graphical explanations for the model's predictions, enhancing transparency and trustworthiness.
 
 ### Responsible AI
 - **Transparency:** The system provides clear and detailed answers, showing both the original and translated texts to ensure transparency.
