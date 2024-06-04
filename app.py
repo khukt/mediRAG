@@ -114,7 +114,8 @@ if question:
 
             # Option to view detailed answer
             if st.button("Show Detailed Answer"):
-                st.write("Detailed Answer:", "\n\n".join(context[0] for context in contexts))
+                detailed_answers = "\n\n".join(context[0] for context in contexts)
+                st.write("Detailed Answer:", detailed_answers)
         except Exception as e:
             st.error(f"An error occurred: {e}")
     else:
@@ -142,7 +143,8 @@ for test in test_questions:
             st.write(f"**Model's Short Answer:** {answers[0]}")
             
             if st.button(f"Show Detailed Answer for '{test['question']}'"):
-                st.write(f"**Model's Detailed Answer:** {'\n\n'.join(context[0] for context in contexts)}")
+                detailed_answers = "\n\n".join(context[0] for context in contexts)
+                st.write(f"**Model's Detailed Answer:** {detailed_answers}")
         except Exception as e:
             st.write(f"**Question:** {test['question']}")
             st.write(f"**Expected Answer:** {test['expected']}")
