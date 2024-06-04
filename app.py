@@ -68,19 +68,28 @@ def semantic_search(question, medicines, model):
     contexts = sorted(contexts, key=lambda x: x[1], reverse=True)
     return contexts[0][0] if contexts else ""
 
+def generate_answers(question, context):
+    short_answer = qa_pipeline(question=question, context=context)
+    # Ensure the short answer is complete
+    start = short_answer['start']
+    end = short_answer['end']
+    full_sentence = context[max(0, start-50):min(len(context), end+50)]
+    if question.lower() in full_sentence.lower():
+        short_answer_text = full_sentence
+    else:
+        short_answer_text = short_answer['answer']
+    
+    return short_answer_text, context
+
 if question:
     # Build the context relevant to the question using semantic search
     context = semantic_search(question, medicines, sentence_model)
     if context:
         try:
-            # Get the short answer from the QA model
-            short_answer = qa_pipeline(question=question, context=context)
-            st.write("Short Answer:", short_answer['answer'])
+            # Get the short and long answers
+            short_answer, long_answer_context = generate_answers(question, context)
+            st.write("Short Answer:", short_answer)
 
-            # Generate the long answer by providing more detailed context
-            long_answer_context = context
-            long_answer = qa_pipeline(question=question, context=long_answer_context)
-            
             # Option to view detailed answer
             if st.button("Show Detailed Answer"):
                 st.write("Detailed Answer:", long_answer_context)
@@ -105,10 +114,10 @@ for test in test_questions:
     context = semantic_search(test["question"], medicines, sentence_model)
     if context:
         try:
-            answer = qa_pipeline(question=test["question"], context=context)
+            short_answer, _ = generate_answers(test["question"], context)
             st.write(f"**Question:** {test['question']}")
             st.write(f"**Expected Answer:** {test['expected']}")
-            st.write(f"**Model's Short Answer:** {answer['answer']}")
+            st.write(f"**Model's Short Answer:** {short_answer}")
             
             if st.button(f"Show Detailed Answer for '{test['question']}'"):
                 st.write(f"**Model's Detailed Answer:** {context}")
