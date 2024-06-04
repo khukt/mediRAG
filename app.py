@@ -5,6 +5,7 @@ from sentence_transformers import SentenceTransformer, util
 from googletrans import Translator
 import shap
 import matplotlib.pyplot as plt
+import numpy as np
 
 # Load the medicines data from the JSON file
 @st.cache_resource
@@ -172,9 +173,9 @@ def explain_detailed_process(original_question, translated_question, relevant_me
     """
     return explanation
 
-def generate_shap_explanation(model, context, question):
+def generate_shap_explanation(pipeline, tokenizer, model, context, question):
     """Generates a SHAP explanation for the model's prediction."""
-    explainer = shap.Explainer(model, context)
+    explainer = shap.Explainer(model, masker=shap.maskers.Text(tokenizer), algorithm="partition")
     shap_values = explainer([question])
     return shap_values
 
