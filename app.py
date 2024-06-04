@@ -173,10 +173,10 @@ def explain_detailed_process(original_question, translated_question, relevant_me
     """
     return explanation
 
-def generate_shap_explanation(pipeline, tokenizer, model, context, question):
+def generate_shap_explanation(pipeline, context, question):
     """Generates a SHAP explanation for the model's prediction."""
-    explainer = shap.Explainer(model, masker=shap.maskers.Text(tokenizer), algorithm="partition")
-    shap_values = explainer([question])
+    explainer = shap.Explainer(pipeline)
+    shap_values = explainer([{"context": context, "question": question}])
     return shap_values
 
 if question:
