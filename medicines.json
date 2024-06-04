@@ -3,7 +3,7 @@
     "generic_name": "Paracetamol",
     "brand_names": ["Tylenol", "Panadol", "Acetaminophen"],
     "description": "Paracetamol is a medication used to treat pain and fever. It is commonly used for headaches, muscle aches, arthritis, backaches, toothaches, colds, and fevers.",
-    "uses": "Paracetamol is a medication used to treat pain and fever. It is commonly used for headaches, muscle aches, arthritis, backaches, toothaches, colds, and fevers.",
+    "uses": "Treats pain and fever. Commonly used for headaches, muscle aches, arthritis, backaches, toothaches, colds, and fevers.",
     "dosage_forms": [
       {
         "form": "tablet",
@@ -58,7 +58,7 @@
     "generic_name": "Ibuprofen",
     "brand_names": ["Advil", "Motrin", "Nurofen"],
     "description": "Ibuprofen is a nonsteroidal anti-inflammatory drug (NSAID) used to reduce fever and treat pain or inflammation caused by many conditions such as headache, toothache, arthritis, menstrual cramps, or minor injury.",
-    "uses": "Ibuprofen is a nonsteroidal anti-inflammatory drug (NSAID) used to reduce fever and treat pain or inflammation caused by many conditions such as headache, toothache, arthritis, menstrual cramps, or minor injury.",
+    "uses": "Reduces fever and treats pain or inflammation caused by conditions such as headache, toothache, arthritis, menstrual cramps, or minor injury.",
     "dosage_forms": [
       {
         "form": "tablet",
