@@ -77,24 +77,42 @@ def find_relevant_medicine(question, medicines):
             return drug
     return None
 
+def translate_text(text, src='en', dest='my'):
+    try:
+        return translator.translate(text, src=src, dest=dest).text
+    except Exception as e:
+        return text
+
 if question:
+    # Translate question to English if in Burmese
+    if language == 'Burmese':
+        original_question = question
+        question = translate_text(question, src='my', dest='en')
+    else:
+        original_question = question
+
     # Directly handle some common questions
     relevant_medicine = find_relevant_medicine(question, medicines)
     if relevant_medicine:
         specific_answer = get_specific_answer(question, relevant_medicine)
         if specific_answer:
+            if language == 'Burmese':
+                specific_answer = translate_text(specific_answer, src='en', dest='my')
             st.write("Short Answer:", specific_answer)
         else:
             # Build the context relevant to the question using semantic search
             context = build_relevant_context(relevant_medicine)
             try:
                 # Get the short and long answers
-                short_answer = qa_pipeline(question=question, context=context)
-                st.write("Short Answer:", short_answer['answer'])
+                short_answer = qa_pipeline(question=question, context=context)['answer']
+                if language == 'Burmese':
+                    short_answer = translate_text(short_answer, src='en', dest='my')
+                st.write("Short Answer:", short_answer)
 
                 # Option to view detailed answer
                 if st.button("Show Detailed Answer"):
-                    st.write("Detailed Answer:", context)
+                    detailed_answer = context if language == 'English' else translate_text(context, src='en', dest='my')
+                    st.write("Detailed Answer:", detailed_answer)
             except Exception as e:
                 st.error(f"An error occurred: {e}")
     else:
@@ -113,33 +131,46 @@ test_questions = [
 st.subheader("Test Questions and Expected Answers")
 
 for test in test_questions:
-    relevant_medicine = find_relevant_medicine(test["question"], medicines)
+    question = test["question"]
+    expected_answer = test["expected"]
+    
+    # Translate question to English if in Burmese
+    if language == 'Burmese':
+        question = translate_text(question, src='my', dest='en')
+    
+    relevant_medicine = find_relevant_medicine(question, medicines)
     if relevant_medicine:
-        specific_answer = get_specific_answer(test["question"], relevant_medicine)
+        specific_answer = get_specific_answer(question, relevant_medicine)
         if specific_answer:
+            if language == 'Burmese':
+                specific_answer = translate_text(specific_answer, src='en', dest='my')
             st.write(f"**Question:** {test['question']}")
-            st.write(f"**Expected Answer:** {test['expected']}")
+            st.write(f"**Expected Answer:** {expected_answer}")
             st.write(f"**Model's Short Answer:** {specific_answer}")
             
             if st.button(f"Show Detailed Answer for '{test['question']}'"):
                 context = build_relevant_context(relevant_medicine)
-                st.write(f"**Model's Detailed Answer:** {context}")
+                detailed_answer = context if language == 'English' else translate_text(context, src='en', dest='my')
+                st.write(f"**Model's Detailed Answer:** {detailed_answer}")
         else:
             context = build_relevant_context(relevant_medicine)
             try:
-                short_answer = qa_pipeline(question=test["question"], context=context)
+                short_answer = qa_pipeline(question=question, context=context)['answer']
+                if language == 'Burmese':
+                    short_answer = translate_text(short_answer, src='en', dest='my')
                 st.write(f"**Question:** {test['question']}")
-                st.write(f"**Expected Answer:** {test['expected']}")
-                st.write(f"**Model's Short Answer:** {short_answer['answer']}")
+                st.write(f"**Expected Answer:** {expected_answer}")
+                st.write(f"**Model's Short Answer:** {short_answer}")
                 
                 if st.button(f"Show Detailed Answer for '{test['question']}'"):
-                    st.write(f"**Model's Detailed Answer:** {context}")
+                    detailed_answer = context if language == 'English' else translate_text(context, src='en', dest='my')
+                    st.write(f"**Model's Detailed Answer:** {detailed_answer}")
             except Exception as e:
                 st.write(f"**Question:** {test['question']}")
-                st.write(f"**Expected Answer:** {test['expected']}")
+                st.write(f"**Expected Answer:** {expected_answer}")
                 st.write(f"**Model's Short Answer:** An error occurred: {e}")
     else:
         st.write(f"**Question:** {test['question']}")
-        st.write(f"**Expected Answer:** {test['expected']}")
+        st.write(f"**Expected Answer:** {expected_answer}")
         st.write("**Model's Short Answer:** No relevant context found for the question.")
     st.write("---")
