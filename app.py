@@ -29,12 +29,8 @@ sentence_model = load_sentence_transformer_model()
 
 st.title("Medicines Information System")
 
-# Dropdown for selecting a medicine
-selected_medicine = st.selectbox("Select a medicine:", [""] + [drug['generic_name'] for drug in medicines])
-
 # Text input for asking a question
 question = st.text_input("Ask a question about any medicine:")
-
 
 def build_relevant_context(question, medicines):
     context = ""
@@ -84,10 +80,6 @@ if question:
             st.error(f"An error occurred: {e}")
     else:
         st.write("No relevant context found for the question.")
-elif selected_medicine:
-    context = build_relevant_context(selected_medicine, medicines)
-    st.subheader("Medicine Information")
-    st.text(context)
 
 # Predefined test questions and expected answers
 test_questions = [
