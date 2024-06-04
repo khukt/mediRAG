@@ -5,7 +5,6 @@ from sentence_transformers import SentenceTransformer, util
 from googletrans import Translator
 import shap
 import matplotlib.pyplot as plt
-import numpy as np
 
 # Load the medicines data from the JSON file
 @st.cache_resource
@@ -19,7 +18,7 @@ def load_qa_model():
     tokenizer = AutoTokenizer.from_pretrained('deepset/xlm-roberta-base-squad2')
     model = AutoModelForQuestionAnswering.from_pretrained('deepset/xlm-roberta-base-squad2')
     qa_pipeline = pipeline("question-answering", model=model, tokenizer=tokenizer)
-    return qa_pipeline
+    return qa_pipeline, tokenizer, model
 
 # Load the Sentence Transformer model for semantic search
 @st.cache_resource
@@ -30,7 +29,7 @@ def load_sentence_transformer_model():
 translator = Translator()
 
 medicines = load_medicines()
-qa_pipeline = load_qa_model()
+qa_pipeline, tokenizer, model = load_qa_model()
 sentence_model = load_sentence_transformer_model()
 
 st.markdown(
@@ -173,10 +172,10 @@ def explain_detailed_process(original_question, translated_question, relevant_me
     """
     return explanation
 
-def generate_shap_explanation(pipeline, context, question):
+def generate_shap_explanation(model, tokenizer, question, context):
     """Generates a SHAP explanation for the model's prediction."""
-    explainer = shap.Explainer(pipeline)
-    shap_values = explainer([{"context": context, "question": question}])
+    explainer = shap.Explainer(model, masker=shap.maskers.Text(tokenizer))
+    shap_values = explainer([[context, question]])
     return shap_values
 
 if question:
@@ -204,7 +203,7 @@ if question:
             # Generate SHAP explanation
             st.write("### SHAP Explanation:")
             context = build_relevant_context(relevant_medicine)
-            shap_values = generate_shap_explanation(qa_pipeline, context, question)
+            shap_values = generate_shap_explanation(model, tokenizer, question, context)
             fig, ax = plt.subplots()
             shap.plots.text(shap_values, ax=ax)
             st.pyplot(fig)
@@ -225,7 +224,7 @@ if question:
 
                 # Generate SHAP explanation
                 st.write("### SHAP Explanation:")
-                shap_values = generate_shap_explanation(qa_pipeline, context, question)
+                shap_values = generate_shap_explanation(model, tokenizer, question, context)
                 fig, ax = plt.subplots()
                 shap.plots.text(shap_values, ax=ax)
                 st.pyplot(fig)
