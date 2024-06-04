@@ -72,10 +72,23 @@ def get_specific_answer(question, medicine):
     return ""
 
 def find_relevant_medicine(question, medicines):
-    for drug in medicines:
-        if drug['generic_name'].lower() in question.lower() or any(bn.lower() in question.lower() for bn in drug['brand_names']):
-            return drug
-    return None
+    # Prepare question embedding
+    question_embedding = sentence_model.encode(question, convert_to_tensor=True)
+
+    best_medicine = None
+    highest_score = float('-inf')
+
+    # Iterate through each medicine to find the best match
+    for medicine in medicines:
+        context = build_relevant_context(medicine)
+        context_embedding = sentence_model.encode(context, convert_to_tensor=True)
+        score = util.pytorch_cos_sim(question_embedding, context_embedding).item()
+
+        if score > highest_score:
+            highest_score = score
+            best_medicine = medicine
+
+    return best_medicine
 
 def translate_text(text, src='en', dest='my'):
     try:
@@ -117,7 +130,7 @@ if question:
     else:
         original_question = question
 
-    # Directly handle some common questions
+    # Find the most relevant medicine using sentence transformers
     relevant_medicine = find_relevant_medicine(question, medicines)
     if relevant_medicine:
         specific_answer = get_specific_answer(question, relevant_medicine)
