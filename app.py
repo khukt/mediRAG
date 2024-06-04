@@ -10,11 +10,11 @@ def load_medicines():
     with open('medicines.json', 'r') as f:
         return json.load(f)
 
-# Load the multilingual XLM-RoBERTa model and tokenizer for QA
+# Load the lightweight DistilBERT model for QA
 @st.cache_resource
 def load_qa_model():
-    tokenizer = AutoTokenizer.from_pretrained('deepset/xlm-roberta-base-squad2')
-    model = AutoModelForQuestionAnswering.from_pretrained('deepset/xlm-roberta-base-squad2')
+    tokenizer = AutoTokenizer.from_pretrained('distilbert-base-cased-distilled-squad')
+    model = AutoModelForQuestionAnswering.from_pretrained('distilbert-base-cased-distilled-squad')
     qa_pipeline = pipeline("question-answering", model=model, tokenizer=tokenizer)
     return qa_pipeline
 
