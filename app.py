@@ -39,6 +39,7 @@ language = st.radio("Select Language:", ('English', 'Burmese'))
 question = st.text_input("Ask a question about any medicine:")
 
 def build_relevant_context(medicine):
+    """Builds a detailed textual context for a given medicine."""
     context = ""
     context += f"Generic Name: {medicine['generic_name']}\n"
     context += f"Brand Names: {', '.join(medicine['brand_names'])}\n"
@@ -57,6 +58,7 @@ def build_relevant_context(medicine):
     return context
 
 def get_specific_answer(question, medicine):
+    """Gets a specific answer from the medicine data based on the question."""
     if 'used for' in question.lower() or 'uses' in question.lower() or 'ဘာအတွက်' in question.lower() or 'အသုံးပြု' in question.lower():
         return medicine['uses']
     if 'side effects' in question.lower() or 'ဘေးထွက်ဆိုးကျိုး' in question.lower():
@@ -72,6 +74,7 @@ def get_specific_answer(question, medicine):
     return ""
 
 def find_relevant_medicine(question, medicines):
+    """Finds the most relevant medicine based on the question using semantic similarity."""
     # Prepare question embedding
     question_embedding = sentence_model.encode(question, convert_to_tensor=True)
 
@@ -91,12 +94,14 @@ def find_relevant_medicine(question, medicines):
     return best_medicine
 
 def translate_text(text, src='en', dest='my'):
+    """Translates text from one language to another."""
     try:
         return translator.translate(text, src=src, dest=dest).text
     except Exception as e:
         return text
 
 def explain_answer_process(original_question, translated_question, relevant_medicine, specific_answer, context, short_answer):
+    """Provides a detailed explanation of the AI process for generating an answer."""
     explanation = f"""
     **Explainable AI Process:**
     
@@ -110,6 +115,7 @@ def explain_answer_process(original_question, translated_question, relevant_medi
     return explanation
 
 def explain_detailed_process(original_question, translated_question, relevant_medicine, context, short_answer, detailed_answer):
+    """Provides a detailed explanation of the AI process for generating a detailed answer."""
     explanation = f"""
     **Explainable AI Process:**
     
