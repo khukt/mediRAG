@@ -1,6 +1,8 @@
 from transformers import AlbertTokenizer, AlbertForQuestionAnswering, pipeline
 import streamlit as st
 import json
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 
 # Load the medicines data from the JSON file
 @st.cache_resource
@@ -16,38 +18,37 @@ def load_model():
     qa_pipeline = pipeline("question-answering", model=model, tokenizer=tokenizer)
     return qa_pipeline
 
+# Extract relevant data sections for better context extraction
+def extract_relevant_sections(medicines):
+    sections = []
+    for drug in medicines:
+        for key, value in drug.items():
+            if isinstance(value, list):
+                for item in value:
+                    sections.append(f"{key}: {', '.join(item) if isinstance(item, list) else item}")
+            else:
+                sections.append(f"{key}: {value}")
+    return sections
+
+# Function to build relevant context using TF-IDF and cosine similarity
+def build_relevant_context(question, sections):
+    vectorizer = TfidfVectorizer().fit_transform(sections)
+    question_vec = vectorizer.transform([question])
+    similarities = cosine_similarity(question_vec, vectorizer).flatten()
+    relevant_sections = [sections[i] for i in similarities.argsort()[-5:][::-1]]
+    return " ".join(relevant_sections)
+
 medicines = load_medicines()
 qa_pipeline = load_model()
+sections = extract_relevant_sections(medicines)
 
 st.title("Medicines Information System")
 
 # User input
 question = st.text_input("Ask a question about any medicine:")
 
-
-def build_relevant_context(question, medicines):
-    context = ""
-    keywords = question.lower().split()
-    for drug in medicines:
-        if any(kw in drug['generic_name'].lower() for kw in keywords) or any(kw.lower() in [bn.lower() for bn in drug['brand_names']] for kw in keywords):
-            context += f"Generic Name: {drug['generic_name']}\n"
-            context += f"Brand Names: {', '.join(drug['brand_names'])}\n"
-            context += f"Description: {drug['description']}\n"
-            context += f"Indications: {', '.join(drug['indications'])}\n"
-            context += f"Contraindications: {', '.join(drug['contraindications'])}\n"
-            context += "Side Effects: Common: " + ", ".join(drug['side_effects']['common']) + "; Serious: " + ", ".join(drug['side_effects']['serious']) + "\n"
-            interactions = "; ".join([f"{i['drug']}: {i['description']}" for i in drug['interactions']])
-            context += f"Interactions: {interactions}\n"
-            context += f"Warnings: {', '.join(drug['warnings'])}\n"
-            context += f"Mechanism of Action: {drug['mechanism_of_action']}\n"
-            pharmacokinetics = f"Pharmacokinetics: Absorption: {drug['pharmacokinetics']['absorption']}; Metabolism: {drug['pharmacokinetics']['metabolism']}; Half-life: {drug['pharmacokinetics']['half_life']}; Excretion: {drug['pharmacokinetics']['excretion']}"
-            context += f"{pharmacokinetics}\n"
-            context += f"Patient Information: {', '.join(drug['patient_information'])}\n"
-    return context
-
 if question:
-    # Build the context relevant to the question
-    context = build_relevant_context(question, medicines)
+    context = build_relevant_context(question, sections)
     if context:
         try:
             # Get the answer from the QA model
@@ -71,7 +72,7 @@ test_questions = [
 st.subheader("Test Questions and Expected Answers")
 
 for test in test_questions:
-    context = build_relevant_context(test["question"], medicines)
+    context = build_relevant_context(test["question"], sections)
     if context:
         try:
             answer = qa_pipeline(question=test["question"], context=context)
