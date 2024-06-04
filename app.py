@@ -96,6 +96,19 @@ def explain_answer_process(original_question, translated_question, relevant_medi
     """
     return explanation
 
+def explain_detailed_process(original_question, translated_question, relevant_medicine, context, short_answer, detailed_answer):
+    explanation = f"""
+    **Explainable AI Process:**
+    
+    1. **Original Question:** {original_question}
+    2. **Translated Question:** {translated_question}
+    3. **Relevant Medicine Found:** {relevant_medicine['generic_name']}
+    4. **Context Built:** {context[:500]}... (truncated for brevity)
+    5. **Model's Short Answer:** {short_answer}
+    6. **Detailed Answer:** {detailed_answer[:500]}... (truncated for brevity)
+    """
+    return explanation
+
 if question:
     # Translate question to English if in Burmese
     if language == 'Burmese':
@@ -138,6 +151,10 @@ if question:
                     detailed_answer_my = translate_text(context, src='en', dest='my')
                     st.write("Detailed Answer (English):", detailed_answer_en)
                     st.write("Detailed Answer (Burmese):", detailed_answer_my)
+
+                    # Explainable AI for Detailed Answer
+                    detailed_explanation = explain_detailed_process(original_question, question, relevant_medicine, context, short_answer, context)
+                    st.write(detailed_explanation)
             except Exception as e:
                 st.error(f"An error occurred: {e}")
     else:
