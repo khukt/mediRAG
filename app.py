@@ -16,6 +16,7 @@ st.title("Medicines Information System")
 # User input
 question = st.text_input("Ask a question about any medicine:")
 
+
 def build_relevant_context(question, medicines):
     context = ""
     keywords = question.lower().split()
@@ -27,10 +28,12 @@ def build_relevant_context(question, medicines):
             context += f"Indications: {', '.join(drug['indications'])}\n"
             context += f"Contraindications: {', '.join(drug['contraindications'])}\n"
             context += "Side Effects: Common: " + ", ".join(drug['side_effects']['common']) + "; Serious: " + ", ".join(drug['side_effects']['serious']) + "\n"
-            context += "; ".join([f"Interactions: {i['drug']}: {i['description']}" for i in drug['interactions']]) + "\n"
+            interactions = "; ".join([f"Interactions: {i['drug']}: {i['description']}" for i in drug['interactions']])
+            context += f"{interactions}\n"
             context += f"Warnings: {', '.join(drug['warnings'])}\n"
             context += f"Mechanism of Action: {drug['mechanism_of_action']}\n"
-            context += f"Pharmacokinetics: Absorption: {drug['pharmacokinetics']['absorption']}; Metabolism: {drug['pharmacokinetics']['metabolism']}; Half-life: {drug['pharmacokinetics']['half_life']}; Excretion: {drug['pharmacokinetics']['excretion']}\n"
+            pharmacokinetics = f"Pharmacokinetics: Absorption: {drug['pharmacokinetics']['absorption']}; Metabolism: {drug['pharmacokinetics']['metabolism']}; Half-life: {drug['pharmacokinetics']['half_life']}; Excretion: {drug['pharmacokinetics']['excretion']}"
+            context += f"{pharmacokinetics}\n"
             context += f"Patient Information: {', '.join(drug['patient_information'])}\n"
     return context
 
