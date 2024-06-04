@@ -6,3 +6,4 @@ spacy
 psutil
 sentencepiece
 shap
+matplotlib
