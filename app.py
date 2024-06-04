@@ -7,8 +7,8 @@ with open('medicines.json', 'r') as f:
     medicines = json.load(f)
 
 # Load the ELECTRA model and tokenizer
-tokenizer = AutoTokenizer.from_pretrained("valhalla/electra-base-discriminator-finetuned-squadv1")
-model = AutoModelForQuestionAnswering.from_pretrained("valhalla/electra-base-discriminator-finetuned-squadv1")
+tokenizer = AutoTokenizer.from_pretrained("google/electra-small-discriminator")
+model = AutoModelForQuestionAnswering.from_pretrained("ahotrod/electra_small_discriminator_squad2_512")
 qa_pipeline = pipeline("question-answering", model=model, tokenizer=tokenizer)
 
 st.title("Medicines Information System")
@@ -76,3 +76,4 @@ for test in test_questions:
         st.write(f"**Expected Answer:** {test['expected']}")
         st.write("**Model's Answer:** No relevant context found for the question.")
     st.write("---")
+
