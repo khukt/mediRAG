@@ -20,22 +20,18 @@ def build_relevant_context(question, medicines):
     context = ""
     keywords = question.lower().split()
     for drug in medicines:
-        drug_info = []
         if any(kw in drug['generic_name'].lower() for kw in keywords) or any(kw.lower() in [bn.lower() for bn in drug['brand_names']] for kw in keywords):
-            drug_info.append(f"Generic Name: {drug['generic_name']}\n")
-            drug_info.append(f"Brand Names: {', '.join(drug['brand_names'])}\n")
-            drug_info.append(f"Description: {drug['description']}\n")
-            drug_info.append(f"Indications: {', '.join(drug['indications'])}\n")
-            drug_info.append(f"Contraindications: {', '.join(drug['contraindications'])}\n")
-            drug_info.append("Side Effects: Common: " + ", ".join(drug['side_effects']['common']) + "; Serious: " + ", ".join(drug['side_effects']['serious']) + "\n")
-            interactions = "; ".join([f"{i['drug']}: {i['description']}" for i in drug['interactions']])
-            drug_info.append(f"Interactions: {interactions}\n")
-            drug_info.append(f"Warnings: {', '.join(drug['warnings'])}\n")
-            drug_info.append(f"Mechanism of Action: {drug['mechanism_of_action']}\n")
-            pharmacokinetics = f"Absorption: {drug['pharmacokinetics']['absorption']}; Metabolism: {drug['pharmacokinetics']['metabolism']}; Half-life: {drug['pharmacokinetics']['half_life']}; Excretion: {drug['pharmacokinetics']['excretion']}"
-            drug_info.append(f"Pharmacokinetics: {pharmacokinetics}\n")
-            drug_info.append(f"Patient Information: {', '.join(drug['patient_information'])}\n")
-            context += " ".join(drug_info)
+            context += f"Generic Name: {drug['generic_name']}\n"
+            context += f"Brand Names: {', '.join(drug['brand_names'])}\n"
+            context += f"Description: {drug['description']}\n"
+            context += f"Indications: {', '.join(drug['indications'])}\n"
+            context += f"Contraindications: {', '.join(drug['contraindications'])}\n"
+            context += "Side Effects: Common: " + ", ".join(drug['side_effects']['common']) + "; Serious: " + ", ".join(drug['side_effects']['serious']) + "\n"
+            context += "; ".join([f"Interactions: {i['drug']}: {i['description']}" for i in drug['interactions']]) + "\n"
+            context += f"Warnings: {', '.join(drug['warnings'])}\n"
+            context += f"Mechanism of Action: {drug['mechanism_of_action']}\n"
+            context += f"Pharmacokinetics: Absorption: {drug['pharmacokinetics']['absorption']}; Metabolism: {drug['pharmacokinetics']['metabolism']}; Half-life: {drug['pharmacokinetics']['half_life']}; Excretion: {drug['pharmacokinetics']['excretion']}\n"
+            context += f"Patient Information: {', '.join(drug['patient_information'])}\n"
     return context
 
 if question:
@@ -72,4 +68,3 @@ for test in test_questions:
         st.write(f"**Expected Answer:** {test['expected']}")
         st.write("**Model's Answer:** No relevant context found for the question.")
     st.write("---")
-
