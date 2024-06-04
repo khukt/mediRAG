@@ -2,7 +2,6 @@ from transformers import pipeline, AutoTokenizer, AutoModelForQuestionAnswering
 import streamlit as st
 import json
 from sentence_transformers import SentenceTransformer, util
-import torch
 from googletrans import Translator
 
 # Load the medicines data from the JSON file
@@ -11,11 +10,11 @@ def load_medicines():
     with open('medicines.json', 'r') as f:
         return json.load(f)
 
-# Load the multilingual BERT model and tokenizer for QA
+# Load the multilingual XLM-RoBERTa model and tokenizer for QA
 @st.cache_resource
 def load_qa_model():
-    tokenizer = AutoTokenizer.from_pretrained('ahotrod/bert-base-multilingual-cased-squad2')
-    model = AutoModelForQuestionAnswering.from_pretrained('ahotrod/bert-base-multilingual-cased-squad2')
+    tokenizer = AutoTokenizer.from_pretrained('deepset/xlm-roberta-base-squad2')
+    model = AutoModelForQuestionAnswering.from_pretrained('deepset/xlm-roberta-base-squad2')
     qa_pipeline = pipeline("question-answering", model=model, tokenizer=tokenizer)
     return qa_pipeline
 
