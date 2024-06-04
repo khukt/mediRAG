@@ -83,15 +83,13 @@ def translate_text(text, src='en', dest='my'):
     except Exception as e:
         return text
 
-def translate_if_needed(text, src, dest):
-    if language == 'Burmese':
-        return translate_text(text, src=src, dest=dest)
-    return text
-
 if question:
     # Translate question to English if in Burmese
     if language == 'Burmese':
+        original_question = question
         question = translate_text(question, src='my', dest='en')
+    else:
+        original_question = question
 
     # Directly handle some common questions
     relevant_medicine = find_relevant_medicine(question, medicines)
@@ -142,7 +140,10 @@ for test in test_questions:
     
     # Translate question to English if in Burmese
     if language == 'Burmese':
+        original_question = question
         question = translate_text(question, src='my', dest='en')
+    else:
+        original_question = question
     
     relevant_medicine = find_relevant_medicine(question, medicines)
     if relevant_medicine:
@@ -150,13 +151,14 @@ for test in test_questions:
         if specific_answer:
             specific_answer_en = specific_answer
             specific_answer_my = translate_text(specific_answer, src='en', dest='my')
-            st.write(f"**Question:** {test['question']}")
+            st.write(f"**Question (Original):** {original_question}")
+            st.write(f"**Question (Translated):** {question}")
             st.write(f"**Expected Answer (English):** {expected_answer}")
             st.write(f"**Expected Answer (Burmese):** {translate_text(expected_answer, src='en', dest='my')}")
             st.write(f"**Model's Short Answer (English):** {specific_answer_en}")
             st.write(f"**Model's Short Answer (Burmese):** {specific_answer_my}")
             
-            if st.button(f"Show Detailed Answer for '{test['question']}'"):
+            if st.button(f"Show Detailed Answer for '{original_question}'"):
                 context = build_relevant_context(relevant_medicine)
                 detailed_answer_en = context
                 detailed_answer_my = translate_text(context, src='en', dest='my')
@@ -168,24 +170,27 @@ for test in test_questions:
                 short_answer = qa_pipeline(question=question, context=context)['answer']
                 short_answer_en = short_answer
                 short_answer_my = translate_text(short_answer, src='en', dest='my')
-                st.write(f"**Question:** {test['question']}")
+                st.write(f"**Question (Original):** {original_question}")
+                st.write(f"**Question (Translated):** {question}")
                 st.write(f"**Expected Answer (English):** {expected_answer}")
                 st.write(f"**Expected Answer (Burmese):** {translate_text(expected_answer, src='en', dest='my')}")
                 st.write(f"**Model's Short Answer (English):** {short_answer_en}")
                 st.write(f"**Model's Short Answer (Burmese):** {short_answer_my}")
                 
-                if st.button(f"Show Detailed Answer for '{test['question']}'"):
+                if st.button(f"Show Detailed Answer for '{original_question}'"):
                     detailed_answer_en = context
                     detailed_answer_my = translate_text(context, src='en', dest='my')
                     st.write(f"**Model's Detailed Answer (English):** {detailed_answer_en}")
                     st.write(f"**Model's Detailed Answer (Burmese):** {detailed_answer_my}")
             except Exception as e:
-                st.write(f"**Question:** {test['question']}")
+                st.write(f"**Question (Original):** {original_question}")
+                st.write(f"**Question (Translated):** {question}")
                 st.write(f"**Expected Answer (English):** {expected_answer}")
                 st.write(f"**Expected Answer (Burmese):** {translate_text(expected_answer, src='en', dest='my')}")
                 st.write(f"**Model's Short Answer:** An error occurred: {e}")
     else:
-        st.write(f"**Question:** {test['question']}")
+        st.write(f"**Question (Original):** {original_question}")
+        st.write(f"**Question (Translated):** {question}")
         st.write(f"**Expected Answer (English):** {expected_answer}")
         st.write(f"**Expected Answer (Burmese):** {translate_text(expected_answer, src='en', dest='my')}")
         st.write("**Model's Short Answer:** No relevant context found for the question.")
