@@ -83,6 +83,19 @@ def translate_text(text, src='en', dest='my'):
     except Exception as e:
         return text
 
+def explain_answer_process(original_question, translated_question, relevant_medicine, specific_answer, context, short_answer):
+    explanation = f"""
+    **Explainable AI Process:**
+    
+    1. **Original Question:** {original_question}
+    2. **Translated Question:** {translated_question}
+    3. **Relevant Medicine Found:** {relevant_medicine['generic_name']}
+    4. **Direct Answer Extraction:** {specific_answer}
+    5. **Context Built:** {context[:500]}... (truncated for brevity)
+    6. **Model's Short Answer:** {short_answer}
+    """
+    return explanation
+
 if question:
     # Translate question to English if in Burmese
     if language == 'Burmese':
@@ -100,6 +113,10 @@ if question:
             specific_answer_my = translate_text(specific_answer, src='en', dest='my')
             st.write("Short Answer (English):", specific_answer_en)
             st.write("Short Answer (Burmese):", specific_answer_my)
+            
+            # Explainable AI
+            explanation = explain_answer_process(original_question, question, relevant_medicine, specific_answer, "", "")
+            st.write(explanation)
         else:
             # Build the context relevant to the question using semantic search
             context = build_relevant_context(relevant_medicine)
@@ -110,6 +127,10 @@ if question:
                 short_answer_my = translate_text(short_answer, src='en', dest='my')
                 st.write("Short Answer (English):", short_answer_en)
                 st.write("Short Answer (Burmese):", short_answer_my)
+
+                # Explainable AI
+                explanation = explain_answer_process(original_question, question, relevant_medicine, "", context, short_answer)
+                st.write(explanation)
 
                 # Option to view detailed answer
                 if st.button("Show Detailed Answer"):
@@ -122,76 +143,20 @@ if question:
     else:
         st.write("No relevant context found for the question.")
 
-# Predefined test questions and expected answers
-test_questions = [
-    {"question": "What is Paracetamol used for?", "expected": "Paracetamol is a medication used to treat pain and fever. It is commonly used for headaches, muscle aches, arthritis, backaches, toothaches, colds, and fevers."},
-    {"question": "What are the brand names for Ibuprofen?", "expected": "Advil, Motrin, Nurofen"},
-    {"question": "What are the side effects of Paracetamol?", "expected": "Common side effects include nausea and vomiting. Serious side effects include liver damage and severe allergic reactions."},
-    {"question": "What are the contraindications for Ibuprofen?", "expected": "History of asthma or allergic reaction to aspirin or other NSAIDs, active gastrointestinal bleeding."},
-    {"question": "What is the mechanism of action of Ibuprofen?", "expected": "Ibuprofen works by inhibiting the enzymes COX-1 and COX-2, which are involved in the synthesis of prostaglandins that mediate inflammation, pain, and fever."},
-    {"question": "How should I take Paracetamol?", "expected": "Take paracetamol with or without food. Do not take more than 4 grams (4000 mg) in 24 hours."}
-]
+# Explanation of the AI
+st.subheader("About this AI System")
+st.write("""
+This AI system leverages advanced natural language processing (NLP) models to provide accurate and detailed information about medicines. The system uses the following technologies:
 
-st.subheader("Test Questions and Expected Answers")
+- **Multilingual XLM-RoBERTa Model:** This model is capable of understanding and processing questions in multiple languages, including English and Burmese.
+- **Google Translator:** This tool is used to translate questions and answers between English and Burmese, ensuring that the system can respond in both languages.
+- **Sentence Transformers:** These models are used for semantic search, allowing the system to find the most relevant information from the database based on the user's question.
 
-for test in test_questions:
-    question = test["question"]
-    expected_answer = test["expected"]
-    
-    # Translate question to English if in Burmese
-    if language == 'Burmese':
-        original_question = question
-        question = translate_text(question, src='my', dest='en')
-    else:
-        original_question = question
-    
-    relevant_medicine = find_relevant_medicine(question, medicines)
-    if relevant_medicine:
-        specific_answer = get_specific_answer(question, relevant_medicine)
-        if specific_answer:
-            specific_answer_en = specific_answer
-            specific_answer_my = translate_text(specific_answer, src='en', dest='my')
-            st.write(f"**Question (Original):** {original_question}")
-            st.write(f"**Question (Translated):** {question}")
-            st.write(f"**Expected Answer (English):** {expected_answer}")
-            st.write(f"**Expected Answer (Burmese):** {translate_text(expected_answer, src='en', dest='my')}")
-            st.write(f"**Model's Short Answer (English):** {specific_answer_en}")
-            st.write(f"**Model's Short Answer (Burmese):** {specific_answer_my}")
-            
-            if st.button(f"Show Detailed Answer for '{original_question}'"):
-                context = build_relevant_context(relevant_medicine)
-                detailed_answer_en = context
-                detailed_answer_my = translate_text(context, src='en', dest='my')
-                st.write(f"**Model's Detailed Answer (English):** {detailed_answer_en}")
-                st.write(f"**Model's Detailed Answer (Burmese):** {detailed_answer_my}")
-        else:
-            context = build_relevant_context(relevant_medicine)
-            try:
-                short_answer = qa_pipeline(question=question, context=context)['answer']
-                short_answer_en = short_answer
-                short_answer_my = translate_text(short_answer, src='en', dest='my')
-                st.write(f"**Question (Original):** {original_question}")
-                st.write(f"**Question (Translated):** {question}")
-                st.write(f"**Expected Answer (English):** {expected_answer}")
-                st.write(f"**Expected Answer (Burmese):** {translate_text(expected_answer, src='en', dest='my')}")
-                st.write(f"**Model's Short Answer (English):** {short_answer_en}")
-                st.write(f"**Model's Short Answer (Burmese):** {short_answer_my}")
-                
-                if st.button(f"Show Detailed Answer for '{original_question}'"):
-                    detailed_answer_en = context
-                    detailed_answer_my = translate_text(context, src='en', dest='my')
-                    st.write(f"**Model's Detailed Answer (English):** {detailed_answer_en}")
-                    st.write(f"**Model's Detailed Answer (Burmese):** {detailed_answer_my}")
-            except Exception as e:
-                st.write(f"**Question (Original):** {original_question}")
-                st.write(f"**Question (Translated):** {question}")
-                st.write(f"**Expected Answer (English):** {expected_answer}")
-                st.write(f"**Expected Answer (Burmese):** {translate_text(expected_answer, src='en', dest='my')}")
-                st.write(f"**Model's Short Answer:** An error occurred: {e}")
-    else:
-        st.write(f"**Question (Original):** {original_question}")
-        st.write(f"**Question (Translated):** {question}")
-        st.write(f"**Expected Answer (English):** {expected_answer}")
-        st.write(f"**Expected Answer (Burmese):** {translate_text(expected_answer, src='en', dest='my')}")
-        st.write("**Model's Short Answer:** No relevant context found for the question.")
-    st.write("---")
+### Responsible AI
+- **Transparency:** The system provides clear and detailed answers, showing both the original and translated texts to ensure transparency.
+- **Fairness:** The system is designed to provide accurate information regardless of the user's language, ensuring fair access to information.
+- **Accountability:** The system includes mechanisms to handle errors and provide feedback, helping to improve the model's performance over time.
+- **Privacy:** The system does not store any personal information from users, ensuring that user data remains private and secure.
+
+If you have any questions or feedback about the system, please feel free to reach out.
+""")
