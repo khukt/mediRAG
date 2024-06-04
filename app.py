@@ -73,9 +73,13 @@ if question:
     context = semantic_search(question, medicines, sentence_model)
     if context:
         try:
-            # Get the answer from the QA model
-            answer = qa_pipeline(question=question, context=context)
-            st.write("Answer:", answer['answer'])
+            # Get the short answer from the QA model
+            short_answer = qa_pipeline(question=question, context=context)
+            st.write("Short Answer:", short_answer['answer'])
+
+            # Option to view detailed answer
+            if st.button("Show Detailed Answer"):
+                st.write("Detailed Answer:", context)
         except Exception as e:
             st.error(f"An error occurred: {e}")
     else:
@@ -100,13 +104,16 @@ for test in test_questions:
             answer = qa_pipeline(question=test["question"], context=context)
             st.write(f"**Question:** {test['question']}")
             st.write(f"**Expected Answer:** {test['expected']}")
-            st.write(f"**Model's Answer:** {answer['answer']}")
+            st.write(f"**Model's Short Answer:** {answer['answer']}")
+            
+            if st.button(f"Show Detailed Answer for '{test['question']}'"):
+                st.write(f"**Model's Detailed Answer:** {context}")
         except Exception as e:
             st.write(f"**Question:** {test['question']}")
             st.write(f"**Expected Answer:** {test['expected']}")
-            st.write(f"**Model's Answer:** An error occurred: {e}")
+            st.write(f"**Model's Short Answer:** An error occurred: {e}")
     else:
         st.write(f"**Question:** {test['question']}")
         st.write(f"**Expected Answer:** {test['expected']}")
-        st.write("**Model's Answer:** No relevant context found for the question.")
+        st.write("**Model's Short Answer:** No relevant context found for the question.")
     st.write("---")
