@@ -174,10 +174,18 @@ def explain_detailed_process(original_question, translated_question, relevant_me
 
 def generate_shap_explanation(model, tokenizer, question, context):
     """Generates a SHAP explanation for the model's prediction."""
-    explainer = shap.Explainer(model, masker=shap.maskers.Text(tokenizer), algorithm="partition")
-    # Combine context and question into a single string for SHAP
-    combined_text = f"Context: {context}\nQuestion: {question}"
-    shap_values = explainer([combined_text])
+    # SHAP expects a list of texts
+    texts = [context + " " + question]
+
+    # Define a function that uses the model for SHAP
+    def f(texts):
+        # Tokenize and get model output
+        inputs = tokenizer(texts, truncation=True, padding=True, return_tensors="pt")
+        outputs = model(**inputs)
+        return outputs.logits.detach().numpy()
+
+    explainer = shap.Explainer(f, tokenizer)
+    shap_values = explainer(texts)
     return shap_values
 
 if question:
@@ -245,6 +253,7 @@ if question:
                 st.error(f"An error occurred: {e}")
     else:
         st.write("No relevant context found for the question.")
+
 
 
 # Explanation of the AI
