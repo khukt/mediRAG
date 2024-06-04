@@ -3,6 +3,7 @@ import streamlit as st
 import json
 from sentence_transformers import SentenceTransformer, util
 import torch
+from googletrans import Translator
 
 # Load the medicines data from the JSON file
 @st.cache_resource
@@ -10,24 +11,30 @@ def load_medicines():
     with open('medicines.json', 'r') as f:
         return json.load(f)
 
-# Load the BERT model and tokenizer for QA
+# Load the multilingual BERT model and tokenizer for QA
 @st.cache_resource
 def load_qa_model():
-    tokenizer = AutoTokenizer.from_pretrained('deepset/bert-base-cased-squad2')
-    model = AutoModelForQuestionAnswering.from_pretrained('deepset/bert-base-cased-squad2')
+    tokenizer = AutoTokenizer.from_pretrained('bert-base-multilingual-cased')
+    model = AutoModelForQuestionAnswering.from_pretrained('bert-base-multilingual-cased')
     qa_pipeline = pipeline("question-answering", model=model, tokenizer=tokenizer)
     return qa_pipeline
 
 # Load the Sentence Transformer model for semantic search
 @st.cache_resource
 def load_sentence_transformer_model():
-    return SentenceTransformer('all-MiniLM-L6-v2')
+    return SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
+
+# Initialize the Google Translator
+translator = Translator()
 
 medicines = load_medicines()
 qa_pipeline = load_qa_model()
 sentence_model = load_sentence_transformer_model()
 
 st.title("Medicines Information System")
+
+# Select language
+language = st.radio("Select Language:", ('English', 'Burmese'))
 
 # Text input for asking a question
 question = st.text_input("Ask a question about any medicine:")
@@ -53,6 +60,10 @@ def build_relevant_context(question, medicines):
     return context
 
 def semantic_search(question, medicines, model):
+    # Translate the question to English for semantic search if necessary
+    if language == 'Burmese':
+        question = translator.translate(question, src='my', dest='en').text
+    
     # Embed the question using the sentence transformer model
     question_embedding = model.encode(question, convert_to_tensor=True)
     
@@ -69,8 +80,12 @@ def semantic_search(question, medicines, model):
     return contexts[0][0] if contexts else ""
 
 def generate_answers(question, context):
-    short_answer = qa_pipeline(question=question, context=context)
-    # Ensure the short answer is complete
+    if language == 'Burmese':
+        question_translated = translator.translate(question, src='my', dest='en').text
+    else:
+        question_translated = question
+
+    short_answer = qa_pipeline(question=question_translated, context=context)
     start = short_answer['start']
     end = short_answer['end']
     full_sentence = context[max(0, start-50):min(len(context), end+50)]
@@ -78,6 +93,10 @@ def generate_answers(question, context):
         short_answer_text = full_sentence
     else:
         short_answer_text = short_answer['answer']
+    
+    if language == 'Burmese':
+        short_answer_text = translator.translate(short_answer_text, src='en', dest='my').text
+        context = translator.translate(context, src='en', dest='my').text
     
     return short_answer_text, context
 
