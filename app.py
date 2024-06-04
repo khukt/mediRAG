@@ -25,8 +25,6 @@ def build_relevant_context(question, medicines):
             drug_info.append(f"Generic Name: {drug['generic_name']}\n")
             drug_info.append(f"Brand Names: {', '.join(drug['brand_names'])}\n")
             drug_info.append(f"Description: {drug['description']}\n")
-            dosage_forms = ", ".join([f"{d['form']} ({', '.join(d['strengths'])})" for d in drug['dosage_forms']])
-            drug_info.append(f"Dosage Forms: {dosage_forms}\n")
             drug_info.append(f"Indications: {', '.join(drug['indications'])}\n")
             drug_info.append(f"Contraindications: {', '.join(drug['contraindications'])}\n")
             drug_info.append("Side Effects: Common: " + ", ".join(drug['side_effects']['common']) + "; Serious: " + ", ".join(drug['side_effects']['serious']) + "\n")
@@ -74,3 +72,4 @@ for test in test_questions:
         st.write(f"**Expected Answer:** {test['expected']}")
         st.write("**Model's Answer:** No relevant context found for the question.")
     st.write("---")
+
