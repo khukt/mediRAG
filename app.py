@@ -42,7 +42,7 @@ if question:
     if context:
         input_text = f"Question: {question}\nContext: {context}\nAnswer:"
         # Generate the answer from the GPT-2 model
-        answer = qa_pipeline(input_text, max_length=200, num_return_sequences=1)
+        answer = qa_pipeline(input_text, max_length=500, num_return_sequences=1)
         st.write("Answer:", answer[0]['generated_text'].split('Answer:')[1].strip())
     else:
         st.write("No relevant context found for the question.")
@@ -64,7 +64,7 @@ for test in test_questions:
     context = build_relevant_context(test["question"], medicines)
     if context:
         input_text = f"Question: {test['question']}\nContext: {context}\nAnswer:"
-        answer = qa_pipeline(input_text, max_length=200, num_return_sequences=1)
+        answer = qa_pipeline(input_text, max_length=500, num_return_sequences=1)
         st.write(f"**Question:** {test['question']}")
         st.write(f"**Expected Answer:** {test['expected']}")
         st.write(f"**Model's Answer:** {answer[0]['generated_text'].split('Answer:')[1].strip()}")
