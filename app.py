@@ -8,6 +8,7 @@ from transformers import pipeline, AutoTokenizer, AutoModelForQuestionAnswering
 import json
 from sentence_transformers import SentenceTransformer, util
 from googletrans import Translator
+import matplotlib.pyplot as plt
 
 # Load the medicines data from the JSON file
 @st.cache_resource
@@ -187,8 +188,11 @@ def explain_detailed_process(original_question, translated_question, relevant_me
 # SHAP Explainer
 def shap_explanation(question, context):
     """Provides SHAP explanations for the model's prediction."""
-    explainer = shap.Explainer(qa_pipeline.model, qa_pipeline.tokenizer)
-    shap_values = explainer([{"question": question, "context": context}])
+    explainer = shap.Explainer(qa_pipeline)
+    shap_values = explainer([{
+        "question": question,
+        "context": context
+    }])
     return shap_values
 
 if question:
@@ -228,10 +232,11 @@ if question:
                 st.write(explanation)
 
                 # SHAP Explanation
-                shap_values = shap_explanation(question, context)
                 st.subheader("SHAP Explanation")
-                shap.plots.text(shap_values, display=False)
-                st.pyplot(bbox_inches='tight')
+                shap_values = shap_explanation(question, context)
+                fig, ax = plt.subplots(figsize=(10, 5))
+                shap.plots.text(shap_values, ax=ax)
+                st.pyplot(fig)
 
                 # Option to view detailed answer
                 if st.button("Show Detailed Answer"):
