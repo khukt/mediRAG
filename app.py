@@ -144,7 +144,7 @@ if question:
 
                 # SHAP Explanation
                 explainer = shap.Explainer(qa_pipeline)
-                shap_values = explainer({"question": question, "context": context})
+                shap_values = explainer([{"question": question, "context": context}])
 
                 st.subheader("SHAP Explanation")
                 fig, ax = plt.subplots(figsize=(10, 5))
