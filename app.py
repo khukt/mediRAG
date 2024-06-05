@@ -1,14 +1,11 @@
 # Ensure the required packages are installed:
-# !pip install shap transformers sentence-transformers googletrans==4.0.0-rc1 streamlit
+# !pip install transformers sentence-transformers googletrans==4.0.0-rc1 streamlit
 
-import shap
 import streamlit as st
-import numpy as np
 from transformers import pipeline, AutoTokenizer, AutoModelForQuestionAnswering
 import json
 from sentence_transformers import SentenceTransformer, util
 from googletrans import Translator
-import matplotlib.pyplot as plt
 
 # Load the medicines data from the JSON file
 @st.cache_resource
@@ -42,48 +39,6 @@ translator = Translator()
 medicines = load_medicines()
 qa_pipeline = load_qa_model()
 sentence_model = load_sentence_transformer_model()
-
-st.markdown(
-    """
-    <style>
-    .main {
-        background-color: #f0f2f6;
-    }
-    .stTextInput input {
-        border: 2px solid #5b9bd5;
-        padding: 10px;
-    }
-    .stButton button {
-        background-color: #5b9bd5;
-        color: white;
-        padding: 10px;
-        border: none;
-        border-radius: 5px;
-    }
-    .stRadio input {
-        margin-right: 10px;
-    }
-    .stRadio label {
-        font-size: 16px;
-        font-weight: bold;
-        color: #5b9bd5;
-    }
-    .stMarkdown h1 {
-        color: #5b9bd5;
-    }
-    .stMarkdown h2 {
-        color: #5b9bd5;
-    }
-    .stMarkdown h3 {
-        color: #5b9bd5;
-    }
-    .stMarkdown p {
-        color: #333;
-    }
-    </style>
-    """, 
-    unsafe_allow_html=True
-)
 
 st.title("Medicines Information System")
 
@@ -157,44 +112,6 @@ def translate_text(text, src='en', dest='my'):
     except Exception as e:
         return text
 
-def explain_answer_process(original_question, translated_question, relevant_medicine, specific_answer, context, short_answer):
-    """Provides a detailed explanation of the AI process for generating an answer."""
-    explanation = f"""
-    **Explainable AI Process:**
-    
-    1. **Original Question:** {original_question}
-    2. **Translated Question:** {translated_question}
-    3. **Relevant Medicine Found:** {relevant_medicine.get('generic_name', 'N/A')}
-    4. **Direct Answer Extraction:** {specific_answer}
-    5. **Context Built:** {context[:500]}... (truncated for brevity)
-    6. **Model's Short Answer:** {short_answer}
-    """
-    return explanation
-
-def explain_detailed_process(original_question, translated_question, relevant_medicine, context, short_answer, detailed_answer):
-    """Provides a detailed explanation of the AI process for generating a detailed answer."""
-    explanation = f"""
-    **Explainable AI Process:**
-    
-    1. **Original Question:** {original_question}
-    2. **Translated Question:** {translated_question}
-    3. **Relevant Medicine Found:** {relevant_medicine.get('generic_name', 'N/A')}
-    4. **Context Built:** {context[:500]}... (truncated for brevity)
-    5. **Model's Short Answer:** {short_answer}
-    6. **Detailed Answer:** {detailed_answer[:500]}... (truncated for brevity)
-    """
-    return explanation
-
-# SHAP Explainer
-def shap_explanation(question, context):
-    """Provides SHAP explanations for the model's prediction."""
-    explainer = shap.Explainer(qa_pipeline)
-    shap_values = explainer([{
-        "question": question,
-        "context": context
-    }])
-    return shap_values
-
 if question:
     # Translate question to English if in Burmese
     if language == 'Burmese':
@@ -212,31 +129,16 @@ if question:
             specific_answer_my = translate_text(specific_answer, src='en', dest='my')
             st.write("### Short Answer (English):", specific_answer_en)
             st.write("### Short Answer (Burmese):", specific_answer_my)
-            
-            # Explainable AI
-            explanation = explain_answer_process(original_question, question, relevant_medicine, specific_answer, "", "")
-            st.write(explanation)
         else:
             # Build the context relevant to the question using semantic search
             context = build_relevant_context(relevant_medicine)
             try:
-                # Get the short and long answers
+                # Get the short answer
                 short_answer = qa_pipeline(question=question, context=context)['answer']
                 short_answer_en = short_answer
                 short_answer_my = translate_text(short_answer, src='en', dest='my')
                 st.write("### Short Answer (English):", short_answer_en)
                 st.write("### Short Answer (Burmese):", short_answer_my)
-
-                # Explainable AI
-                explanation = explain_answer_process(original_question, question, relevant_medicine, "", context, short_answer)
-                st.write(explanation)
-
-                # SHAP Explanation
-                st.subheader("SHAP Explanation")
-                shap_values = shap_explanation(question, context)
-                fig, ax = plt.subplots(figsize=(10, 5))
-                shap.plots.text(shap_values, ax=ax)
-                st.pyplot(fig)
 
                 # Option to view detailed answer
                 if st.button("Show Detailed Answer"):
@@ -244,30 +146,7 @@ if question:
                     detailed_answer_my = translate_text(context, src='en', dest='my')
                     st.write("### Detailed Answer (English):", detailed_answer_en)
                     st.write("### Detailed Answer (Burmese):", detailed_answer_my)
-
-                    # Explainable AI for Detailed Answer
-                    detailed_explanation = explain_detailed_process(original_question, question, relevant_medicine, context, short_answer, context)
-                    st.write(detailed_explanation)
             except Exception as e:
                 st.error(f"An error occurred: {e}")
     else:
         st.write("No relevant context found for the question.")
-
-# Explanation of the AI
-st.subheader("About this AI System")
-st.write("""
-This AI system leverages advanced natural language processing (NLP) models to provide accurate and detailed information about medicines. The system uses the following technologies:
-
-- **Multilingual XLM-RoBERTa Model:** This model is capable of understanding and processing questions in multiple languages, including English and Burmese.
-- **Google Translator:** This tool is used to translate questions and answers between English and Burmese, ensuring that the system can respond in both languages.
-- **Sentence Transformers:** These models are used for semantic search, allowing the system to find the most relevant information from the database based on the user's question.
-- **SHAP (SHapley Additive exPlanations):** This is used to provide visual explanations for the model's decision-making process.
-
-### Responsible AI
-- **Transparency:** The system provides clear and detailed answers, showing both the original and translated texts to ensure transparency.
-- **Fairness:** The system is designed to provide accurate information regardless of the user's language, ensuring fair access to information.
-- **Accountability:** The system includes mechanisms to handle errors and provide feedback, helping to improve the model's performance over time.
-- **Privacy:** The system does not store any personal information from users, ensuring that user data remains private and secure.
-
-If you have any questions or feedback about the system, please feel free to reach out.
-""")
