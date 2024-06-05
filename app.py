@@ -1,10 +1,13 @@
-from transformers import pipeline, AutoTokenizer, AutoModelForQuestionAnswering
+# Ensure the required packages are installed:
+# !pip install shap
+
+import shap
 import streamlit as st
+import numpy as np
+from transformers import pipeline, AutoTokenizer, AutoModelForQuestionAnswering
 import json
 from sentence_transformers import SentenceTransformer, util
 from googletrans import Translator
-import shap
-import matplotlib.pyplot as plt
 
 # Load the medicines data from the JSON file
 @st.cache_resource
@@ -18,7 +21,7 @@ def load_qa_model():
     tokenizer = AutoTokenizer.from_pretrained('deepset/xlm-roberta-base-squad2')
     model = AutoModelForQuestionAnswering.from_pretrained('deepset/xlm-roberta-base-squad2')
     qa_pipeline = pipeline("question-answering", model=model, tokenizer=tokenizer)
-    return qa_pipeline, tokenizer, model
+    return qa_pipeline
 
 # Load the Sentence Transformer model for semantic search
 @st.cache_resource
@@ -29,7 +32,7 @@ def load_sentence_transformer_model():
 translator = Translator()
 
 medicines = load_medicines()
-qa_pipeline, tokenizer, model = load_qa_model()
+qa_pipeline = load_qa_model()
 sentence_model = load_sentence_transformer_model()
 
 st.markdown(
@@ -172,20 +175,11 @@ def explain_detailed_process(original_question, translated_question, relevant_me
     """
     return explanation
 
-def generate_shap_explanation(model, tokenizer, question, context):
-    """Generates a SHAP explanation for the model's prediction."""
-    # SHAP expects a list of texts
-    texts = [context + " " + question]
-
-    # Define a function that uses the model for SHAP
-    def f(texts):
-        # Tokenize and get model output
-        inputs = tokenizer(texts, padding=True, truncation=True, return_tensors="pt")
-        outputs = model(**inputs)
-        return outputs.logits
-
-    explainer = shap.Explainer(f, tokenizer)
-    shap_values = explainer(texts)
+# SHAP Explainer
+def shap_explanation(question, context):
+    """Provides SHAP explanations for the model's prediction."""
+    explainer = shap.Explainer(qa_pipeline.model, qa_pipeline.tokenizer)
+    shap_values = explainer([{"question": question, "context": context}])
     return shap_values
 
 if question:
@@ -209,14 +203,6 @@ if question:
             # Explainable AI
             explanation = explain_answer_process(original_question, question, relevant_medicine, specific_answer, "", "")
             st.write(explanation)
-            
-            # Generate SHAP explanation
-            st.write("### SHAP Explanation:")
-            context = build_relevant_context(relevant_medicine)
-            shap_values = generate_shap_explanation(model, tokenizer, question, context)
-            fig, ax = plt.subplots()
-            shap.plots.text(shap_values[0], ax=ax)
-            st.pyplot(fig)
         else:
             # Build the context relevant to the question using semantic search
             context = build_relevant_context(relevant_medicine)
@@ -232,12 +218,11 @@ if question:
                 explanation = explain_answer_process(original_question, question, relevant_medicine, "", context, short_answer)
                 st.write(explanation)
 
-                # Generate SHAP explanation
-                st.write("### SHAP Explanation:")
-                shap_values = generate_shap_explanation(model, tokenizer, question, context)
-                fig, ax = plt.subplots()
-                shap.plots.text(shap_values[0], ax=ax)
-                st.pyplot(fig)
+                # SHAP Explanation
+                shap_values = shap_explanation(question, context)
+                st.subheader("SHAP Explanation")
+                shap.plots.text(shap_values, display=False)
+                st.pyplot(bbox_inches='tight')
 
                 # Option to view detailed answer
                 if st.button("Show Detailed Answer"):
@@ -254,9 +239,6 @@ if question:
     else:
         st.write("No relevant context found for the question.")
 
-
-
-
 # Explanation of the AI
 st.subheader("About this AI System")
 st.write("""
@@ -265,7 +247,7 @@ This AI system leverages advanced natural language processing (NLP) models to pr
 - **Multilingual XLM-RoBERTa Model:** This model is capable of understanding and processing questions in multiple languages, including English and Burmese.
 - **Google Translator:** This tool is used to translate questions and answers between English and Burmese, ensuring that the system can respond in both languages.
 - **Sentence Transformers:** These models are used for semantic search, allowing the system to find the most relevant information from the database based on the user's question.
-- **SHAP (SHapley Additive exPlanations):** This library provides graphical explanations for the model's predictions, enhancing transparency and trustworthiness.
+- **SHAP (SHapley Additive exPlanations):** This is used to provide visual explanations for the model's decision-making process.
 
 ### Responsible AI
 - **Transparency:** The system provides clear and detailed answers, showing both the original and translated texts to ensure transparency.
