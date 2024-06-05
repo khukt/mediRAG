@@ -1,11 +1,13 @@
 # Ensure the required packages are installed:
-# !pip install transformers sentence-transformers googletrans==4.0.0-rc1 streamlit
+# !pip install shap transformers sentence-transformers googletrans==4.0.0-rc1 streamlit
 
+import shap
 import streamlit as st
 from transformers import pipeline, AutoTokenizer, AutoModelForQuestionAnswering
 import json
 from sentence_transformers import SentenceTransformer, util
 from googletrans import Translator
+import matplotlib.pyplot as plt
 
 # Load the medicines data from the JSON file
 @st.cache_resource
@@ -139,6 +141,15 @@ if question:
                 short_answer_my = translate_text(short_answer, src='en', dest='my')
                 st.write("### Short Answer (English):", short_answer_en)
                 st.write("### Short Answer (Burmese):", short_answer_my)
+
+                # SHAP Explanation
+                explainer = shap.Explainer(qa_pipeline)
+                shap_values = explainer({"question": question, "context": context})
+
+                st.subheader("SHAP Explanation")
+                fig, ax = plt.subplots(figsize=(10, 5))
+                shap.waterfall_plot(shap_values[0], max_display=10)
+                st.pyplot(fig)
 
                 # Option to view detailed answer
                 if st.button("Show Detailed Answer"):
